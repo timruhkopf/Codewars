@@ -18,67 +18,71 @@ solution = [[9, 2, 6, 5, 8, 3, 4, 7, 1],
             [2, 8, 4, 7, 9, 5, 6, 1, 3],
             [1, 3, 9, 6, 4, 2, 8, 5, 7]]
 
-# This solution reduces the paths need to traverse.
-# (1) finding the sets of applicable values in each dimension (row, column, block)
-candrow = [set(range(10)) - set(row) for row in problem]
-candcol = [set(range(10)) - set(column) for column in list(zip(*problem))]  # make use of transpose
 
-# index on (row , column, block) = (i, j, i//3 + j//3 + (i//3)*2). # traverses rowwise in problem
-sudokuindex = list((r, c, r // 3 + c // 3 + (r // 3) * 2) for r in range(9) for c in range(9))
-zero = [(r,c,b) for r, c, b in sudokuindex if problem[r][c] == 0]
+def solve (problem):
+    # This solution reduces the paths need to traverse.
+    # index on (row , column, block) = (i, j, i//3 + j//3 + (i//3)*2).
+    sudokuindex = list((r, c, r // 3 + c // 3 + (r // 3) * 2) for r in range(9) for c in range(9))
+    zero = [(r, c, b) for r, c, b in sudokuindex if problem[r][c] == 0]
+    # TODO: change the sorting of zero for efficiency gains;
+    # e.g. by number of possibilities to make correct decisions early
+    # at the cost of little marginal information gain (locally) for each choice
+    # consider zerodict = {(r,c,b):candrow[r] & candcol[c] & candblock[b] for r, c, b in sudokuindex if problem[r][c] == 0}
 
-B = [[], [], [], [], [], [], [], [], []]
-for r, c, b in sudokuindex:
-    if problem[r][c] != 0:
-        B[b].append(problem[r][c])
-candblock = [set(range(1,10)) - set(block) for block in B]
+    B = [[], [], [], [], [], [], [], [], []]
+    for r, c, b in sudokuindex:
+        if problem[r][c] != 0:
+            B[b].append(problem[r][c])
+    candblock = [set(range(1, 10)) - set(block) for block in B]
+    candrow = [set(range(10)) - set(row) for row in problem]
+    candcol = [set(range(10)) - set(column) for column in list(zip(*problem))]  # make use of transpose
 
+    def memoize (f):
+        def helper (position, counter):
+            helper.calls += 1
+            helper.memo[position] = f(position, counter)
+            return helper.memo[position]
 
-def memoize (f):
+        helper.calls = 0
+        helper.memo = {}
+        return helper
 
-    def helper (position, counter):
-        '''keep track on memo & current index position & call counter'''
-        helper.calls += 1
-        helper.memo[position] = f(position, counter)  # overrides the index position or create it if hasn't been there
-        return helper.memo[position]
-
-    helper.calls = 0
-    helper.memo = {}
-    return helper
-
-@memoize
-def solv(position, counter):
-    r,c,b = position
-    S = candrow[r] & candcol[c] & candblock[b]
-    for s in S:
-        if counter +1 == len(zero): # & len(S) == 1: not necessary, but explicit
-            # base case; the last zero value is reached and has only one solution
-            return s
-        else:
-            # we have a candidate s
-            # remove from se return {}ts
-            candrow[r].difference_update({s})
-            candcol[c].difference_update({s})
-            candblock[b].difference_update({s})
-            sol = solv(zero[counter + 1], counter+1) # solv.current+1
-
-            if bool(sol): # the next step yielded a non empty solutions
+    @memoize
+    def solv (position, counter):  # TODO: counter in decorator
+        r, c, b = position
+        S = candrow[r] & candcol[c] & candblock[b]
+        for s in S:
+            if counter + 1 == len(zero):  # base case: last zero value is reached
                 return s
-            else:  # the next zero index returns {} i.e. it has no applicable choices
-                # add s to sets it was removed from
-                candrow[r].update({s})
-                candcol[c].update({s})
-                candblock[b].update({s})
-                continue # just for visual purposes.
-    return {}
+            else:  # go further down on path with current s
+                candrow[r].difference_update({s})
+                candcol[c].difference_update({s})
+                candblock[b].difference_update({s})
+                sol = solv(zero[counter + 1], counter + 1)
 
-solv(position = zero[0], counter = 0)
+                if bool(sol):  # the next step yielded a non empty solution
+                    return s
+                else:  # the next zero index returns {}
+                    # i.e. it has no applicable choices: Go up
+                    # add s to sets it was removed from
+                    candrow[r].update({s})
+                    candcol[c].update({s})
+                    candblock[b].update({s})
+                    continue
+        return {}
 
-print(solv.calls)
-print(solv.memo)
+    solv(position=zero[0], counter=0)
 
-for (r, c, b), val in solv.memo.items():
-    problem[r][c] = val
+    print('it required {} calls to solve the problem'.format(solv.calls))
+    # print(solv.memo)
+
+    for (r, c, b), val in solv.memo.items():
+        problem[r][c] = val
+
+    return problem
+
+
+print(solve(problem) == solution)
 
 # hello github
 #         if bool(solut):
@@ -88,4 +92,3 @@ for (r, c, b), val in solv.memo.items():
 #             helper.current -= 1
 #
 #         helper.current = 0
-
