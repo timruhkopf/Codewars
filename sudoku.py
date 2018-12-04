@@ -35,15 +35,15 @@ candblock = [set(range(1,10)) - set(block) for block in B]
 
 
 def memoize (f):
-    memo = {}
 
     def helper (position, counter):
         '''keep track on memo & current index position & call counter'''
         helper.calls += 1
-        memo[position] = f(position, counter) # overrides the index position or create it if hasn't been there
-        return memo
+        helper.memo[position] = f(position, counter)  # overrides the index position or create it if hasn't been there
+        return helper.memo[position]
 
     helper.calls = 0
+    helper.memo = {}
     return helper
 
 @memoize
@@ -75,7 +75,10 @@ def solv(position, counter):
 solv(position = zero[0], counter = 0)
 
 print(solv.calls)
-print(solv.current)
+print(solv.memo)
+
+for (r, c, b), val in solv.memo.items():
+    problem[r][c] = val
 
 # hello github
 #         if bool(solut):
