@@ -20,15 +20,10 @@ solution = [[9, 2, 6, 5, 8, 3, 4, 7, 1],
 
 
 def solve (problem):
-    # This solution reduces the paths need to traverse.
+    '''Solves the sudoku, by reducing the number of paths to the applicable only.'''
+
     # index on (row , column, block) = (i, j, i//3 + j//3 + (i//3)*2).
     sudokuindex = list((r, c, r // 3 + c // 3 + (r // 3) * 2) for r in range(9) for c in range(9))
-    zero = [(r, c, b) for r, c, b in sudokuindex if problem[r][c] == 0]
-    # TODO: change the sorting of zero for efficiency gains;
-    # e.g. by number of possibilities to make correct decisions early
-    # at the cost of little marginal information gain (locally) for each choice
-    # consider zerodict = {(r,c,b):candrow[r] & candcol[c] & candblock[b] for r, c, b in sudokuindex if problem[r][c] == 0}
-
     B = [[], [], [], [], [], [], [], [], []]
     for r, c, b in sudokuindex:
         if problem[r][c] != 0:
@@ -36,6 +31,9 @@ def solve (problem):
     candblock = [set(range(1, 10)) - set(block) for block in B]
     candrow = [set(range(10)) - set(row) for row in problem]
     candcol = [set(range(10)) - set(column) for column in list(zip(*problem))]  # make use of transpose
+
+    # cheap version
+    zero = [(r, c, b) for r, c, b in sudokuindex if problem[r][c] == 0]
 
     def memoize (f):
         def helper (position, counter):
@@ -48,7 +46,8 @@ def solve (problem):
         return helper
 
     @memoize
-    def solv (position, counter):  # TODO: counter in decorator
+    def solv (position, counter):
+        '''recursive path trough the problem, whilst considering only applicable paths'''
         r, c, b = position
         S = candrow[r] & candcol[c] & candblock[b]
         for s in S:
@@ -60,7 +59,7 @@ def solve (problem):
                 candblock[b].difference_update({s})
                 sol = solv(zero[counter + 1], counter + 1)
 
-                if bool(sol):  # the next step yielded a non empty solution
+                if bool(sol):  # the next step returned a non empty solution
                     return s
                 else:  # the next zero index returns {}
                     # i.e. it has no applicable choices: Go up
@@ -72,7 +71,6 @@ def solve (problem):
         return {}
 
     solv(position=zero[0], counter=0)
-
     print('it required {} calls to solve the problem'.format(solv.calls))
     # print(solv.memo)
 
@@ -81,14 +79,4 @@ def solve (problem):
 
     return problem
 
-
 print(solve(problem) == solution)
-
-# hello github
-#         if bool(solut):
-#             helper.current += 1
-#
-#         else: # || bool(memo[position])
-#             helper.current -= 1
-#
-#         helper.current = 0
