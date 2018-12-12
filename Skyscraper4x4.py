@@ -50,4 +50,11 @@ next(a)
 import itertools
 list(itertools.permutations([1, 2, 3 ], r = 2))
 a = list(itertools.permutations([1, 2, 3]))
-b =
+
+
+
+
+
+
+
+
