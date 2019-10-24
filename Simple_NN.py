@@ -12,7 +12,16 @@ model.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
 
-model.fit(x, y, epochs=5)
+callbacks = [
+  tf.keras.callbacks.TensorBoard(log_dir='/Users/oliverdippel/PycharmProject/codewars/logs')
+]
+
+model.fit(x, y, epochs=5, callbacks=callbacks)
 model.evaluate(x, y)
+model.save(
+    '/Users/oliverdippel/PycharmProject/codewars/saves',
+    overwrite=True,
+    include_optimizer=True
+)
 
 
