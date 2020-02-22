@@ -19,6 +19,16 @@ solution = [[9, 2, 6, 5, 8, 3, 4, 7, 1],
             [1, 3, 9, 6, 4, 2, 8, 5, 7]]
 
 
+def memoize(f):
+    def helper(position, counter):
+        helper.calls += 1
+        helper.memo[position] = f(position, counter)
+        return helper.memo[position]
+
+    helper.calls = 0
+    helper.memo = {}
+    return helper
+
 def solve (problem):
     '''Solves the sudoku, by reducing the number of paths to the applicable only.'''
 
@@ -34,16 +44,6 @@ def solve (problem):
 
     # cheap version
     zero = [(r, c, b) for r, c, b in sudokuindex if problem[r][c] == 0]
-
-    def memoize (f):
-        def helper (position, counter):
-            helper.calls += 1
-            helper.memo[position] = f(position, counter)
-            return helper.memo[position]
-
-        helper.calls = 0
-        helper.memo = {}
-        return helper
 
     @memoize
     def solv (position, counter):
