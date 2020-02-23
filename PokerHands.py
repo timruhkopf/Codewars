@@ -1,29 +1,20 @@
-from functools import reduce
 from collections import Counter
 from operator import sub
 
 
 class PokerCard(object):
     def __init__(self, card):
-        card = reduce(
-            lambda a, kv: a.replace(*kv),
-            {'T': '10', 'J': '11', 'Q': '12', 'K': '13', 'A': '14'}.items(),
-            card)
+        self.card = card
 
-        # b = {'i': 'I', 's': 'S'}
-        # for x, y in b.items():
-        #     a = a.replace(x, y)
+        d = {'T': '10', 'J': '11', 'Q': '12', 'K': '13', 'A': '14'}
+        for k, v in d.items():
+            card = card.replace(k, v)
 
         self.value = int(card[:-1])
         self.suit = card[-1]
 
     def __repr__(self):
-        value = reduce(
-            lambda a, k,: a.replace(k[1], k[0]),
-            {'T': '10', 'J': '11', 'Q': '12', 'K': '13', 'A': '14'}.items(),
-            str(self.value))
-
-        return value + self.suit
+        return str(self.card)
 
     # def __eq__(self, other):
     #     assert (isinstance(other, PokerCard))
@@ -38,118 +29,151 @@ class PokerHand(object):
     def __init__(self, hand):
         self.cards = [PokerCard(card) for card in hand.split(' ')]
         self.myrank()
+        print(self.__repr__())
 
-    def kicker(self):
-        # a not used card!
-        pass
+    def __repr__(self):
+        hand = ['highcard', 'pair', 'two_pair', 'three', 'straight', 'flush',
+                'full_house', 'four', 'straight_flush', 'royal_flush'][self.rank]
+
+        return 'rank {}, {}, {}, kicker: {}'.format(self.rank, self.cards, hand, self.kicker)
 
     def myrank(self):
+
         suitlist = list(x.suit for x in self.cards)
         valuelist = list(x.value for x in self.cards)
         counter = Counter(valuelist)
 
-        def highcard():
-            return max(valuelist)
+        # high_card
+        self.rank = 0
+        self.kicker = max(valuelist)
 
         def pair():
-            return 2 in counter.values()
+            if 2 in counter.values():
+                self.rank = 1
 
-        def two_pair():
-            vals = list(counter.values())
-            vals.sort()
-            return vals == [1, 2, 2]
+                self.kicker = [k for k, v in counter.items() if v == 2]
+                # self.suit = max(['CDHS'.index(x.suit) for x in self.cards if (x.value in self.kicker)])
+                self.multicard = max([k for k, v in counter.items() if v != 2])
+                return True
+            return False
 
-        def three_of_a_kind():
-            return 3 in counter.values()
+        def pair2():
+            multicard = [k for k, v in counter.items() if v == 2]
+            if (2 in counter.values()) & (len(multicard) == 2):
+                self.rank = 2
+                self.kicker = max(multicard)
+                # self.suit = max(['CDHS'.index(x.suit) for x in self.cards if x.value == self.kicker])
+                self.multicard = max([k for k, v in counter.items() if v != 2])
+
+        def three():
+            if 3 in counter.values():
+                self.rank = 3
+                self.kicker = [k for k, v in counter.items() if v == 3]
+                # self.suit = max(['CDHS'.index(x.suit) for x in self.cards if (x.value in self.kicker)])
+                self.multicard = max([k for k, v in counter.items() if v != 3])
+                return True
+            return False
 
         def straight():
             valuelist.sort()
-            return set(map(sub, valuelist[1:], valuelist[:-1])) == {1}
+            if set(map(sub, valuelist[1:], valuelist[:-1])) == {1}:
+                self.rank = 4
+                self.kicker = max(valuelist)
+                return True
+            return False
 
         def flush():
-            return len(set(suitlist)) == 1
+            if len(set(suitlist)) == 1:
+                self.rank = 5
+                self.kicker = 'CDHS'.index(self.cards[0].suit)
 
-        def full_house():  # Fixme how to determine the kicker?
-            return three_of_a_kind() & pair()
+                return True
+            return False
 
-        def four_of_a_kind():  # FIXME kicker case
-            return 4 in counter.values()
+        def full_house():
+            if (3 in counter.values()) & (2 in counter.values()):
+                self.rank = 6
+                self.kicker = max(valuelist)  # Fixme how to determine the kicker?
+
+        def four():
+            if 4 in counter.values():
+                self.rank = 7
+                self.kicker = [k for k, v in counter.items() if v == 4]
+                self.multicard = max([k for k, v in counter.items() if v != 4])
 
         def straight_flush():
-            return flush() & straight()
+            if flush() & straight():
+                self.rank = 8
+                self.kicker = max(valuelist)
+                return True
+            return False
 
         def royal_flush():
-            return straight_flush() & (14 in counter.keys())
+            if straight_flush() & (14 in counter.keys()):
+                self.rank = 9
+                self.kicker = 'CDHS'.index(self.cards[0].suit)
 
-        self.high = highcard()
-
-        isit = [True, pair(), two_pair(), three_of_a_kind(), straight(), flush(),
-                full_house(), four_of_a_kind(), straight_flush(), royal_flush()]
-
-        # first occurence is the highest rank
-        self.rank = isit[::-1].index(True)
+        # early stopping
+        for f in [royal_flush, straight_flush, four, full_house, flush,
+                  straight, three, pair2, pair]:
+            f()
+            if self.rank != 0:
+                break
 
     def compare_with(self, other):
-        """
-        The result of your poker hand compare can be one of these 3 options:
-        [ "Win", "Tie", "Loss" ]
-
-        they can make from the seven cards comprising their two-hole cards and
-        the five community cards. A player may use both of their own two hole
-        cards, only one, or none at all, to form their final five-card hand.
-        If the five community cards form the player's best hand, then the
-        player is said to be playing the board and can only hope to split the
-        pot, because each other player can also use the same five cards
-        to construct the same hand.
-
-        Nevertheless, one must be careful in determining the best hand;
-        if the hand involves fewer than five cards, (such as two pair or three
-        of a kind), then kickers are used to settle ties. The card's numerical
-        rank is of sole importance; suit values are irrelevant in hold 'em.
-        """
         assert (isinstance(other, PokerHand))
 
-        choices = ['royal', 'straight_flush', 'four', 'full', 'flush', 'straight', 'three', 'two_pair', 'pair', 'high']
-        myhand = choices[self.rank]
-        ophand = choices[other.rank]
-
-        print('\n', 'player: ', myhand, str(self.high), '\n',
-              'op: ', ophand, str(other.high))
-
-
-        if self.rank < other.rank:
+        # (0) check rank win
+        if self.rank > other.rank:
             return 'Win'
-        elif self.rank > other.rank:
+        elif self.rank < other.rank:
             return 'Loss'
-
         elif self.rank == other.rank:
-        # Fixme look at kickers ! # also to determine if 5 e.g. flushes win over one another
-            if self.high > other.high:
+
+            if self.kicker > other.kicker:
                 return 'Win'
-            elif self.high < other.high:
+            elif self.kicker < other.kicker:
                 return 'Loss'
-            return 'Tie'
+            elif self.kicker == other.kicker:
+                # (1.1) pair, pair2, three, four (check kicker)
+                if self.rank in (1, 2, 3, 7):
+                    # if self.suit > other.suit:
+                    #     return 'Win'
+                    # elif self.suit < other.suit:
+                    #     return 'Loss'
+
+                    if self.multicard > other.multicard:
+                        return 'Win'
+                    if self.multicard < other.multicard:
+                        return 'Loss'
+                return 'Tie'
 
 
 if __name__ == '__main__':
     # card = PokerCard('TH')
     # card1 = PokerCard('JH')
+
     #
-    # # four = PokerHand("JS JD JC JH AD")
-    # pair2 = PokerHand("2S 2H 4H 5S 4C")
-    # straight = PokerHand("2S 3H 4H 5S 6C")
-    # fullhouse = PokerHand("2S AH 2H AS AC")
-    # flushS = PokerHand("KS AS TS QS JS")
-    # flushH = PokerHand("2H 3H 4H 5H 6H")
-    #
-    # flushS.compare_with(flushH) == 'Loss'
+    # high = PokerHand("3S 6H QH 5S 4C")
+    # pair = PokerHand("3S 6H 4H 5S 4C")
+    pair2 = PokerHand("2S 2H 4H 5S 4C")
+    three = PokerHand("AH AC 5H 6H AS")
+    straight = PokerHand("2S 3H 4H 5S 6C")
+    flush = PokerHand("2S AS TS QS JS")
+    full_house = PokerHand("2S AH 2H AS AC")
+    four = PokerHand("JS JD JC JH AD")
+    straight_flush = PokerHand("2H 3H 4H 5H 6H")
+    royal_flush = PokerHand("AS KS QS JS TS")
+
 
     def runTest(msg, expected, hand, other):
         player, opponent = PokerHand(hand), PokerHand(other)
-        assert (player.compare_with(opponent) == expected)
         print(expected)
         print("{}: '{}' against '{}'".format(msg, hand, other))
+        assert (player.compare_with(opponent) == expected)
 
+
+    runTest("Highest pair wins", 'Loss', '6S AD 7H 4S AS', 'AH AC 5H 6H 7S' ) # FIXME! Thisone expects the value of kicker to be 4 and 5 respectively : the highest NON! shared value!!
 
     runTest("Straight flush wins of 4 of a kind", "Win", "2H 3H 4H 5H 6H", "AS AD AC AH JD")
 
@@ -171,7 +195,7 @@ if __name__ == '__main__':
 
     runTest("Highest straight flush wins", "Loss", "2H 3H 4H 5H 6H", "KS AS TS QS JS")
 
-    # runTest("Highest pair wins", "Loss", "6S AD 7H 4S AS", "AH AC 5H 6H 7S")
-    # runTest("Highest card wins", "Win", "4S 5H 6H TS AC", "3S 5H 6H TS AC")
+    runTest("Highest pair wins", "Loss", "6S AD 7H 4S AS", "AH AC 5H 6H 7S")
+    runTest("Highest card wins", "Win", "4S 5H 6H TS AC", "3S 5H 6H TS AC")
 
     print('')
