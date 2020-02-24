@@ -16,7 +16,7 @@ class PokerCard(object):
         return str(self.card)
 
     def __eq__(self, other):
-        return (self.value == other.value) #& (self.suit == other.suit)
+        return (self.value == other.value)  # & (self.suit == other.suit)
 
     def __lt__(self, other):  # for sorting
         if self.value < other.value:
@@ -45,16 +45,12 @@ class PokerHand(object):
         self.cards.sort()
         self.myrank()
 
-        print(self)
+        # print(self)
 
     def __repr__(self):
         hand = ['highcard', 'pair', 'two_pair', 'three', 'straight', 'flush',
                 'full_house', 'four', 'straight_flush', 'royal_flush'][self.rank]
         return 'rank {}, {}, {}, high_incombo:'.format(self.rank, hand, self.cards)
-
-    # def __eq__(self, other):
-    #     # if self.rank
-    #     pass
 
     def __gt__(self, other):
         if self.rank > other.rank:
@@ -62,8 +58,6 @@ class PokerHand(object):
 
         elif self.rank == other.rank:
             if self.rank == 6:  # full house
-            # compare threes first, then pairs
-
                 for a, b in zip(self.multiples, other.multiples):
                     if a > b:
                         return True
@@ -83,7 +77,7 @@ class PokerHand(object):
                     if any((mine == set(), oppo == set())):
                         return mine > oppo  # longer set wins
                     else:  # highest remainder
-                        return max(mine) > max(oppo) # FIXME: remove value?
+                        return max(mine) > max(oppo)  # FIXME: remove value?
 
         return False
 
@@ -91,11 +85,9 @@ class PokerHand(object):
         if self.rank < other.rank:
             return True
 
-
-
         elif self.rank == other.rank:
             if self.rank == 6:  # full house
-            # compare threes first, then pairs
+                # compare threes first, then pairs
                 for a, b in zip(self.multiples, other.multiples):
                     if a > b:
                         return False
@@ -141,7 +133,7 @@ class PokerHand(object):
             return flush() & straight()
 
         def fullhouse():
-            return (len(self.multiples) == 2) & (set(len(l) for l in  self.multiples) == {2, 3})
+            return (len(self.multiples) == 2) & (set(len(l) for l in self.multiples) == {2, 3})
 
         def flush():
             return len(set(x.suit for x in self.cards)) == 1
@@ -162,7 +154,7 @@ class PokerHand(object):
 
         elif royal_flush():
             self.rank = 9
-            self.high_incombo = 'CDHS'.index(self.cards[0].suit) # if colors would matter
+            self.high_incombo = 'CDHS'.index(self.cards[0].suit)  # if colors would matter
 
         elif straight_flush():
             self.rank = 8
@@ -184,7 +176,6 @@ class PokerHand(object):
 
         else:  # highcard
             self.rank = 0
-
 
     def compare_with(self, other):
         assert (isinstance(other, PokerHand))
@@ -260,6 +251,7 @@ if __name__ == '__main__':
         print("{}: '{}'  {} against '{}'".format(msg, hand, expected, other))
         assert (player.compare_with(opponent) == expected)
 
+
     #
     runTest("Highest straight flush wins", "Loss", "2H 3H 4H 5H 6H", "KS AS TS QS JS")
     runTest("Straight flush wins of 4 of a kind", "Win", "2H 3H 4H 5H 6H", "AS AD AC AH JD")
@@ -283,10 +275,8 @@ if __name__ == '__main__':
     runTest('', 'Win', 'JH AH TH KH QH', 'QC KH TS JS AH')
     runTest('high card KS, but going down', 'Win', 'TS KS 5S 9S AC', 'JH 8S TH AH QH')
     runTest('flush flush 8C kicker', 'Win', '4C 5C 9C 8C KC', '3S 8S 9S 5S KS')
-    runTest('fullhouse fullhouse', 'Loss',  '3D 2H 3H 2C 2D' , '2H 2C 3S 3H 3D')
+    runTest('fullhouse fullhouse', 'Loss', '3D 2H 3H 2C 2D', '2H 2C 3S 3H 3D')
 
-    runTest('pair pair', 'Loss', 'KS 8D 4D 9S 4S' , 'KD 4S KC 3H 8S' )
-
-
+    runTest('pair pair', 'Loss', 'KS 8D 4D 9S 4S', 'KD 4S KC 3H 8S')
 
 print('')
