@@ -16,7 +16,7 @@ class PokerCard(object):
         return str(self.card)
 
     def __eq__(self, other):
-        return (self.value == other.value) & (self.suit == other.suit)
+        return (self.value == other.value) #& (self.suit == other.suit)
 
     def __lt__(self, other):  # for sorting
         if self.value < other.value:
@@ -50,7 +50,7 @@ class PokerHand(object):
     def __repr__(self):
         hand = ['highcard', 'pair', 'two_pair', 'three', 'straight', 'flush',
                 'full_house', 'four', 'straight_flush', 'royal_flush'][self.rank]
-        return 'rank {}, {}, {}, high_incombo: {}'.format(self.rank, hand, self.cards, self.high_incombo)
+        return 'rank {}, {}, {}, high_incombo:'.format(self.rank, hand, self.cards)
 
     # def __eq__(self, other):
     #     # if self.rank
@@ -63,22 +63,27 @@ class PokerHand(object):
         elif self.rank == other.rank:
             if self.rank == 6:  # full house
             # compare threes first, then pairs
-                for a, b in zip(self.multiples[::-1], other.multiples[::-1]):
-                    if a[0] > b[0]:
+
+                for a, b in zip(self.multiples, other.multiples):
+                    if a > b:
                         return True
+                    elif a < b:
+                        return False
+                    else:
+                        continue
 
             elif self.high_incombo > other.high_incombo:
                 return True
 
-            elif self.high_incombo == self.high_incombo:
-                if self.rank in (0, 1, 2, 3, 7):
+            elif self.high_incombo == other.high_incombo:
+                if self.rank in (0, 1, 2, 3, 5, 7):
                     # check unused cards
                     mine = self.remain - other.remain
                     oppo = other.remain - self.remain
                     if any((mine == set(), oppo == set())):
                         return mine > oppo  # longer set wins
                     else:  # highest remainder
-                        return max(mine).value > max(oppo).value
+                        return max(mine) > max(oppo) # FIXME: remove value?
 
         return False
 
@@ -91,15 +96,20 @@ class PokerHand(object):
         elif self.rank == other.rank:
             if self.rank == 6:  # full house
             # compare threes first, then pairs
-                for a, b in zip(self.multiples[::-1], other.multiples[::-1]):
-                    if a[0] > b[0]:
+                for a, b in zip(self.multiples, other.multiples):
+                    if a > b:
+                        return False
+                    elif a < b:
                         return True
+                    else:
+                        continue
 
             elif self.high_incombo < other.high_incombo:
                 return True
 
             elif self.high_incombo == self.high_incombo:
-                if self.rank in (0, 1, 2, 3, 7):
+                if self.rank in (0, 1, 2, 3, 5, 7):
+                    # check unused cards
                     mine = self.remain - other.remain
                     oppo = other.remain - self.remain
                     if any((mine == set(), oppo == set())):
@@ -110,6 +120,7 @@ class PokerHand(object):
         return False
 
     def myrank(self):
+        self.high_incombo = 0
 
         # equal value?
         d_values = {k: [] for k in set(card.value for card in self.cards)}
@@ -118,7 +129,7 @@ class PokerHand(object):
 
         # relevant only for less than five card combinations (fullhouse)
         self.multiples = [v for v in d_values.values() if len(v) > 1]
-        self.multiples.sort()  # for full houose relevant
+        self.multiples.sort(key=len, reverse=True)  # for full houose relevant
 
         # remain is full, if no multiple was found
         self.remain = {v[0] for v in d_values.values() if len(v) == 1}
@@ -159,12 +170,9 @@ class PokerHand(object):
 
         elif fullhouse():
             self.rank = 6
-            self.high_incombo = 0
 
         elif flush():
             self.rank = 5
-            # self.high_incombo = 'CDHS'.index(self.cards[0].suit) # if color were relevant
-            self.high_incombo = max(self.cards)
 
         elif straight():
             self.rank = 4
@@ -176,7 +184,7 @@ class PokerHand(object):
 
         else:  # highcard
             self.rank = 0
-            self.high_incombo = 0
+
 
     def compare_with(self, other):
         assert (isinstance(other, PokerHand))
@@ -252,7 +260,7 @@ if __name__ == '__main__':
         print("{}: '{}'  {} against '{}'".format(msg, hand, expected, other))
         assert (player.compare_with(opponent) == expected)
 
-
+    #
     runTest("Highest straight flush wins", "Loss", "2H 3H 4H 5H 6H", "KS AS TS QS JS")
     runTest("Straight flush wins of 4 of a kind", "Win", "2H 3H 4H 5H 6H", "AS AD AC AH JD")
     runTest("Highest 4 of a kind wins", "Win", "AS AH 2H AD AC", "JS JD JC JH 3D")
@@ -273,6 +281,12 @@ if __name__ == '__main__':
     runTest('straight loses to flush', 'Loss', 'QC KH TS JS AH', 'JH AH TH KH QH')
     runTest('', 'Loss', '3S 8S 9S 5S KS', 'JH 8H AH KH QH')
     runTest('', 'Win', 'JH AH TH KH QH', 'QC KH TS JS AH')
+    runTest('high card KS, but going down', 'Win', 'TS KS 5S 9S AC', 'JH 8S TH AH QH')
+    runTest('flush flush 8C kicker', 'Win', '4C 5C 9C 8C KC', '3S 8S 9S 5S KS')
+    runTest('fullhouse fullhouse', 'Loss',  '3D 2H 3H 2C 2D' , '2H 2C 3S 3H 3D')
+
+    runTest('pair pair', 'Loss', 'KS 8D 4D 9S 4S' , 'KD 4S KC 3H 8S' )
+
 
 
 print('')
