@@ -1,4 +1,3 @@
-
 class Package(object):
     """Challenge @ https://www.codewars.com/kata/587e1ef6f1a2534bbe0001ef"""
 
@@ -7,7 +6,6 @@ class Package(object):
         self.width = width
         self.height = height
         self.weight = weight
-        self.__setattr__('volume', 0)
 
     def __setattr__(self, key, value):
         bounds = {'length': (0, 350), 'width': (0, 300), 'height': (0, 150), 'weight': (0, 40)}
@@ -16,22 +14,22 @@ class Package(object):
 
             if (value < lower) | (upper < value):
                 raise DimensionsOutOfBoundError(key, value, lower, upper)
+            else:
+                object.__setattr__(self, key, value)
 
-        object.__setattr__(self, key, value)
-
-    def volume(self):
-        return self.volume
-    @volume.getter
+    @property
     def volume(self):
         return self.length * self.width * self.height
 
 
 class DimensionsOutOfBoundError(Exception):
     def __init__(self, variable, value, lower, upper):
-        s = "Package {variable}=={value} out of bounds, " \
-            "should be: {lower} < {variable} <= {upper}".format(
+        self.str = "Package {variable}=={value} out of bounds, " \
+                   "should be: {lower} < {variable} <= {upper}".format(
             variable=variable, value=value, lower=lower, upper=upper)
-        Exception.__init__(self, s)
+
+    def __str__(self):
+        return self.str
 
 
 if __name__ == '__main__':
