@@ -5,6 +5,10 @@ def validate_battlefield(field):
     # https://www.codewars.com/kata/52bb6539a4cf1b12d90005b7/train/python
     field = np.array(field)
 
+    # kill if to many ones
+    if np.sum(field) == 20:
+        return False
+
     # setting up filters for convolution
     cyclicfilters = [np.array([[1, 1, 1, 0][i - j] for i in range(4)]).reshape(2,2) for j in range(4)]
     crossfilters = [np.array([[1, 0], [0, 1]]), np.array([[0, 1], [1, 0]])]
@@ -15,6 +19,10 @@ def validate_battlefield(field):
             for v, filter in zip([3, 2], [cyclicfilters, crossfilters]):
                 if any(map(lambda f: np.sum(f * field[i:i + 2, j:j + 2]) == v, filter)):
                     return False
+
+
+
+    return True
 
 
 if __name__ == '__main__':
@@ -29,4 +37,4 @@ if __name__ == '__main__':
                    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
-validate_battlefield(battlefield) == True
+    validate_battlefield(battlefield) == True
