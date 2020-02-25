@@ -22,12 +22,14 @@ def validate_battlefield(field):
                     return False
 
     shipcounter = {k: 0 for k in [4, 3, 2]}
-    for ind, ship in zip([7, 8, 9], [4, 3, 2]):
+    for ship in [4, 3, 2]:
         for j in range(10):
-            for i in range(ind):  #
+            for i in range(11-ship):  #
                 if sum(field[j, i:i + ship]) == ship:
+                    field[j, i:i + ship] = 0
                     shipcounter[ship] += 1
-                if sum(field[i:i + ship, j]) == ship:
+                if sum(field[i:i + ship, j]) == ship: # transpose
+                    field[i:i + ship, j] = 0
                     shipcounter[ship] += 1
 
     shipcounter[1] = np.sum(field)
