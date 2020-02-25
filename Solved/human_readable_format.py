@@ -1,4 +1,5 @@
 def format_duration(seconds):
+    """Oliver Solution"""
     if seconds == 0: return ('now')
 
     dictionary = {1: '{}',
@@ -31,6 +32,24 @@ def format_duration(seconds):
 
     return dictionary[len(os)].format(*os)
 
+
+def format_duration (seconds):
+    """Tim Solution"""
+    if seconds == 0: return 'now'
+    numbers = [seconds // (60 ** 2 * 24 * 365),
+               seconds // (60 ** 2 * 24) % 365,
+               seconds // (60 ** 2) % 24,
+               seconds // 60 % 60,
+               seconds % 60]
+
+    names = [unit if numbers[i] == 1 else unit + 's' for i, unit in
+             enumerate(['year', 'day', 'hour', 'minute', 'second']) if numbers[i] != 0]
+    numbers = list(filter(lambda n: n != 0, numbers))
+
+    sentence = {i: (', '.join(['{} {}'] * (i - 1)) + ' and {} {}') for i in range(2, 6)}
+    sentence[1] = '{} {}'
+
+    return sentence[len(numbers)].format(*sum(zip(numbers, names), ()))
 
 
 
