@@ -16,6 +16,7 @@ def validate_battlefield(field):
                 if any(map(lambda f: np.sum(f * field[i:i + 2, j:j + 2]) == v, filter)):
                     return False
 
+   ships = [[1]*i for i in reversed(range(2,5))]
 
 if __name__ == '__main__':
     battlefield = [[1, 0, 0, 0, 0, 1, 1, 0, 0, 0],
