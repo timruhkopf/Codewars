@@ -37,6 +37,15 @@ def lazycompute(func):
 
     return wrapper
 
+def recmemo(f):
+    def helper(position, counter):
+        helper.calls += 1
+        helper.memo[position] = f(position, counter)
+        return helper.memo[position]
+
+    helper.calls = 0
+    helper.memo = {}
+    return helper
 
 @lazycompute
 def get_cluevalue(cluekey):
@@ -60,7 +69,38 @@ def solve_puzzle(clues):
     rowclues = list(map(get_cluevalue, rowclues))
 
     # (4) bruteforce with recursion & memoize (Sudoku style)
+    matrixindex = list((r, c) for r in range(4) for c in range(4))
+
+    @recmemo
+    def solv(position, counter):
+        '''recursive path trough the problem, whilst considering only applicable paths'''
+        r, c = position
+        S = rowclues[r] & colclues[c]
+        for s in S:
+            if counter + 1 == len(matrixindex):  # base case: last zero value is reached
+                return s
+            else:  # go further down on path with current s
+                rowclues[r].difference_update({s})
+                colclues[c].difference_update({s})
+                sol = solv(matrixindex[counter + 1], counter + 1)
+
+                if bool(sol):  # the next step returned a non empty solution
+                    return s
+                else:  # the next zero index returns {}
+                    # i.e. it has no applicable choices: Go up
+                    # add s to sets it was removed from
+                    rowclues[r].update({s})
+                    colclues[c].update({s})
+                    continue
+        return {}
+
+    solv(position=matrixindex[0], counter=0)
+    # print(solv.memo)
+
     downtown = tuple(tuple(0 for i in range(4)) for j in range(problemsize))
+
+    for (r, c), val in solv.memo.items():
+        downtown[r][c] = val
 
 
 if __name__ == '__main__':
