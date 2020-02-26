@@ -9,15 +9,14 @@ def lazycompute(func):
 
     def wrapper(cluekey):
         if cluekey in mem.keys():
-            # already available
             return mem[cluekey]
         elif tuple(reversed(cluekey)) in mem.keys():
             mem.update({cluekey: list(reversed(mem[tuple(reversed(cluekey))]))})
         else:
             mem.update(func(cluekey, basemem))
-
-        # finally return value
         return mem[cluekey]
+
+    # EXECUTE THE FOLLOWING ONLY ONCE
 
     # sorting the permutations only once by visability
     permute = list(permutations(list(range(1, problemsize + 1))))
@@ -35,16 +34,22 @@ def lazycompute(func):
         for clue in lclues:
             for i, value in enumerate(clue):
                 mem[(k, 0)][i].update([value])
+
+    # compute base cases (0,*)
+    for k in list(mem.keys()):
+        mem.update({tuple(reversed(k)): list(reversed(mem[k]))})
+
     basemem = mem.copy()
+
     return wrapper
 
 
 @lazycompute
-def get_cluevalue(cluekey,
-                  basedict):  # FIXME do not pass basedict as it is copied in every lookup. instead access memmoized dict immediately!
+def get_cluevalue(cluekey, basedict):
+    # FIXME do not pass basedict as it is copied in every lookup. instead access memmoized dict immediately!
     """return [cluekey: [set(), set(), set(), set()]} with appropriate sets based on pclues"""
-    return {cluekey: [s0.intersection(s1) for s0, s1 in zip(basedict[(cluekey[0], 0)],
-                                                            reversed(basedict[(cluekey[1], 0)]))]}
+    return {cluekey: [s0.intersection(s1) for s0, s1 in
+                      zip(basedict[(cluekey[0], 0)], basedict[(cluekey[1], 0)])]}
 
 
 def solve_puzzle(clues):
@@ -68,7 +73,9 @@ def solve_puzzle(clues):
     for (r, c) in matrixindex:
         # downtown[r][c] = rowclues[r][c] & colclues[c][r]
         print((r, c), rowclues1[r], colclues1[c], rowclues[r][c], colclues[c][r], rowclues[r][c] & colclues[c][r])
+        # print((r, c), get_cluevalue(colclues1[c]), get_cluevalue(rowclues1[r]))
 
+    print('')
 
 if __name__ == '__main__':
     # interpret_clues()
