@@ -39,19 +39,19 @@ def interpret_clues():
 
 
 def solve_puzzle(clues):
-    # (2) clue parsing: getting row- & columnclues
+    # (2) clue parsing: getting row- & colclues
     lenc = int(len(clues) / 4)  # for adaptive fieled sizes
     clues = [[clues[j * lenc + i] for i in range(lenc)] for j in range(4)]
     clues = [clue if i % 2 == 0 else list(reversed(clue)) for i, clue in enumerate(clues)]
 
-    # columnclues, rowclues = [[(clues[i][k], clues[i + 2][k]) for k in range(4)] for i in [0, 1]]
-    columnclues = [(clues[0][k], clues[0 + 2][k]) for k in range(4)]
+    # colclues, rowclues = [[(clues[i][k], clues[i + 2][k]) for k in range(4)] for i in [0, 1]]
+    colclues = [(clues[0][k], clues[0 + 2][k]) for k in range(4)]
     rowclues = [(clues[1 + 2][k], clues[1][k]) for k in range(4)]
 
     # (3) looking up clues & filling them into the solution space
     # Todo make dclues avaliable for lookup!
-    for clue in columnclues:
-        if clue == sorted(clue):
+    for clue in colclues:
+        if clue in dclues.keys():
             dclues[clue]
         else:
             # ToDo a call on dclues with a yet not comuted (reversed tupel)
