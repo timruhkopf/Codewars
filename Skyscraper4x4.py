@@ -1,24 +1,14 @@
-from itertools import permutations, combinations
+from itertools import permutations
 from collections import deque
 
+problemsize = 4
 
-# (1) sort the possible permutations for each clue
-#     All of (1.) can be computed only once for all cases yet to come.
-#     Consider writing it in a seperate function & do memoize
 
-# (1) sort permutations by no. of visible skyscapers
-# a) Use deque comparisons (am i greater than you, i stay comperand,
-#    if not, you are new comperand & increase counter. Number of switches is
-#    directly related with tip
-# [ b) Lookup the max value's index position (as this is the max tip number
-#    that can still be achieved and proceed with a).]
-# counter of comparisons is len()
-
-def memoize(func):
+def lazycompute(func):
     """lazily compute the cluekeys"""
     # sorting the permutations only once by visability
-    permute = list(permutations([1, 2, 3, 4]))
-    pclues = {k: [] for k in range(1, 5)}
+    permute = list(permutations(list(range(1, problemsize + 1))))
+    pclues = {k: [] for k in range(1, problemsize + 1)}
     for tup in permute:
         ismax = deque([tup[0]])
         for value in tup:
@@ -27,7 +17,7 @@ def memoize(func):
         pclues[len(ismax)].append(tup)
 
     # compute base cases (*,0)
-    func.mem = {(k, 0): [set(), set(), set(), set()] for k in range(1, 5)}
+    func.mem = {(k, 0): [set(), set(), set(), set()] for k in range(1, problemsize + 1)}
     for k, lclues in pclues.items():
         for clue in lclues:
             for i, value in enumerate(clue):
@@ -35,32 +25,24 @@ def memoize(func):
 
     def wrapper(cluekey):
         if cluekey in func.mem.keys():
+            # already available
             return func.mem[cluekey]
         elif tuple(reversed(cluekey)) in func.mem.keys():
             func.mem[cluekey].update(tuple(reversed(func.mem[tuple(reversed(cluekey))])))
         else:
             func.mem.update(func(cluekey))
 
+        # finally return valule
         return func.mem[cluekey]
 
     return wrapper
 
 
-# def get_baseclue(cluekey):
-#     # (1.2) for each clue, get the indexposition set
-#     sets = [set(), set(), set(), set()]
-#     for clue in get_cluevalue.pclues[cluekey[cluekey != 0]]:
-#         for i, value in enumerate(clue):
-#             sets[i].update([value])
-#     return {cluekey: sets}
-#
-
-
-@memoize
+@lazycompute
 def get_cluevalue(cluekey):
     """return [cluekey: [set(), set(), set(), set()]} with appropriate sets based on pclues"""
     return {cluekey: [s0.intersection(s1) for s0, s1 in zip(get_cluevalue.mem[(cluekey[0], 0)],
-                      reversed(get_cluevalue.mem[(cluekey[1], 0)]))]}
+                                                            reversed(get_cluevalue.mem[(cluekey[1], 0)]))]}
 
 
 def solve_puzzle(clues):
@@ -70,14 +52,15 @@ def solve_puzzle(clues):
     clues = [clue if i % 2 == 0 else list(reversed(clue)) for i, clue in enumerate(clues)]
 
     # columnclues, rowclues = [[(clues[i][k], clues[i + 2][k]) for k in range(4)] for i in [0, 1]]
-    columnclues = [(clues[0][k], clues[0 + 2][k]) for k in range(4)]
+    colclues = [(clues[0][k], clues[0 + 2][k]) for k in range(4)]
     rowclues = [(clues[1 + 2][k], clues[1][k]) for k in range(4)]
 
     # (3) looking up clues & computing clue values lazily
-    columnclues = list(map(get_cluevalue, columnclues))
+    colclues = list(map(get_cluevalue, colclues))
     rowclues = list(map(get_cluevalue, rowclues))
 
     # (4) bruteforce with recursion & memoize (Sudoku style)
+    downtown = tuple(tuple(0 for i in range(4)) for j in range(problemsize))
 
 
 if __name__ == '__main__':
