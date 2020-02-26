@@ -2,40 +2,65 @@ from itertools import permutations, combinations
 from collections import deque
 
 
-def interpret_clues():
-    # (1) sort the possible permutations for each clue
-    #     All of (1.) can be computed only once for all cases yet to come.
-    #     Consider writing it in a seperate function & do memoize
+# (1) sort the possible permutations for each clue
+#     All of (1.) can be computed only once for all cases yet to come.
+#     Consider writing it in a seperate function & do memoize
 
-    # (1) sort permutations by no. of visible skyscapers
-    # a) Use deque comparisons (am i greater than you, i stay comperand,
-    #    if not, you are new comperand & increase counter. Number of switches is
-    #    directly related with tip
-    # [ b) Lookup the max value's index position (as this is the max tip number
-    #    that can still be achieved and proceed with a).]
+# (1) sort permutations by no. of visible skyscapers
+# a) Use deque comparisons (am i greater than you, i stay comperand,
+#    if not, you are new comperand & increase counter. Number of switches is
+#    directly related with tip
+# [ b) Lookup the max value's index position (as this is the max tip number
+#    that can still be achieved and proceed with a).]
+# counter of comparisons is len()
+
+def memoize(func):
+    """lazily compute the cluekeys"""
+    # sorting the permutations only once by visability
     permute = list(permutations([1, 2, 3, 4]))
     pclues = {k: [] for k in range(1, 5)}
     for tup in permute:
-        ismax = deque(tup[0])
+        ismax = deque([tup[0]])
         for value in tup:
             if ismax[0] < value:
                 ismax.appendleft(value)
-        pclues[len(ismax)].append(tup)  # counter of comparisons is len()
+        pclues[len(ismax)].append(tup)
 
-    # (1.2) for each clue, get the indexposition set
-    dclues = {(k, 0): [set(), set(), set(), set()] for k in range(1, 5)}
+    # compute base cases (*,0)
+    func.mem = {(k, 0): [set(), set(), set(), set()] for k in range(1, 5)}
     for k, lclues in pclues.items():
         for clue in lclues:
             for i, value in enumerate(clue):
-                dclues[(k, 0)][i].update([value])
+                func.mem[(k, 0)][i].update([value])
 
-    # (1.3) get unique clues (that can be reverted)
-    # dclues already shows: some combinations are invalid! (empty sets)
-    unique_info_sets = list(combinations([1, 2, 3, 4], r=2))
-    dclues.update({(k0, k1): [] for k0, k1 in unique_info_sets})
-    for k0, k1 in unique_info_sets:
-        for s0, s1 in zip(dclues[(k0, 0)], reversed(dclues[(k1, 0)])):
-            dclues[(k0, k1)].append(s0.intersection(s1))
+    def wrapper(cluekey):
+        if cluekey in func.mem.keys():
+            return func.mem[cluekey]
+        elif tuple(reversed(cluekey)) in func.mem.keys():
+            func.mem[cluekey].update(tuple(reversed(func.mem[tuple(reversed(cluekey))])))
+        else:
+            func.mem.update(func(cluekey))
+
+        return func.mem[cluekey]
+
+    return wrapper
+
+
+# def get_baseclue(cluekey):
+#     # (1.2) for each clue, get the indexposition set
+#     sets = [set(), set(), set(), set()]
+#     for clue in get_cluevalue.pclues[cluekey[cluekey != 0]]:
+#         for i, value in enumerate(clue):
+#             sets[i].update([value])
+#     return {cluekey: sets}
+#
+
+
+@memoize
+def get_cluevalue(cluekey):
+    """return [cluekey: [set(), set(), set(), set()]} with appropriate sets based on pclues"""
+    return {cluekey: [s0.intersection(s1) for s0, s1 in zip(get_cluevalue.mem[(cluekey[0], 0)],
+                      reversed(get_cluevalue.mem[(cluekey[1], 0)]))]}
 
 
 def solve_puzzle(clues):
@@ -48,25 +73,20 @@ def solve_puzzle(clues):
     columnclues = [(clues[0][k], clues[0 + 2][k]) for k in range(4)]
     rowclues = [(clues[1 + 2][k], clues[1][k]) for k in range(4)]
 
-    # (3) looking up clues & filling them into the solution space
-    # Todo make dclues avaliable for lookup!
-    for clue in columnclues:
-        if clue == sorted(clue):
-            dclues[clue]
-        else:
-            # ToDo a call on dclues with a yet not comuted (reversed tupel)
-            #  should calculate the reversed clue & add it to dclues, to ease
-            #  later lookups.
-            dclues[tuple(reversed(clue))]
+    # (3) looking up clues & computing clue values lazily
+    columnclues = list(map(get_cluevalue, columnclues))
+    rowclues = list(map(get_cluevalue, rowclues))
 
     # (4) bruteforce with recursion & memoize (Sudoku style)
 
 
 if __name__ == '__main__':
-    interpret_clues()
+    # interpret_clues()
 
     clues = ((2, 2, 1, 3, 2, 2, 3, 1, 1, 2, 2, 3, 3, 2, 1, 3),
              (0, 0, 1, 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0))
+
+    solve_puzzle(clues[0])
 
     outcomes = (
         ((1, 3, 4, 2),
