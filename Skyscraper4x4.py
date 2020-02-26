@@ -16,7 +16,7 @@ def interpret_clues():
     permute = list(permutations([1, 2, 3, 4]))
     pclues = {k: [] for k in range(1, 5)}
     for tup in permute:
-        ismax = deque(tup[0])
+        ismax = deque([tup[0]])
         for value in tup:
             if ismax[0] < value:
                 ismax.appendleft(value)
