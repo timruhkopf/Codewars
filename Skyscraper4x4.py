@@ -7,45 +7,12 @@ def interpret_clues():
     #     All of (1.) can be computed only once for all cases yet to come.
     #     Consider writing it in a seperate function & do memoize
 
+    # (1) sort permutations by no. of visible skyscapers
     # a) Use deque comparisons (am i greater than you, i stay comperand,
     #    if not, you are new comperand & increase counter. Number of switches is
     #    directly related with tip
-
-    # b) Lookup the max value's index position (as this is the max tip number
-    #    that can still be achieved and proceed with a).
-
-
-
-    # # possible combinations (sanity check for 4x4)
-    # pclues1 = {4: [(1, 2, 3, 4)],
-    #
-    #           3: [(1, 2, 4, 3),
-    #               (1, 3, 2, 4),
-    #               (1, 3, 4, 2),
-    #               (2, 1, 3, 4),
-    #               (2, 3, 1, 4),
-    #               (2, 3, 4, 1)],
-    #
-    #           2: [(1, 4, 2, 3),
-    #               (1, 4, 3, 2),
-    #               (2, 1, 4, 3),
-    #               (2, 4, 1, 3),
-    #               (2, 4, 3, 1),
-    #               (3, 1, 2, 4),
-    #               (3, 1, 4, 2),
-    #               (3, 2, 1, 4),
-    #               (3, 2, 4, 1),
-    #               (3, 4, 1, 2),
-    #               (3, 4, 2, 1)],
-    #
-    #           1: [(4, 1, 2, 3),
-    #               (4, 1, 3, 2),
-    #               (4, 2, 1, 3),
-    #               (4, 2, 3, 1),
-    #               (4, 3, 1, 2),
-    #               (4, 3, 2, 1)]}
-
-    # (1) sort permutations by no. of visible skyscapers
+    # [ b) Lookup the max value's index position (as this is the max tip number
+    #    that can still be achieved and proceed with a).]
     permute = list(permutations([1, 2, 3, 4]))
     pclues = {k: [] for k in range(1, 5)}
     for tup in permute:
