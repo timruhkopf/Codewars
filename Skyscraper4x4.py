@@ -1,4 +1,5 @@
 from itertools import permutations, combinations
+from collections import deque
 
 
 def interpret_clues():
@@ -13,36 +14,46 @@ def interpret_clues():
     # b) Lookup the max value's index position (as this is the max tip number
     #    that can still be achieved and proceed with a).
 
+
+
+    # # possible combinations (sanity check for 4x4)
+    # pclues1 = {4: [(1, 2, 3, 4)],
+    #
+    #           3: [(1, 2, 4, 3),
+    #               (1, 3, 2, 4),
+    #               (1, 3, 4, 2),
+    #               (2, 1, 3, 4),
+    #               (2, 3, 1, 4),
+    #               (2, 3, 4, 1)],
+    #
+    #           2: [(1, 4, 2, 3),
+    #               (1, 4, 3, 2),
+    #               (2, 1, 4, 3),
+    #               (2, 4, 1, 3),
+    #               (2, 4, 3, 1),
+    #               (3, 1, 2, 4),
+    #               (3, 1, 4, 2),
+    #               (3, 2, 1, 4),
+    #               (3, 2, 4, 1),
+    #               (3, 4, 1, 2),
+    #               (3, 4, 2, 1)],
+    #
+    #           1: [(4, 1, 2, 3),
+    #               (4, 1, 3, 2),
+    #               (4, 2, 1, 3),
+    #               (4, 2, 3, 1),
+    #               (4, 3, 1, 2),
+    #               (4, 3, 2, 1)]}
+
+    # (1) sort permutations by no. of visible skyscapers
     permute = list(permutations([1, 2, 3, 4]))
-
-    # possible combinations (sanity check for 4x4)
-    pclues = {4: [(1, 2, 3, 4)],
-
-              3: [(1, 2, 4, 3),
-                  (1, 3, 2, 4),
-                  (1, 3, 4, 2),
-                  (2, 1, 3, 4),
-                  (2, 3, 1, 4),
-                  (2, 3, 4, 1)],
-
-              2: [(1, 4, 2, 3),
-                  (1, 4, 3, 2),
-                  (2, 1, 4, 3),
-                  (2, 4, 1, 3),
-                  (2, 4, 3, 1),
-                  (3, 1, 2, 4),
-                  (3, 1, 4, 2),
-                  (3, 2, 1, 4),
-                  (3, 2, 4, 1),
-                  (3, 4, 1, 2),
-                  (3, 4, 2, 1)],
-
-              1: [(4, 1, 2, 3),
-                  (4, 1, 3, 2),
-                  (4, 2, 1, 3),
-                  (4, 2, 3, 1),
-                  (4, 3, 1, 2),
-                  (4, 3, 2, 1)]}
+    pclues = {k: [] for k in range(1, 5)}
+    for tup in permute:
+        ismax = deque(tup[0])
+        for value in tup:
+            if ismax[0] < value:
+                ismax.appendleft(value)
+        pclues[len(ismax)].append(tup)  # counter of comparisons is len()
 
     # (1.2) for each clue, get the indexposition set
     dclues = {(k, 0): [set(), set(), set(), set()] for k in range(1, 5)}
