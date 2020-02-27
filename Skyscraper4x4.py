@@ -58,7 +58,7 @@ def _get_cluevalue(cluekey):
     """return [cluekey: [set(), set(), set(), set()]} with appropriate sets
     based on cluetuples & the corresponding base cases"""
     return {cluekey: [s0.intersection(s1) for s0, s1 in
-                      zip(mem[(cluekey[0], 0)], mem[(cluekey[1], 0)])]}
+                      zip(mem[(cluekey[0], 0)], mem[(0, cluekey[1])])]}
 
 
 def _interpret_clues(clues):
@@ -114,9 +114,9 @@ if __name__ == '__main__':
         def test_getcluevalue(self):
             self.assertEqual(_get_cluevalue((2, 0)), [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}],
                              'Tested, base_case fetch')
-            self.assertEqual(_get_cluevalue((1, 3)), [{4}, {1, 2, 3, 4}, {1, 2, 3}, {1, 2}],
+            self.assertEqual(_get_cluevalue((1, 3)), [{4}, {1, 2, 3}, {1, 2, 3}, {1, 2}],
                              'Tested creating new values')
-            self.assertEqual(_get_cluevalue((3, 1), _get_cluevalue(1, 3)),
+            self.assertEqual(_get_cluevalue((3, 1)), list(reversed(_get_cluevalue((1, 3)))),
                              'Tested')
 
         def test_clueparsing(self):
