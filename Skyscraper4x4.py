@@ -3,29 +3,38 @@ from collections import deque
 
 problemsize = 4
 
-# GENERATE ONLY ONCE -----------------------------
-# sorting the permutations only once by visibility
-permute = list(permutations(list(range(1, problemsize + 1))))
-pclues = {k: [] for k in range(1, problemsize + 1)}
-for tup in permute:
-    ismax = deque([tup[0]])
-    for value in tup:
-        if ismax[0] < value:
-            ismax.appendleft(value)
-    pclues[len(ismax)].append(tup)
 
-# compute base cases (*,0)
-mem = {(k, 0): [set(), set(), set(), set()] for k in range(1, problemsize + 1)}
-for k, lclues in pclues.items():
-    for clue in lclues:
-        for i, value in enumerate(clue):
-            mem[(k, 0)][i].update([value])
+def _sort_permutations():
+    # sorting the permutations only once by visibility
+    permute = list(permutations(list(range(1, problemsize + 1))))
+    pclues = {k: [] for k in range(1, problemsize + 1)}
+    for tup in permute:
+        ismax = deque([tup[0]])
+        for value in tup:
+            if ismax[0] < value:
+                ismax.appendleft(value)
+        pclues[len(ismax)].append(tup)
 
-# compute base cases (0,*)
-for k in list(mem.keys()):
-    mem.update({tuple(reversed(k)): list(reversed(mem[k]))})
+    return pclues
+
+def _compute_base_cases():
+    pclues = _sort_permutations()
+
+    # compute base cases (*,0)
+    mem = {(k, 0): [set(), set(), set(), set()] for k in range(1, problemsize + 1)}
+    for k, lclues in pclues.items():
+        for clue in lclues:
+            for i, value in enumerate(clue):
+                mem[(k, 0)][i].update([value])
+
+    # compute base cases (0,*)
+    for k in list(mem.keys()):
+        mem.update({tuple(reversed(k)): list(reversed(mem[k]))})
+
+    return mem
 
 
+mem = _compute_base_cases()
 def lazycompute(func):
     """lazily compute the cluekeys"""
 
@@ -91,6 +100,7 @@ if __name__ == '__main__':
         """Tests valid for problemsize = 4"""
 
         def test_base_case_creation(self):
+            mem = _compute_base_cases()
             self.assertEqual(mem[(2, 0)], {(2, 0): [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}]})
             self.assertEqual(mem[(0, 2)], {(0, 2): [{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 4}, {1, 2, 3}]})
             self.assertEqual(mem[(3, 0)], {(3, 0): [{1, 2}, {1, 2, 3}, {1, 2, 3, 4}, {1, 2, 3, 4}]})
@@ -105,12 +115,11 @@ if __name__ == '__main__':
                              'Tested')
 
         def test_clueparsing(self):
-            colclues = ((1,12), (2,11), (3, 10), (4, 9))
+            colclues = ((1, 12), (2, 11), (3, 10), (4, 9))
             # FIXME! is the order in rowclues correct? didn't i reverte the rowclues
-            rowclues = ((5,16), (6,15), (7,14), (8,13))
-            self.assertEqual(_interpret_clues(tuple(i for i in range(1,17))),
-                             (colclues,rowclues), 'Tested clueparsing')
-
+            rowclues = ((5, 16), (6, 15), (7, 14), (8, 13))
+            self.assertEqual(_interpret_clues(tuple(i for i in range(1, 17))),
+                             (colclues, rowclues), 'Tested clueparsing')
 
         def test_preallocate_downtown(self):
             # colclues, rowclues = _interpret_clues(clues)
@@ -120,8 +129,8 @@ if __name__ == '__main__':
 
             pass
 
-
         def test_pclues(self):
+            pclues = _sort_permutations()
             self.assertEqual(pclues, {4: [(1, 2, 3, 4)],
 
                                       3: [(1, 2, 4, 3),
