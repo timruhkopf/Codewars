@@ -17,7 +17,6 @@ def _sort_permutations():
 
     return pclues
 
-
 def _compute_base_cases():
     pclues = _sort_permutations()
 
@@ -190,4 +189,3 @@ if __name__ == '__main__':
 
 
     unittest.main()
-
