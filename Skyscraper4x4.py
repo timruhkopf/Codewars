@@ -93,6 +93,8 @@ def solve_puzzle(clues):
 
 
 if __name__ == '__main__':
+    # tutorial on how to write unittests
+    # https://realpython.com/python-testing/#writing-your-first-test
     import unittest
 
 
@@ -173,3 +175,6 @@ if __name__ == '__main__':
                          (1, 3, 2, 4)))
             self.assertEqual(solve_puzzle(clues[0]), outcomes[0])
             self.assertEqual(solve_puzzle(clues[1]), outcomes[1])
+
+
+    unittest.main()
