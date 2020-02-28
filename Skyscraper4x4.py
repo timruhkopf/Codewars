@@ -1,7 +1,22 @@
+from functools import wraps
 from itertools import permutations
 from collections import deque
+import time
 
 
+def timeit(func):
+    @wraps(func)
+    def wrapper(*arg, **kwargs):
+        t0 = time.time()
+        value = func(*arg, **kwargs)
+        t1 = time.time()
+        print('{} required {} seconds'.format(func.__name__, (t1 - t0)))
+        return value
+
+    return wrapper
+
+
+@timeit
 def _sort_permutations(problemsize):
     # sorting the permutations only once by visibility
     permute = list(permutations(list(range(1, problemsize + 1))))
@@ -16,6 +31,7 @@ def _sort_permutations(problemsize):
     return pclues
 
 
+@timeit
 def _compute_base_cases(problemsize):
     # transpose pclues & get rowsets. Produce baseclues (*,0)
     pclues = _sort_permutations(problemsize)
@@ -28,6 +44,7 @@ def _compute_base_cases(problemsize):
 def lazycompute(func):
     """lazily compute the cluekeys"""
 
+    @wraps(func)
     def wrapper(cluekey):
         if cluekey in mem.keys():
             return mem[cluekey]
@@ -60,6 +77,7 @@ def _interpret_clues(clues):
     return colclues, rowclues
 
 
+@timeit
 def solve_puzzle(clues):
     problemsize = int(len(clues) / 4)
     colclues, rowclues = _interpret_clues(clues)
@@ -83,7 +101,7 @@ def solve_puzzle(clues):
         # fixme make deterministics scalabple for problems
         newrow = list()
         for i, comparand in enumerate(row):
-            indexes = tuple(set(range(1,len(row))) - {i})
+            indexes = tuple(set(range(1, len(row))) - {i})
             temp = comparand - row[indexes[0]].union(*[row[i] for i in indexes[1:]])
             if len(temp) == 0:
                 temp = comparand
