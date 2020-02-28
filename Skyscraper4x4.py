@@ -1,41 +1,28 @@
 from itertools import permutations
 from collections import deque
 
-problemsize = 4
 
-
-def _sort_permutations():
+def _sort_permutations(problemsize):
     # sorting the permutations only once by visibility
     permute = list(permutations(list(range(1, problemsize + 1))))
-    pclues = {k: [] for k in range(1, problemsize + 1)}
+    pclues = {(k, 0): [] for k in range(1, problemsize + 1)}
     for tup in permute:
         ismax = deque([tup[0]])
         for value in tup:
             if ismax[0] < value:
                 ismax.appendleft(value)
-        pclues[len(ismax)].append(tup)
+        pclues[(len(ismax), 0)].append(tup)
 
     return pclues
 
 
-def _compute_base_cases():
-    pclues = _sort_permutations()
+def _compute_base_cases(problemsize):
+    # transpose permute & get rowsets
+    pclues = _sort_permutations(problemsize)
+    for k in pclues.keys():
+        pclues[k] = [set(row) for row in zip(*pclues[k])]
 
-    # compute base cases (*,0)
-    mem = {(k, 0): [set(), set(), set(), set()] for k in range(1, problemsize + 1)}
-    for k, lclues in pclues.items():
-        for clue in lclues:
-            for i, value in enumerate(clue):
-                mem[(k, 0)][i].update([value])
-
-    # compute base cases (0,*)
-    for k in list(mem.keys()):
-        mem.update({tuple(reversed(k)): list(reversed(mem[k]))})
-
-    return mem
-
-
-mem = _compute_base_cases()
+    return pclues
 
 
 def lazycompute(func):
@@ -50,6 +37,7 @@ def lazycompute(func):
             mem.update(func(cluekey))
         return mem[cluekey]
 
+    mem = _compute_base_cases(problemsize=4)  # FIXME: ONLY HARD CODED problemsize (is a decorator argument)
     return wrapper
 
 
@@ -58,14 +46,14 @@ def _get_cluevalue(cluekey):
     """return [cluekey: [set(), set(), set(), set()]} with appropriate sets
     based on cluetuples & the corresponding base cases"""
     return {cluekey: [s0.intersection(s1) for s0, s1 in
-                      zip(mem[(cluekey[0], 0)], mem[(0, cluekey[1])])]}
+                      zip(_get_cluevalue((cluekey[0], 0)), _get_cluevalue((0, cluekey[1])))]}
 
 
 def _interpret_clues(clues):
     # (2) clue parsing: getting row- & columnclues
     lenc = int(len(clues) / 4)  # for adaptive fieled sizes
     clues = [[clues[j * lenc + i] for i in range(lenc)] for j in range(4)]
-    clues = [clue if i in (0,1) else list(reversed(clue)) for i, clue in enumerate(clues)]
+    clues = [clue if i in (0, 1) else list(reversed(clue)) for i, clue in enumerate(clues)]
 
     colclues = [(clues[0][k], clues[0 + 2][k]) for k in range(4)]
     rowclues = [(clues[1 + 2][k], clues[1][k]) for k in range(4)]
@@ -73,18 +61,19 @@ def _interpret_clues(clues):
     return colclues, rowclues
 
 
-def _preallocate_downtown(colclues, rowclues):
+def _preallocate_downtown(colclues, rowclues, problemsize):
     matrixindex = list((r, c) for r in range(problemsize) for c in range(problemsize))
     downtown = list(list(0 for i in range(4)) for j in range(problemsize))
     for (r, c) in matrixindex:
         # downtown[r][c] = rowclues[r][c] & colclues[c][r]
-        print((r, c), rowclues[r], colclues[c], rowclues[r][c], colclues[c][r], rowclues[r][c] & colclues[c][r])
+        print((r, c), rowclues[r], colclues[c], rowclues[r][c], colclues[c][r], [rowclues[r][c] & colclues[c][r]])
         # print((r, c), get_cluevalue(colclues1[c]), get_cluevalue(rowclues1[r]))
 
     return downtown, matrixindex
 
 
 def solve_puzzle(clues):
+    problemsize = int(len(clues) / 4)
     colclues, rowclues = _interpret_clues(clues)
 
     # (3) looking up clues & computing clue values lazily
@@ -92,7 +81,7 @@ def solve_puzzle(clues):
     rowclues = list(map(_get_cluevalue, rowclues))
 
     # (4) bruteforce with recursion & memoize (Sudoku style)
-    downtown, matrixindex = _preallocate_downtown(colclues, rowclues)
+    downtown, matrixindex = _preallocate_downtown(colclues, rowclues, problemsize)
 
 
 if __name__ == '__main__':
@@ -105,11 +94,10 @@ if __name__ == '__main__':
         """Tests valid for problemsize = 4"""
 
         def test_base_case_creation(self):
-            mem = _compute_base_cases()
+            mem = _compute_base_cases(problemsize=4)
             self.assertEqual(mem[(2, 0)], [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}])
-            self.assertEqual(mem[(0, 2)], [{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 4}, {1, 2, 3}])
             self.assertEqual(mem[(3, 0)], [{1, 2}, {1, 2, 3}, {1, 2, 3, 4}, {1, 2, 3, 4}])
-            self.assertEqual(mem[(0, 4)], [{4}, {3}, {2}, {1}])
+
 
         def test_getcluevalue(self):
             self.assertEqual(_get_cluevalue((2, 0)), [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}],
@@ -118,6 +106,10 @@ if __name__ == '__main__':
                              'Tested creating new values')
             self.assertEqual(_get_cluevalue((3, 1)), list(reversed(_get_cluevalue((1, 3)))),
                              'Tested')
+            self.assertEqual(_get_cluevalue((0, 2)), [{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 4}, {1, 2, 3}],
+                             'Tested feting flipped base cases')
+            self.assertEqual(_get_cluevalue((0, 4)), [{4}, {3}, {2}, {1}],
+                             'Tested feting flipped base cases')
 
         def test_clueparsing(self):
             # FIXME! is the order in rowclues correct? didn't i reverte the rowclues
@@ -135,34 +127,34 @@ if __name__ == '__main__':
             pass
 
         def test_pclues(self):
-            pclues = _sort_permutations()
-            self.assertEqual(pclues, {4: [(1, 2, 3, 4)],
+            pclues = _sort_permutations(problemsize=4)
+            self.assertEqual(pclues, {(4, 0): [(1, 2, 3, 4)],
 
-                                      3: [(1, 2, 4, 3),
-                                          (1, 3, 2, 4),
-                                          (1, 3, 4, 2),
-                                          (2, 1, 3, 4),
-                                          (2, 3, 1, 4),
-                                          (2, 3, 4, 1)],
+                                      (3, 0): [(1, 2, 4, 3),
+                                               (1, 3, 2, 4),
+                                               (1, 3, 4, 2),
+                                               (2, 1, 3, 4),
+                                               (2, 3, 1, 4),
+                                               (2, 3, 4, 1)],
 
-                                      2: [(1, 4, 2, 3),
-                                          (1, 4, 3, 2),
-                                          (2, 1, 4, 3),
-                                          (2, 4, 1, 3),
-                                          (2, 4, 3, 1),
-                                          (3, 1, 2, 4),
-                                          (3, 1, 4, 2),
-                                          (3, 2, 1, 4),
-                                          (3, 2, 4, 1),
-                                          (3, 4, 1, 2),
-                                          (3, 4, 2, 1)],
+                                      (2, 0): [(1, 4, 2, 3),
+                                               (1, 4, 3, 2),
+                                               (2, 1, 4, 3),
+                                               (2, 4, 1, 3),
+                                               (2, 4, 3, 1),
+                                               (3, 1, 2, 4),
+                                               (3, 1, 4, 2),
+                                               (3, 2, 1, 4),
+                                               (3, 2, 4, 1),
+                                               (3, 4, 1, 2),
+                                               (3, 4, 2, 1)],
 
-                                      1: [(4, 1, 2, 3),
-                                          (4, 1, 3, 2),
-                                          (4, 2, 1, 3),
-                                          (4, 2, 3, 1),
-                                          (4, 3, 1, 2),
-                                          (4, 3, 2, 1)]},
+                                      (1, 0): [(4, 1, 2, 3),
+                                               (4, 1, 3, 2),
+                                               (4, 2, 1, 3),
+                                               (4, 2, 3, 1),
+                                               (4, 3, 1, 2),
+                                               (4, 3, 2, 1)]},
                              'Tested sorting of permutations')
 
         def test_skyscraper4x4(self):
