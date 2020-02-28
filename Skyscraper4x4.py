@@ -1,6 +1,9 @@
 from itertools import permutations
 from collections import deque
 
+# for determinisitic filter only
+from collections import Counter
+
 # auxilary for beautifications
 from functools import wraps
 import time
@@ -85,6 +88,30 @@ def solve_puzzle(clues):
     # (0) interpreting the cluesindex
     probsize = int(len(clues) / 4)
     colclues, rowclues = _interpret_clues(clues)
+
+    # (1) interterpret cluevalue by lazy compute
+    colsets = list(map(_get_cluevalue, colclues))
+    rowsets = list(map(_get_cluevalue, rowclues))
+
+    # (2) find already uniquely identified
+    # Deprec. be carefull to look columnwise too!
+    # downtown = [[rowsets[r][c] & colsets[c][r] for c in range(probsize)] for r in range(probsize)]
+    # cnt = Counter()
+    # for r, row in enumerate(downtown):
+    #     for s in row:
+    #         cnt.update(s)
+    #     uniques = set([u for u, count in cnt.items() if count == 1])
+    #     cnt.clear()
+    #
+    #     if bool(uniques):  # non empty set, found unique(s)
+    #         # get rowwise unique
+    #         downtown[r] = [s & uniques if bool(s & uniques) else s for s in row]
+    #         for c, s1 in enumerate(downtown[r]):
+    #             if len(s1) == 1:
+    #                 for colneigb in (*range(0, r), *range(r + 1, 4)):
+    #                     downtown[colneigb][c].difference_update(s1)
+    #
+    # index = list((r, c) for r in range(probsize) for c in range(probsize) if len(downtown[r][c]) > 1)
 
     # (1) interterpret cluevalue by lazy compute
     colsets = list(map(_get_cluevalue, colclues))
