@@ -17,7 +17,7 @@ def _sort_permutations(problemsize):
 
 
 def _compute_base_cases(problemsize):
-    # transpose permute & get rowsets
+    # transpose pclues & get rowsets. Produce baseclues (*,0)
     pclues = _sort_permutations(problemsize)
     for k in pclues.keys():
         pclues[k] = [set(row) for row in zip(*pclues[k])]
@@ -50,7 +50,6 @@ def _get_cluevalue(cluekey):
 
 
 def _interpret_clues(clues):
-    # (2) clue parsing: getting row- & columnclues
     lenc = int(len(clues) / 4)  # for adaptive fieled sizes
     clues = [[clues[j * lenc + i] for i in range(lenc)] for j in range(4)]
     clues = [clue if i in (0, 1) else list(reversed(clue)) for i, clue in enumerate(clues)]
@@ -60,16 +59,6 @@ def _interpret_clues(clues):
 
     return colclues, rowclues
 
-
-def _preallocate_downtown(colclues, rowclues, problemsize):
-    matrixindex = list((r, c) for r in range(problemsize) for c in range(problemsize))
-    downtown = list(list(0 for i in range(4)) for j in range(problemsize))
-    for (r, c) in matrixindex:
-        # downtown[r][c] = rowclues[r][c] & colclues[c][r]
-        print((r, c), rowclues[r], colclues[c], rowclues[r][c], colclues[c][r], [rowclues[r][c] & colclues[c][r]])
-        # print((r, c), get_cluevalue(colclues1[c]), get_cluevalue(rowclues1[r]))
-
-    return downtown, matrixindex
 
 
 def solve_puzzle(clues):
@@ -81,7 +70,8 @@ def solve_puzzle(clues):
     rowclues = list(map(_get_cluevalue, rowclues))
 
     # (4) bruteforce with recursion & memoize (Sudoku style)
-    downtown, matrixindex = _preallocate_downtown(colclues, rowclues, problemsize)
+    downtown = [[rowclues[r][c] & colclues[c][r] for c in range(problemsize)] for r in range(problemsize)]
+    matrixindex = list((r, c) for r in range(problemsize) for c in range(problemsize))
 
 
 if __name__ == '__main__':
