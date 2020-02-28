@@ -60,7 +60,6 @@ def _interpret_clues(clues):
     return colclues, rowclues
 
 
-
 def solve_puzzle(clues):
     problemsize = int(len(clues) / 4)
     colclues, rowclues = _interpret_clues(clues)
@@ -72,6 +71,30 @@ def solve_puzzle(clues):
     # (4) bruteforce with recursion & memoize (Sudoku style)
     downtown = [[rowclues[r][c] & colclues[c][r] for c in range(problemsize)] for r in range(problemsize)]
     matrixindex = list((r, c) for r in range(problemsize) for c in range(problemsize))
+
+    print(downtown)
+    print([row for row in zip(*downtown)])  # transpose
+
+    # TODO WE ALREADY SET SOME POSITIONS, AS THERE ARE ROWS,
+    #  IN WHICH ONLY A SINGLE SET HOLDS A VALUE - then this set must be
+    #  this particular value
+
+    def deterministics(row):
+        # fixme make deterministics scalabple for problems
+        newrow = list()
+        for i, comparand in enumerate(row):
+            indexes = tuple(set(range(1,len(row))) - {i})
+            temp = comparand - row[indexes[0]].union(*[row[i] for i in indexes[1:]])
+            if len(temp) == 0:
+                temp = comparand
+            newrow.append(temp)
+
+        return newrow
+
+    # deterministics(downtown[3])
+    [deterministics(row) for row in downtown]
+    map(deterministics, downtown)
+    downtown = [deterministics(row) for row in zip(*downtown)]
 
 
 if __name__ == '__main__':
@@ -87,7 +110,6 @@ if __name__ == '__main__':
             mem = _compute_base_cases(problemsize=4)
             self.assertEqual(mem[(2, 0)], [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}])
             self.assertEqual(mem[(3, 0)], [{1, 2}, {1, 2, 3}, {1, 2, 3, 4}, {1, 2, 3, 4}])
-
 
         def test_getcluevalue(self):
             self.assertEqual(_get_cluevalue((2, 0)), [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}],
