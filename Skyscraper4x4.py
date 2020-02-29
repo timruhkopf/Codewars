@@ -59,6 +59,7 @@ def lazycompute(func):
         return mem[cluekey]
 
     mem = _compute_base_cases(problemsize=4)  # FIXME: ONLY HARD CODED problemsize (is a decorator argument)
+    mem.update({(0, 0): [set(range(1, 5)) for i in range(4)]})  # corner case, FIXME hard coded range(1,problemsize+1)
     return wrapper
 
 
