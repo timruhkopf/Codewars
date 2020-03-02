@@ -1,7 +1,5 @@
-# required imports
 from itertools import permutations
 from collections import deque
-from collections import Counter
 
 # auxilary for beautifications
 from functools import wraps
@@ -58,7 +56,7 @@ def lazycompute(func):
             mem.update(func(cluekey))
         return mem[cluekey]
 
-    mem = _compute_base_cases(problemsize=4)  # FIXME: ONLY HARD CODED problemsize (is a decorator argument)
+    mem = _compute_base_cases(problemsize=4)  # FIXME: HARD CODED problemsize (is a decorator argument)
     mem.update({(0, 0): [set(range(1, 5)) for i in range(4)]})  # corner case, FIXME hard coded range(1,problemsize+1)
     return wrapper
 
@@ -91,54 +89,72 @@ def solve_puzzle(clues):
     # (1) interterpret cluevalue by lazy compute
     colsets = list(map(_get_cluevalue, colclues))
     rowsets = list(map(_get_cluevalue, rowclues))
-
-    # (2) find already uniquely identified
     downtown = [[rowsets[r][c] & colsets[c][r] for c in range(probsize)] for r in range(probsize)]
-    cnt = Counter()
-    for r, row in enumerate(downtown):
-        for s in row:
-            cnt.update(s)
-        uniques = set([u for u, count in cnt.items() if count == 1])
-        cnt.clear()
 
-        if bool(uniques):  # non empty set, found unique(s)
-            # get rowwise unique
-            downtown[r] = [s & uniques if bool(s & uniques) else s for s in row]
-            for c, s1 in enumerate(downtown[r]):
-                if len(s1) == 1:
-                    for colneigb in (*range(0, r), *range(r + 1, 4)):
-                        downtown[colneigb][c].difference_update(s1)
+    def recurcive_replacement(ind, choice):
+        global downtown
+        global index
+        global stack
 
-    index = list((r, c) for r in range(probsize) for c in range(probsize) if len(downtown[r][c]) > 1)
+        r, c = ind
 
+        # find my non single neighbours ;)
+        rowneighb = (tup[1] for tup in index if tup[0] == r and len(downtown[tup[0]][tup[1]]))
+        colneighb = (tup[0] for tup in index if tup[1] == c and len(downtown[tup[0]][tup[1]]))
 
-    # (4) bruteforce with recursion & memoize (Sudoku style)
-    downtown = [[rowclues[r][c] & colclues[c][r] for c in range(problemsize)] for r in range(problemsize)]
-    matrixindex = list((r, c) for r in range(problemsize) for c in range(problemsize))
+        for r, c in [*rowneighb, *colneighb]:
+            repl = downtown[r][c]
 
-    print(downtown)
-    print([row for row in zip(*downtown)])  # transpose
+            if choice in repl:  # check if the choice need be removed
+                downtown[r][c].difference_update({choice})
+                stack[choice].append((r, c))
 
-    # TODO WE ALREADY SET SOME POSITIONS, AS THERE ARE ROWS,
-    #  IN WHICH ONLY A SINGLE SET HOLDS A VALUE - then this set must be
-    #  this particular value
+                if not bool(downtown[r][c]):  # empty set after diff: unravel choice
+                    return False
 
-    def deterministics(row):
-        # fixme make deterministics scalabple for problems
-        newrow = list()
-        for i, comparand in enumerate(row):
-            indexes = tuple(set(range(1, len(row))) - {i})
-            temp = comparand - row[indexes[0]].union(*[row[i] for i in indexes[1:]])
-            if len(temp) == 0:
-                temp = comparand
-            newrow.append(temp)
+                if len(repl) == 2:  # after change there is only one element left
+                    recurcive_replacement((r, c), downtown[r][c])
+                    index[(r, c)] -= 1
 
-        return newrow
+            stack[choice].append(ind)
+            index[ind] += 1
 
-    # deterministics(downtown[3])
-    [deterministics(row) for row in downtown]
-    map(deterministics, downtown)
-    downtown = [deterministics(row) for row in zip(*downtown)]
+    def unravel_choice(stack, ind, choice):
+        global index
+        index[ind] += 1
+        # FIXME: how to reset the choice @ ind position to previous state?
+        for r, c in stack:
+            downtown[r][c].update(choice)
+            index[(r, c)] += 1
+
+    # Deprec: this was the old "sorted" version of index, to get a starter
+    # index = list(sorted([(r, c) for r in range(probsize) for c in range(probsize)
+    #           if len(downtown[r][c]) != 1], key=lambda tup: len(downtown[tup[0]][tup[1]])))
+
+    #
+    index = {(r, c): len(downtown[r][c]) for r in range(probsize) for c in range(probsize)}
+
+    # TODO make temp adaptive to v == 2 if there are no v == 1 ones left.
+    #  also: we need only the first element & in each iteration, this version of temp will change!
+    #  must compute the next currentpos in each iteration (efficiently!)
+    temp = [k for k, v in index.items() if v == 1]
+    globstack = []
+    currentpos = temp[0]  # starting position
+    while set(index.values()) == {1}:   # all indecies have sets of len 1, we succeeded!
+        r, c = currentpos
+        for choice in downtown[r][c]:
+            stack = {k: [] for k in range(1, probsize + 1)}  # for current choice only
+            if not bool(recurcive_replacement(index[0], choice)):
+                # an empty set occured, choice invalid
+                unravel_choice(currentpos, choice, stack)
+                continue
+            else:  # step succeeded with no empty set # FIXME: no choose the next currentpos
+                globstack.append(stack)  # stepwise stack
+        # no choice in this step succeeded (since previous decision was faulty)
+        # go back one step
+        unravel_choice(temp[0], choice, stack=globstack.pop())
+
+    return downtown
 
 
 if __name__ == '__main__':
