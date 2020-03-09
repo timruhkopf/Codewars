@@ -2,7 +2,7 @@ from itertools import permutations
 from collections import deque
 
 # for determinisitic filter only
-from collections import Counter
+# from collections import Counter
 
 # auxilary for beautifications
 from functools import wraps
@@ -118,75 +118,90 @@ def solve_puzzle(clues):
     rowsets = list(map(_get_cluevalue, rowclues))
     downtown = [[rowsets[r][c] & colsets[c][r] for c in range(probsize)] for r in range(probsize)]
 
-    def recurcive_replacement(ind, choice):
-        global downtown
-        global index
-        global stack
+    def choose_among(ind):
+        """deploys consequences from choices & keeps track of all consequences in stack"""
+        nonlocal globstack
 
         r, c = ind
-
-        # find my non single neighbours ;)
-        rowneighb = (tup[1] for tup in index if tup[0] == r and len(downtown[tup[0]][tup[1]]))
-        colneighb = (tup[0] for tup in index if tup[1] == c and len(downtown[tup[0]][tup[1]]))
-
-        for r, c in [*rowneighb, *colneighb]:
-            repl = downtown[r][c]
-
-            if choice in repl:  # check if the choice need be removed
-                downtown[r][c].difference_update({choice})
-                stack[choice].append((r, c))
-
-                if not bool(downtown[r][c]):  # empty set after diff: unravel choice
-                    return False
-
-                if len(repl) == 2:  # after change there is only one element left
-                    recurcive_replacement((r, c), downtown[r][c])
-                    index[(r, c)] -= 1
-
-            stack[choice].append(ind)
-            index[ind] += 1
-
-    def unravel_choice(stack, ind, choice):
-        global index
-        index[ind] += 1
-        # FIXME: how to reset the choice @ ind position to previous state?
-        for r, c in stack:
-            downtown[r][c].update(choice)
-            index[(r, c)] += 1
-
-    # Deprec: this was the old "sorted" version of index, to get a starter
-    # index = list(sorted([(r, c) for r in range(probsize) for c in range(probsize)
-    #           if len(downtown[r][c]) != 1], key=lambda tup: len(downtown[tup[0]][tup[1]])))
-
-    #
-    index = {(r, c): len(downtown[r][c]) for r in range(probsize) for c in range(probsize)}
-
-    # TODO make temp adaptive to v == 2 if there are no v == 1 ones left.
-    #  also: we need only the first element & in each iteration, this version of temp will change!
-    #  must compute the next currentpos in each iteration (efficiently!)
-    temp = [k for k, v in index.items() if v == 1]
-    globstack = []
-    currentpos = temp[0]  # starting position
-    while set(index.values()) == {1}:   # all indecies have sets of len 1, we succeeded!
-        r, c = currentpos
         for choice in downtown[r][c]:
             stack = {k: [] for k in range(1, probsize + 1)}  # for current choice only
-            if not bool(recurcive_replacement(index[0], choice)):
-                # an empty set occured, choice invalid
-                unravel_choice(currentpos, choice, stack)
-                continue
-            else:  # step succeeded with no empty set # FIXME: no choose the next currentpos
-                globstack.append(stack)  # stepwise stack
-        # no choice in this step succeeded (since previous decision was faulty)
-        # go back one step
-        unravel_choice(temp[0], choice, stack=globstack.pop())
+            # ensure, that choice at ind can be reverted!
 
+            for k in downtown[r][c] - {choice}:
+                stack[k].append((r, c))
+
+            index[ind] = 1
+            downtown[r][c] = {choice}
+
+            if not bool(consequences(ind, choice, stack)):  # care for side effects!
+                # empty set occured
+                continue
+            else:  # step succeeded with no empty set
+                # succeeded with this choice
+                globstack.append(stack)
+                return True
+
+        # This area should not be hit due to return True
+        # all choices failed due to faulty choice higher in stack
+        revert_consequences(stack=globstack.pop())
+
+    def consequences(ind, choice, stack):
+        nonlocal downtown
+        nonlocal index
+
+        r0, c0 = ind
+        index[ind] = 1
+
+        # find non single neighbours
+        rowneighb = [(r0, cn) for cn in range(4) if index[(r0, cn)] > 1 and (r0, cn) != (r0, c0)]
+        colneighb = [(rn, c0) for rn in range(4) if index[(rn, c0)] > 1 and (rn, c0) != (r0, c0)]
+
+        for r, c in [*rowneighb, *colneighb]:
+
+            downtown[r][c].difference_update({choice})
+            if len(downtown[r][c]) < index[(r,c)]: # actually updated at r,c
+                index[(r, c)] -= 1
+                stack[choice].append((r, c))
+
+            if index[(r, c)] == 0:  # empty set after diff: unravel choice
+                revert_consequences(stack)
+                return False
+
+            if index[(r, c)] == 1:  # after change there is only one element left
+                consequences((r, c), int(*downtown[r][c]), stack)
+
+
+        return True
+
+    def revert_consequences(stack):
+        nonlocal index
+        for k, l in stack.items():
+            k = {k}
+            for r, c in l:
+                downtown[r][c].update(k)
+                index[(r, c)] += 1
+
+    # ease lookup on len at an index position!
+    index = {(r, c): len(downtown[r][c]) for r in range(probsize) for c in range(probsize)}
+    globstack = []
+    while set(index.values()) != {1}:  # all indecies have sets of len 1, we succeeded!
+
+        # find next position
+        for lens in range(2, probsize + 1):
+            temp = [k for k, v in index.items() if v == lens]
+            if bool(temp):
+                currentpos = temp[0]
+                break
+
+        choose_among(currentpos)
+
+    downtown = tuple(tuple(int(*s) for s in row) for row in downtown)
     return downtown
 
 
 if __name__ == '__main__':
-    # tutorial on how to write unittests
-    # https://realpython.com/python-testing/#writing-your-first-test
+    # # tutorial on how to write unittests
+    # # https://realpython.com/python-testing/#writing-your-first-test
     import unittest
 
 
@@ -211,7 +226,6 @@ if __name__ == '__main__':
                              'Tested feting flipped base cases')
 
         def test_clueparsing(self):
-            # FIXME! is the order in rowclues correct? didn't i reverte the rowclues
             self.assertEqual(_interpret_clues(tuple(i for i in range(1, 17)))[0],
                              [(1, 12), (2, 11), (3, 10), (4, 9)], 'Tested colclues')
             self.assertEqual(_interpret_clues(tuple(i for i in range(1, 17)))[1],
@@ -272,3 +286,5 @@ if __name__ == '__main__':
 
 
     unittest.main()
+
+    solve_puzzle((2, 2, 1, 3, 2, 2, 3, 1, 1, 2, 2, 3, 3, 2, 1, 3))
