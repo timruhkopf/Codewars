@@ -59,8 +59,9 @@ def lazycompute(func):
             mem.update(func(cluekey))
         return mem[cluekey]
 
-    mem = _compute_base_cases(problemsize=4)  # FIXME: HARD CODED problemsize (is a decorator argument)
-    mem.update({(0, 0): [set(range(1, 5)) for i in range(4)]})  # corner case, FIXME hard coded range(1,problemsize+1)
+    probsize = 6  # FIXME: HARD CODED problemsize (is a decorator argument)
+    mem = _compute_base_cases(problemsize=probsize)
+    mem.update({(0, 0): [set(range(1, probsize + 1)) for i in range(probsize)]})
     return wrapper
 
 
@@ -72,13 +73,13 @@ def _get_cluevalue(cluekey):
                       zip(_get_cluevalue((cluekey[0], 0)), _get_cluevalue((0, cluekey[1])))]}
 
 
-def _interpret_clues(clues):
+def _interpret_clues(clues, probsize):
     lenc = int(len(clues) / 4)  # for adaptive fieled sizes
     clues = [[clues[j * lenc + i] for i in range(lenc)] for j in range(4)]
     clues = [clue if i in (0, 1) else list(reversed(clue)) for i, clue in enumerate(clues)]
 
-    colclues = [(clues[0][k], clues[0 + 2][k]) for k in range(4)]
-    rowclues = [(clues[1 + 2][k], clues[1][k]) for k in range(4)]
+    colclues = [(clues[0][k], clues[0 + 2][k]) for k in range(probsize)]
+    rowclues = [(clues[1 + 2][k], clues[1][k]) for k in range(probsize)]
 
     return colclues, rowclues
 
@@ -87,11 +88,12 @@ def _interpret_clues(clues):
 def solve_puzzle(clues):
     # (0) interpreting the cluesindex
     probsize = int(len(clues) / 4)
-    colclues, rowclues = _interpret_clues(clues)
+    colclues, rowclues = _interpret_clues(clues, probsize)
 
     # (1) interterpret cluevalue by lazy compute
     colsets = list(map(_get_cluevalue, colclues))
     rowsets = list(map(_get_cluevalue, rowclues))
+    downtown = {(r, c): rowsets[r][c] & colsets[c][r] for c in range(probsize) for r in range(probsize)}
 
     # (2) find already uniquely identified
     # Deprec. be carefull to look columnwise too!
@@ -113,178 +115,192 @@ def solve_puzzle(clues):
     #
     # index = list((r, c) for r in range(probsize) for c in range(probsize) if len(downtown[r][c]) > 1)
 
-    # (1) interterpret cluevalue by lazy compute
-    colsets = list(map(_get_cluevalue, colclues))
-    rowsets = list(map(_get_cluevalue, rowclues))
-    downtown = [[rowsets[r][c] & colsets[c][r] for c in range(probsize)] for r in range(probsize)]
-
-    def choose_among(ind):
-        """deploys consequences from choices & keeps track of all consequences in stack"""
-        nonlocal globstack
-
-        r, c = ind
-        for choice in downtown[r][c]:
-            stack = {k: [] for k in range(1, probsize + 1)}  # for current choice only
-            # ensure, that choice at ind can be reverted!
-
-            for k in downtown[r][c] - {choice}:
-                stack[k].append((r, c))
-
-            index[ind] = 1
-            downtown[r][c] = {choice}
-
-            if not bool(consequences(ind, choice, stack)):  # care for side effects!
-                # empty set occured
-                continue
-            else:  # step succeeded with no empty set
-                # succeeded with this choice
-                globstack.append(stack)
-                return True
-
-        # This area should not be hit due to return True
-        # all choices failed due to faulty choice higher in stack
-        revert_consequences(stack=globstack.pop())
-
-    def consequences(ind, choice, stack):
+    globstack = []
+    def fixing_values():
         nonlocal downtown
-        nonlocal index
 
-        r0, c0 = ind
-        index[ind] = 1
+        def consequences(ind, choice, probsize):
+            """function with strong side effects on both stack, index and downtown.
+            will return True if all consequences resulting from choice are
+            successfull. Else: False. Should it return False, it will already
+            have cleaned up its side effects"""
 
-        # find non single neighbours
-        rowneighb = [(r0, cn) for cn in range(4) if index[(r0, cn)] > 1 and (r0, cn) != (r0, c0)]
-        colneighb = [(rn, c0) for rn in range(4) if index[(rn, c0)] > 1 and (rn, c0) != (r0, c0)]
+            nonlocal stack
+            nonlocal downtown
 
-        for r, c in [*rowneighb, *colneighb]:
+            stack[ind] = downtown[ind] - choice
+            downtown[ind] = choice
 
-            downtown[r][c].difference_update({choice})
-            if len(downtown[r][c]) < index[(r,c)]: # actually updated at r,c
-                index[(r, c)] -= 1
-                stack[choice].append((r, c))
+            r, c = ind
+            # (4.1) now look at the choice's consequences
+            rowneighb = ((r, cn) for cn in range(probsize) if (r, cn) != (r, c))
+            colneighb = ((rn, c) for rn in range(probsize) if (rn, c) != (r, c))
 
-            if index[(r, c)] == 0:  # empty set after diff: unravel choice
-                revert_consequences(stack)
-                return False
+            # (4.1.1) update neighbours
+            newones = list()
+            for neighb in (*rowneighb, *colneighb):
+                lendown = len(downtown[neighb])  # beforehand length
+                downtown[neighb].difference_update(choice)
+                if len(downtown[neighb]) < lendown:  # actually updated at position
+                    stack[neighb].update(choice)
 
-            if index[(r, c)] == 1:  # after change there is only one element left
-                consequences((r, c), int(*downtown[r][c]), stack)
+                    if len(downtown[neighb]) == 0:  # empty set after diff: unravel choice
+                        revert_consequences(stack)
+                        return False
 
+                    if len(downtown[neighb]) == 1:  # after change there is only one element left
+                        newones.append(neighb)
 
-        return True
+            # (4.1.2) look at consequences from new ones, originiated from previous update
+            for one in newones:
+                state = consequences(one, downtown[one])
+                if not state:  # any of the resulting ones returned False!
+                    return False
+
+            return True
+
+        # (2) find a good! starting position with small length (until first hit)
+        # FIXME: this will deterministically hit up the first one positions
+        #  one positions must be removed once updated!
+        for lens in range(1, probsize + 1):  # EXCLUDING len == 0 (those values that are fixed)
+            for k, v in downtown.items():
+                if len(v) == lens:  # This is the critical!
+                    ind = k
+                    break
+            else:
+                continue
+            break
+
+        # (3) at that position, iterate through the choices (and keep track of consequences)
+        for choice in downtown[ind]:
+            stack = {(r, c): set() for c in range(probsize) for r in range(probsize)}
+            state = consequences(ind, {choice}, probsize)
+            if not state:  # consequences were not successful
+                continue
+            else:
+                # entire "broadcasting" of consequences succeeded. next choice required
+                globstack.append(stack)
+                if set(len(v) for k, v in downtown.items()) != {1}:  # stopping condition
+                    fixing_values()
+
+        if not state:  # unravel previous choice, as it was faulty
+            revert_consequences(globstack.pop())
 
     def revert_consequences(stack):
-        nonlocal index
-        for k, l in stack.items():
-            k = {k}
-            for r, c in l:
-                downtown[r][c].update(k)
-                index[(r, c)] += 1
+        nonlocal downtown
+        for k, s in stack.items():
+            downtown[k].update(s)
 
-    # ease lookup on len at an index position!
-    index = {(r, c): len(downtown[r][c]) for r in range(probsize) for c in range(probsize)}
-    globstack = []
-    while set(index.values()) != {1}:  # all indecies have sets of len 1, we succeeded!
+    fixing_values()
 
-        # find next position
-        for lens in range(2, probsize + 1):
-            temp = [k for k, v in index.items() if v == lens]
-            if bool(temp):
-                currentpos = temp[0]
-                break
-
-        choose_among(currentpos)
-
-    downtown = tuple(tuple(int(*s) for s in row) for row in downtown)
-    return downtown
+    # (4) convert to required format
+    return tuple(tuple(int(*downtown[(r, c)]) for c in range(probsize)) for r in range(probsize))
 
 
 if __name__ == '__main__':
     # # tutorial on how to write unittests
     # # https://realpython.com/python-testing/#writing-your-first-test
-    import unittest
+    # import unittest
+    #
+    #
+    # class Test_Skyscraper(unittest.TestCase):
+    #     """Tests valid for problemsize = 4"""
+    #
+    #     def test_base_case_creation(self):
+    #         mem = _compute_base_cases(problemsize=4)
+    #         self.assertEqual(mem[(2, 0)], [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}])
+    #         self.assertEqual(mem[(3, 0)], [{1, 2}, {1, 2, 3}, {1, 2, 3, 4}, {1, 2, 3, 4}])
+    #
+    #     def test_getcluevalue(self):
+    #         self.assertEqual(_get_cluevalue((2, 0)), [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}],
+    #                          'Tested, base_case fetch')
+    #         self.assertEqual(_get_cluevalue((1, 3)), [{4}, {1, 2, 3}, {1, 2, 3}, {1, 2}],
+    #                          'Tested creating new values')
+    #         self.assertEqual(_get_cluevalue((3, 1)), list(reversed(_get_cluevalue((1, 3)))),
+    #                          'Tested')
+    #         self.assertEqual(_get_cluevalue((0, 2)), [{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 4}, {1, 2, 3}],
+    #                          'Tested feting flipped base cases')
+    #         self.assertEqual(_get_cluevalue((0, 4)), [{4}, {3}, {2}, {1}],
+    #                          'Tested feting flipped base cases')
+    #
+    #     def test_clueparsing(self):
+    #         self.assertEqual(_interpret_clues(tuple(i for i in range(1, 17)))[0],
+    #                          [(1, 12), (2, 11), (3, 10), (4, 9)], 'Tested colclues')
+    #         self.assertEqual(_interpret_clues(tuple(i for i in range(1, 17)))[1],
+    #                          [(16, 5), (15, 6), (14, 7), (13, 8)], 'Tested colclues')
+    #
+    #     def test_preallocate_downtown(self):
+    #         # colclues, rowclues = _interpret_clues(clues)
+    #         # TODO use example from test_clueparsing
+    #
+    #         # TODO allocate downtown and check, that no single nested set is empty!
+    #
+    #         pass
+    #
+    #     def test_pclues(self):
+    #         pclues = _sort_permutations(problemsize=4)
+    #         self.assertEqual(pclues, {(4, 0): [(1, 2, 3, 4)],
+    #
+    #                                   (3, 0): [(1, 2, 4, 3),
+    #                                            (1, 3, 2, 4),
+    #                                            (1, 3, 4, 2),
+    #                                            (2, 1, 3, 4),
+    #                                            (2, 3, 1, 4),
+    #                                            (2, 3, 4, 1)],
+    #
+    #                                   (2, 0): [(1, 4, 2, 3),
+    #                                            (1, 4, 3, 2),
+    #                                            (2, 1, 4, 3),
+    #                                            (2, 4, 1, 3),
+    #                                            (2, 4, 3, 1),
+    #                                            (3, 1, 2, 4),
+    #                                            (3, 1, 4, 2),
+    #                                            (3, 2, 1, 4),
+    #                                            (3, 2, 4, 1),
+    #                                            (3, 4, 1, 2),
+    #                                            (3, 4, 2, 1)],
+    #
+    #                                   (1, 0): [(4, 1, 2, 3),
+    #                                            (4, 1, 3, 2),
+    #                                            (4, 2, 1, 3),
+    #                                            (4, 2, 3, 1),
+    #                                            (4, 3, 1, 2),
+    #                                            (4, 3, 2, 1)]},
+    #                          'Tested sorting of permutations')
+    #
+    #     def test_skyscraper4x4(self):
+    #         clues = ((2, 2, 1, 3, 2, 2, 3, 1, 1, 2, 2, 3, 3, 2, 1, 3),
+    #                  (0, 0, 1, 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0),
+    #                  [1, 2, 4, 2, 2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1],
+    #                  [2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2])
+    #
+    #         outcomes = (((1, 3, 4, 2),
+    #                      (4, 2, 1, 3),
+    #                      (3, 4, 2, 1),
+    #                      (2, 1, 3, 4)),
+    #
+    #                     ((2, 1, 4, 3),
+    #                      (3, 4, 1, 2),
+    #                      (4, 2, 3, 1),
+    #                      (1, 3, 2, 4)),
+    #
+    #                     ((4, 2, 1, 3),  #FIXME: this one has multiple time same value in a row!
+    #                      (3, 1, 2, 4),
+    #                      (1, 4, 3, 2),
+    #                      (2, 3, 4, 1)),
+    #
+    #                     ((3, 4, 2, 1),
+    #                      (1, 2, 3, 4),
+    #                      (2, 1, 4, 3),
+    #                      (4, 3, 1, 2)))
+    #
+    #         self.assertEqual(solve_puzzle(clues[0]), outcomes[0])
+    #         self.assertEqual(solve_puzzle(clues[1]), outcomes[1])
+    #         self.assertEqual(solve_puzzle(clues[2]), outcomes[2])
+    #
+    #
+    # unittest.main()
 
+    d = solve_puzzle((0, 0, 0, 2, 2, 0, 0, 0, 0, 6, 3, 0, 0, 4, 0, 0, 0, 0, 4, 4, 0, 3, 0, 0))
 
-    class Test_Skyscraper(unittest.TestCase):
-        """Tests valid for problemsize = 4"""
-
-        def test_base_case_creation(self):
-            mem = _compute_base_cases(problemsize=4)
-            self.assertEqual(mem[(2, 0)], [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}])
-            self.assertEqual(mem[(3, 0)], [{1, 2}, {1, 2, 3}, {1, 2, 3, 4}, {1, 2, 3, 4}])
-
-        def test_getcluevalue(self):
-            self.assertEqual(_get_cluevalue((2, 0)), [{1, 2, 3}, {1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}],
-                             'Tested, base_case fetch')
-            self.assertEqual(_get_cluevalue((1, 3)), [{4}, {1, 2, 3}, {1, 2, 3}, {1, 2}],
-                             'Tested creating new values')
-            self.assertEqual(_get_cluevalue((3, 1)), list(reversed(_get_cluevalue((1, 3)))),
-                             'Tested')
-            self.assertEqual(_get_cluevalue((0, 2)), [{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 4}, {1, 2, 3}],
-                             'Tested feting flipped base cases')
-            self.assertEqual(_get_cluevalue((0, 4)), [{4}, {3}, {2}, {1}],
-                             'Tested feting flipped base cases')
-
-        def test_clueparsing(self):
-            self.assertEqual(_interpret_clues(tuple(i for i in range(1, 17)))[0],
-                             [(1, 12), (2, 11), (3, 10), (4, 9)], 'Tested colclues')
-            self.assertEqual(_interpret_clues(tuple(i for i in range(1, 17)))[1],
-                             [(16, 5), (15, 6), (14, 7), (13, 8)], 'Tested colclues')
-
-        def test_preallocate_downtown(self):
-            # colclues, rowclues = _interpret_clues(clues)
-            # TODO use example from test_clueparsing
-
-            # TODO allocate downtown and check, that no single nested set is empty!
-
-            pass
-
-        def test_pclues(self):
-            pclues = _sort_permutations(problemsize=4)
-            self.assertEqual(pclues, {(4, 0): [(1, 2, 3, 4)],
-
-                                      (3, 0): [(1, 2, 4, 3),
-                                               (1, 3, 2, 4),
-                                               (1, 3, 4, 2),
-                                               (2, 1, 3, 4),
-                                               (2, 3, 1, 4),
-                                               (2, 3, 4, 1)],
-
-                                      (2, 0): [(1, 4, 2, 3),
-                                               (1, 4, 3, 2),
-                                               (2, 1, 4, 3),
-                                               (2, 4, 1, 3),
-                                               (2, 4, 3, 1),
-                                               (3, 1, 2, 4),
-                                               (3, 1, 4, 2),
-                                               (3, 2, 1, 4),
-                                               (3, 2, 4, 1),
-                                               (3, 4, 1, 2),
-                                               (3, 4, 2, 1)],
-
-                                      (1, 0): [(4, 1, 2, 3),
-                                               (4, 1, 3, 2),
-                                               (4, 2, 1, 3),
-                                               (4, 2, 3, 1),
-                                               (4, 3, 1, 2),
-                                               (4, 3, 2, 1)]},
-                             'Tested sorting of permutations')
-
-        def test_skyscraper4x4(self):
-            clues = ((2, 2, 1, 3, 2, 2, 3, 1, 1, 2, 2, 3, 3, 2, 1, 3),
-                     (0, 0, 1, 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0))
-            outcomes = (((1, 3, 4, 2),
-                         (4, 2, 1, 3),
-                         (3, 4, 2, 1),
-                         (2, 1, 3, 4)),
-                        ((2, 1, 4, 3),
-                         (3, 4, 1, 2),
-                         (4, 2, 3, 1),
-                         (1, 3, 2, 4)))
-            self.assertEqual(solve_puzzle(clues[0]), outcomes[0])
-            self.assertEqual(solve_puzzle(clues[1]), outcomes[1])
-
-
-    unittest.main()
-
-    solve_puzzle((2, 2, 1, 3, 2, 2, 3, 1, 1, 2, 2, 3, 3, 2, 1, 3))
+print(d)
