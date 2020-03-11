@@ -116,20 +116,25 @@ def solve_puzzle(clues):
     # index = list((r, c) for r in range(probsize) for c in range(probsize) if len(downtown[r][c]) > 1)
 
     globstack = []
+    fixed = set()
+
     def fixing_values():
+        # CONSIDER: fixing values could be a decorator for consequences
         nonlocal downtown
+        nonlocal fixed
 
         def consequences(ind, choice, probsize):
             """function with strong side effects on both stack, index and downtown.
             will return True if all consequences resulting from choice are
             successfull. Else: False. Should it return False, it will already
             have cleaned up its side effects"""
-
-            nonlocal stack
+            nonlocal fixed
+            nonlocal stack  # FIXME: stack in recursive calls is not propperly added!
             nonlocal downtown
 
             stack[ind] = downtown[ind] - choice
             downtown[ind] = choice
+            fixed.add(ind)
 
             r, c = ind
             # (4.1) now look at the choice's consequences
@@ -142,10 +147,13 @@ def solve_puzzle(clues):
                 lendown = len(downtown[neighb])  # beforehand length
                 downtown[neighb].difference_update(choice)
                 if len(downtown[neighb]) < lendown:  # actually updated at position
+
                     stack[neighb].update(choice)
 
                     if len(downtown[neighb]) == 0:  # empty set after diff: unravel choice
                         revert_consequences(stack)
+                        fixed.remove(ind)
+                        fixed.difference_update(newones)
                         return False
 
                     if len(downtown[neighb]) == 1:  # after change there is only one element left
@@ -153,10 +161,9 @@ def solve_puzzle(clues):
 
             # (4.1.2) look at consequences from new ones, originiated from previous update
             for one in newones:
-                state = consequences(one, downtown[one])
+                state = consequences(one, downtown[one], probsize)
                 if not state:  # any of the resulting ones returned False!
                     return False
-
             return True
 
         # (2) find a good! starting position with small length (until first hit)
@@ -164,7 +171,7 @@ def solve_puzzle(clues):
         #  one positions must be removed once updated!
         for lens in range(1, probsize + 1):  # EXCLUDING len == 0 (those values that are fixed)
             for k, v in downtown.items():
-                if len(v) == lens:  # This is the critical!
+                if len(v) == lens and k not in fixed:  # This is the critical!
                     ind = k
                     break
             else:
@@ -176,14 +183,14 @@ def solve_puzzle(clues):
             stack = {(r, c): set() for c in range(probsize) for r in range(probsize)}
             state = consequences(ind, {choice}, probsize)
             if not state:  # consequences were not successful
+                # Consider unraveling the stack here?
                 continue
-            else:
-                # entire "broadcasting" of consequences succeeded. next choice required
+            else:  # entire "broadcasting" of consequences succeeded. next choice required
                 globstack.append(stack)
                 if set(len(v) for k, v in downtown.items()) != {1}:  # stopping condition
                     fixing_values()
 
-        if not state:  # unravel previous choice, as it was faulty
+        if not state:  # unravel previous choice (fixing_value call), as it was faulty
             revert_consequences(globstack.pop())
 
     def revert_consequences(stack):
