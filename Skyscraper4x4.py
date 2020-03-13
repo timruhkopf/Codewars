@@ -129,10 +129,12 @@ def solve_puzzle(clues):
             successfull. Else: False. Should it return False, it will already
             have cleaned up its side effects"""
             nonlocal fixed
-            nonlocal stack  # FIXME: stack in recursive calls is not propperly added!
+            nonlocal stack
             nonlocal downtown
 
-            stack[ind] = downtown[ind] - choice
+            for k in downtown[ind] - choice:
+                stack[k].append(ind)
+            # stack[ind] = downtown[ind] - choice
             downtown[ind] = choice
             fixed.add(ind)
 
@@ -148,7 +150,8 @@ def solve_puzzle(clues):
                 downtown[neighb].difference_update(choice)
                 if len(downtown[neighb]) < lendown:  # actually updated at position
 
-                    stack[neighb].update(choice)
+                    stack[int(*choice)].append(neighb)
+                    # stack[neighb].update(choice)
 
                     if len(downtown[neighb]) == 0:  # empty set after diff: unravel choice
                         revert_consequences(stack)
@@ -167,8 +170,6 @@ def solve_puzzle(clues):
             return True
 
         # (2) find a good! starting position with small length (until first hit)
-        # FIXME: this will deterministically hit up the first one positions
-        #  one positions must be removed once updated!
         for lens in range(1, probsize + 1):  # EXCLUDING len == 0 (those values that are fixed)
             for k, v in downtown.items():
                 if len(v) == lens and k not in fixed:  # This is the critical!
@@ -180,23 +181,31 @@ def solve_puzzle(clues):
 
         # (3) at that position, iterate through the choices (and keep track of consequences)
         for choice in downtown[ind]:
-            stack = {(r, c): set() for c in range(probsize) for r in range(probsize)}
+            # stack = {(r, c): set() for c in range(probsize) for r in range(probsize)}
+            stack = {k: [] for k in range(1, probsize + 1)}
             state = consequences(ind, {choice}, probsize)
             if not state:  # consequences were not successful
                 # Consider unraveling the stack here?
                 continue
             else:  # entire "broadcasting" of consequences succeeded. next choice required
                 globstack.append(stack)
-                if set(len(v) for k, v in downtown.items()) != {1}:  # stopping condition
+                if len(fixed) != probsize ** 2:   # stopping condition
+                    ##set(len(v) for k, v in downtown.items()) != {1}:
                     fixing_values()
 
         if not state:  # unravel previous choice (fixing_value call), as it was faulty
             revert_consequences(globstack.pop())
+            #return  # FIXME go into higher hierarchy and continue higher fixing_values choice loop
+
 
     def revert_consequences(stack):
         nonlocal downtown
-        for k, s in stack.items():
-            downtown[k].update(s)
+        # for k, s in stack.items():
+        #     downtown[k].update(s)
+
+        for k, l in stack.items():
+            for tup in l:
+                downtown[tup].add(k)
 
     fixing_values()
 
