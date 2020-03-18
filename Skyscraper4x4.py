@@ -30,7 +30,11 @@ def visible(tup):
 @timeit
 def _sort_permutations(problemsize):
     # sorting the permutations only once by visibility
-    permute = permutations(list(range(1, problemsize + 1)))
+    permute = permutations(range(1, problemsize + 1))
+
+    # due to lexicographic ordering in permuations: cut no of permutations to half
+    # permute = [p for p in permutations(range(1,problemsize +1)) if p[0] < p[-1]]
+
     pclues = {(k0, k1): [] for k0 in range(1, problemsize + 1) for k1 in range(1, problemsize + 1)}
     # FIXME: this must be changed to accomodate all key combinations (in naive crossprod, there will be keys that cannot reasonably exist !
 
@@ -68,46 +72,29 @@ def solve_puzzle(clues):
     downtown_row = {r: pclues[rowclues[r]] for r in range(probsize)}
     downtown_col = {c: pclues[colclues[c]] for c in range(probsize)}
 
-    @timeit
-    def _compute_column_intersect(ind, fix, margin):
-        """given a clue, derive at an index position which values are applicable"""
-        # transpose pclues & get rowsets.
-        if margin == 1:
-            fixed = set(col[fix] for col in downtown_col[ind])
-        else:
-            fixed = set(row[fix] for row in downtown_row[ind])
-        return fixed
+    def _col_update(col):
+        fix = [set(column) for column in zip(*downtown_col[col])]
+        for i, valid in enumerate(fix):
+            downtown_row[i] = [tup for tup in downtown_row[i] if tup[col] in valid]
 
-    # @timeit
-    # def _compute_tuple_base(problemsize):
-    #     """given a clue, derive all applicable values at each position"""
-    #     # transpose pclues & get rowsets. Produce baseclues (*,0)
-    #     for k in pclues.keys():
-    #         pclues[k] = [set(column) for column in zip(*pclues[k])]
-    #
-    #     return pclues
+    def _row_update(row):
+        fix = [set(row1) for row1 in zip(*downtown_row[row])]
+        for i, valid in enumerate(fix):
+            downtown_col[i] = [tup for tup in downtown_col[i] if tup[row] in valid]
 
-    def deselect(fix, choices, margin):
-        if margin == 1:
-            for tup in downtown_row[fix]:
-                if tup[fix] not in choices:
-                    downtown_row[fix].remove(tup)
+    before, after = False, True
+    while before != after:
+        before = [len(a[i]) for a in (downtown_row, downtown_col) for i in range(probsize)]
 
-        else:
-            for tup in downtown_col[fix]:
-                if tup[fix] not in choices:
-                    downtown_col[fix].remove(tup)
+        for row in sorted(range(probsize), key=lambda i: len(downtown_row[i])):
+            _row_update(row)
+        for col in sorted(range(probsize), key=lambda i: len(downtown_col[i])):
+            _col_update(col)
 
-    # a row update (starting at column 2, updating row 3
-    # Consider, that a complexity measure of choices is found in the length of the lists in both downtown dicts
-    col_choice = 2
-    applicable = _compute_column_intersect(ind=col_choice, fix=3, margin=1)
-    deselect(fix=3, choices=applicable, margin=1)
-
-
+        after = [len(a[i]) for a in (downtown_row, downtown_col) for i in range(probsize)]
 
     # (4) convert to required format
-    # return tuple(tuple(int(*downtown[(r, c)]) for c in range(probsize)) for r in range(probsize))
+    return tuple(tuple(downtown_row[i][0]) for i in range(4))
 
 
 if __name__ == '__main__':
