@@ -19,7 +19,6 @@ def timeit(func):
 
 
 def _visible(tup):
-    # ismax = deque(tup.__next__()) # if tup were a generator such as reversed
     ismax = deque([tup[0]])
     for value in tup:
         if ismax[0] < value:
@@ -46,13 +45,6 @@ def _sort_permutations(problemsize):
     pclues.update({(k, 0): set.union(*(pclues[(k, i)] for i in gen)) for k in gen})
     pclues = {k: v for k, v in pclues.items() if len(v) != 0}
     pclues.update({(0, 0): permute})  # todo: ignore 0,0 in update process! # set()
-
-    # FIXME: this must be changed to accomodate all key combinations (in naive crossprod, there will be keys that cannot reasonably exist !
-
-    # Deprec: remove me
-    # info on how informative each clue is (excluding 0,0)
-    for p, v in pclues.items():
-        print(p, len(v))
 
     return pclues
 
@@ -82,7 +74,7 @@ def mem_visability(probsize):
 
 
 @timeit
-@mem_visability(probsize=7)
+@mem_visability(probsize=6)
 def solve_puzzle(clues, probsize, pclues):
     colclues, rowclues = _interpret_clues(clues, probsize)
 
@@ -97,18 +89,22 @@ def solve_puzzle(clues, probsize, pclues):
         print(p, len(v))
 
     def _col_update(col):
-        # TODO make only one function for both _col & _row_update
-        # updating rows indepenendly
+        # updating rows indepenendly based on column
         fix = [set(column) for column in zip(*downtown_col[col])]
         for i, valid in enumerate(fix):
             downtown_row[i] = [tup for tup in downtown_row[i] if tup[col] in valid]
 
-        # update deterministics across columns
-        for i, val in enumerate(fix):
-            if len(val) == 1:
-                for j in {*range(probsize)} - {col}:
-                    # TODO no refetching and multiple accesses due to i (switch i & j order  & doe only one list comp!
-                    downtown_col[j] = [tup for tup in downtown_col[j] if tup[i] not in val]
+        # update deterministics across columns & early stopping!
+        uniques = list((i, v) for i, v in enumerate(fix) if len(v) == 1)
+        for j in {*range(probsize)} - {col}:
+            for tup in downtown_col[j]:
+                for i, v in uniques:
+                    if tup[i] in v:
+                        downtown_col[j].remove(tup)
+                        break
+                continue
+
+
 
         # FIXME: make sure, unique updates are carried out only once!!
 
@@ -232,44 +228,44 @@ if __name__ == '__main__':
         #     self.assertEqual(solve_puzzle(clues[2]), outcomes[2])
         #     self.assertEqual(solve_puzzle(clues[3]), outcomes[3])
 
-        # def test_skyscraper6x6(self):
-        #     self.assertEqual(
-        #         solve_puzzle((0, 0, 0, 2, 2, 0, 0, 0, 0, 6, 3, 0, 0, 4, 0, 0, 0, 0, 4, 4, 0, 3, 0, 0)),
-        #         ((5, 6, 1, 4, 3, 2),
-        #          (4, 1, 3, 2, 6, 5),
-        #          (2, 3, 6, 1, 5, 4),
-        #          (6, 5, 4, 3, 2, 1),
-        #          (1, 2, 5, 6, 4, 3),
-        #          (3, 4, 2, 5, 1, 6)))
-        #
-        #     self.assertEqual(
-        #         solve_puzzle((3, 2, 2, 3, 2, 1, 1, 2, 3, 3, 2, 2, 5, 1, 2, 2, 4, 3, 3, 2, 1, 2, 2, 4)),
-        #         ((2, 1, 4, 3, 5, 6),
-        #          (1, 6, 3, 2, 4, 5),
-        #          (4, 3, 6, 5, 1, 2),
-        #          (6, 5, 2, 1, 3, 4),
-        #          (5, 4, 1, 6, 2, 3),
-        #          (3, 2, 5, 4, 6, 1)))
-        #
-        #     self.assertEqual(
-        #         solve_puzzle((0, 3, 0, 5, 3, 4, 0, 0, 0, 0, 0, 1, 0, 3, 0, 3, 2, 3, 3, 2, 0, 3, 1, 0)),
-        #         ((5, 2, 6, 1, 4, 3),
-        #          (6, 4, 3, 2, 5, 1),
-        #          (3, 1, 5, 4, 6, 2),
-        #          (2, 6, 1, 5, 3, 4),
-        #          (4, 3, 2, 6, 1, 5),
-        #          (1, 5, 4, 3, 2, 6)))
-
-        def test_skyscraper7x7(self):
+        def test_skyscraper6x6(self):
             self.assertEqual(
-                solve_puzzle([3, 3, 2, 1, 2, 2, 3, 4, 3, 2, 4, 1, 4, 2, 2, 4, 1, 4, 5, 3, 2, 3, 1, 4, 2, 5, 2, 3]), \
-                [[2, 1, 4, 7, 6, 5, 3],
-                 [6, 4, 7, 3, 5, 1, 2],
-                 [1, 2, 3, 6, 4, 7, 5],
-                 [5, 7, 6, 2, 3, 4, 1],
-                 [4, 3, 5, 1, 2, 6, 7],
-                 [7, 6, 2, 5, 1, 3, 4],
-                 [3, 5, 1, 4, 7, 2, 6]])
+                solve_puzzle((0, 0, 0, 2, 2, 0, 0, 0, 0, 6, 3, 0, 0, 4, 0, 0, 0, 0, 4, 4, 0, 3, 0, 0)),
+                ((5, 6, 1, 4, 3, 2),
+                 (4, 1, 3, 2, 6, 5),
+                 (2, 3, 6, 1, 5, 4),
+                 (6, 5, 4, 3, 2, 1),
+                 (1, 2, 5, 6, 4, 3),
+                 (3, 4, 2, 5, 1, 6)))
+
+            self.assertEqual(
+                solve_puzzle((3, 2, 2, 3, 2, 1, 1, 2, 3, 3, 2, 2, 5, 1, 2, 2, 4, 3, 3, 2, 1, 2, 2, 4)),
+                ((2, 1, 4, 3, 5, 6),
+                 (1, 6, 3, 2, 4, 5),
+                 (4, 3, 6, 5, 1, 2),
+                 (6, 5, 2, 1, 3, 4),
+                 (5, 4, 1, 6, 2, 3),
+                 (3, 2, 5, 4, 6, 1)))
+
+            self.assertEqual(
+                solve_puzzle((0, 3, 0, 5, 3, 4, 0, 0, 0, 0, 0, 1, 0, 3, 0, 3, 2, 3, 3, 2, 0, 3, 1, 0)),
+                ((5, 2, 6, 1, 4, 3),
+                 (6, 4, 3, 2, 5, 1),
+                 (3, 1, 5, 4, 6, 2),
+                 (2, 6, 1, 5, 3, 4),
+                 (4, 3, 2, 6, 1, 5),
+                 (1, 5, 4, 3, 2, 6)))
+
+        # def test_skyscraper7x7(self):
+        #     self.assertEqual(
+        #         solve_puzzle([3, 3, 2, 1, 2, 2, 3, 4, 3, 2, 4, 1, 4, 2, 2, 4, 1, 4, 5, 3, 2, 3, 1, 4, 2, 5, 2, 3]), \
+        #         [[2, 1, 4, 7, 6, 5, 3],
+        #          [6, 4, 7, 3, 5, 1, 2],
+        #          [1, 2, 3, 6, 4, 7, 5],
+        #          [5, 7, 6, 2, 3, 4, 1],
+        #          [4, 3, 5, 1, 2, 6, 7],
+        #          [7, 6, 2, 5, 1, 3, 4],
+        #          [3, 5, 1, 4, 7, 2, 6]])
 
 
     unittest.main()
