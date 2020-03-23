@@ -50,8 +50,7 @@ def _sort_permutations(problemsize):
     pclues.update({(0, k): set.union(*(pclues[(i, k)] for i in gen)) for k in gen})  # supersets
     pclues.update({(k, 0): set.union(*(pclues[(k, i)] for i in gen)) for k in gen})
     pclues = {k: v for k, v in pclues.items() if len(v) != 0}
-    pclues.update({(0, 0): permute})  # todo: ignore 0,0 in update process! # set()
-    # pclues.update({(0, 0): set()})
+    pclues.update({(0, 0): permute})
     return pclues
 
 
@@ -113,6 +112,33 @@ def solve_puzzle(clues, probsize, pclues):
                         break
         return stack  # relevant only for last 7*7er case
 
+    def update_2ndstage(row):
+        """recursive solving for the last remaining ambigous case"""
+        for choice in downtown_row[row]:
+            stack = _update_det(pos1=downtown_row, fix=[set([v]) for v in choice], col=row)
+            downtown_row[row] = [choice]
+
+            after = [len(row) for row in downtown_row.values()]
+            if not all(after):
+                _revert(stack)
+                continue
+
+            elif row != probsize - 1:  # there are more rows
+                if update_2ndstage(row + 1):
+                    return True
+                else:
+                    continue
+
+            elif after == [1, 1, 1, 1, 1, 1, 1]:
+                return True
+
+        if after != [1, 1, 1, 1, 1, 1, 1]:  # all choices faulty
+            _revert(stack)
+            return False
+
+    def _revert(stack):
+        for k, v in stack.items():
+            downtown_row[k].extend(v)
 
     # (1st stage updating) solves all unambigous cases -------------------------
     before = []
@@ -127,37 +153,8 @@ def solve_puzzle(clues, probsize, pclues):
 
         after = [len(a[i]) for a in (downtown_row, downtown_col) for i in range(probsize)]
 
-
+    # (2nd stage updating) solves ambigous cases -----------------------
     if after != [1, 1, 1, 1, 1, 1, 1]:
-        # (2nd stage updating) solves ambigous cases -----------------------
-        def update_2ndstage(row):
-            """recursive solving for the last remaining ambigous case"""
-            for choice in downtown_row[row]:
-                stack = _update_det(pos1=downtown_row, fix=[set([v]) for v in choice], col=row)
-                downtown_row[row] = [choice]
-
-                after = [len(row) for row in downtown_row.values()]
-                if not all(after):
-                    revert(stack)
-                    continue
-
-                elif row != probsize-1:  # there are more rows
-                    if update_2ndstage(row + 1):
-                        return True
-                    else:
-                        continue
-
-                elif after == [1, 1, 1, 1, 1, 1, 1]:
-                    return True
-
-            if after != [1, 1, 1, 1, 1, 1, 1]: # all choices faulty
-                revert(stack)
-                return False
-
-        def revert(stack):
-            for k, v in stack.items():
-                downtown_row[k].extend(v)
-
         update_2ndstage(row=0)
 
     if probsize == 7:
@@ -180,67 +177,30 @@ if __name__ == '__main__':
             self.assertEqual(_interpret_clues(tuple(i for i in range(1, 17)), probsize=4)[1],
                              [(16, 5), (15, 6), (14, 7), (13, 8)], 'Tested colclues')
 
-        # def test_pclues(self):
-        #     pclues = _sort_permutations(problemsize=4)
-        # self.assertEqual(pclues, {(4, 0): [(1, 2, 3, 4)],
-        #
-        #                           (3, 0): [(1, 2, 4, 3),
-        #                                    (1, 3, 2, 4),
-        #                                    (1, 3, 4, 2),
-        #                                    (2, 1, 3, 4),
-        #                                    (2, 3, 1, 4),
-        #                                    (2, 3, 4, 1)],
-        #
-        #                           (2, 0): [(1, 4, 2, 3),
-        #                                    (1, 4, 3, 2),
-        #                                    (2, 1, 4, 3),
-        #                                    (2, 4, 1, 3),
-        #                                    (2, 4, 3, 1),
-        #                                    (3, 1, 2, 4),
-        #                                    (3, 1, 4, 2),
-        #                                    (3, 2, 1, 4),
-        #                                    (3, 2, 4, 1),
-        #                                    (3, 4, 1, 2),
-        #                                    (3, 4, 2, 1)],
-        #
-        #                           (1, 0): [(4, 1, 2, 3),
-        #                                    (4, 1, 3, 2),
-        #                                    (4, 2, 1, 3),
-        #                                    (4, 2, 3, 1),
-        #                                    (4, 3, 1, 2),
-        #                                    (4, 3, 2, 1)]},
-        #                  'Tested sorting of permutations')
-
         # def test_skyscraper4x4(self):
-        #     clues = ((2, 2, 1, 3, 2, 2, 3, 1, 1, 2, 2, 3, 3, 2, 1, 3),
-        #              (0, 0, 1, 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0),
-        #              [1, 2, 4, 2, 2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1],
-        #              [2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2])
+        #     self.assertEqual(solve_puzzle((2, 2, 1, 3, 2, 2, 3, 1, 1, 2, 2, 3, 3, 2, 1, 3)), \
+        #                      ((1, 3, 4, 2),
+        #                       (4, 2, 1, 3),
+        #                       (3, 4, 2, 1),
+        #                       (2, 1, 3, 4)))
         #
-        #     outcomes = (((1, 3, 4, 2),
-        #                  (4, 2, 1, 3),
-        #                  (3, 4, 2, 1),
-        #                  (2, 1, 3, 4)),
+        #     self.assertEqual(solve_puzzle((0, 0, 1, 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0)), \
+        #                      ((2, 1, 4, 3),
+        #                       (3, 4, 1, 2),
+        #                       (4, 2, 3, 1),
+        #                       (1, 3, 2, 4)))
         #
-        #                 ((2, 1, 4, 3),
-        #                  (3, 4, 1, 2),
-        #                  (4, 2, 3, 1),
-        #                  (1, 3, 2, 4)),
+        #     self.assertEqual(solve_puzzle([1, 2, 4, 2, 2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1]), \
+        #                      ((4, 2, 1, 3),
+        #                       (3, 1, 2, 4),
+        #                       (1, 4, 3, 2),
+        #                       (2, 3, 4, 1)))
         #
-        #                 ((4, 2, 1, 3),
-        #                  (3, 1, 2, 4),
-        #                  (1, 4, 3, 2),
-        #                  (2, 3, 4, 1)),
-        #
-        #                 ((3, 4, 2, 1),
-        #                  (1, 2, 3, 4),
-        #                  (2, 1, 4, 3),
-        #                  (4, 3, 1, 2)))
-        #
-        #     self.assertEqual(solve_puzzle(clues[0]), outcomes[0])
-        #     # self.assertEqual(solve_puzzle(clues[1]), outcomes[1])
-        #     self.assertEqual(solve_puzzle(clues[2]), outcomes[2])
-        #     self.assertEqual(solve_puzzle(clues[3]), outcomes[3])
+        #     self.assertEqual(solve_puzzle([2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2]), \
+        #                      ((3, 4, 2, 1),
+        #                       (1, 2, 3, 4),
+        #                       (2, 1, 4, 3),
+        #                       (4, 3, 1, 2)))
 
         # def test_skyscraper6x6(self):
         #     self.assertEqual(
