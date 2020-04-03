@@ -77,17 +77,20 @@ class Go:
                 self.board[r][c] = ['x', 'o'][len(self.history) % 2]
                 self.history.append(position)
 
+            # find neighbours   # TODO  make next lines a oneliner
+            cond = lambda r, c: r >= 0 and r < self.size['height'] and c >= 0 and c < self.size['width']
+            neighb = [(r + i, c) for i in [-1, 1] if cond(r + i, c)]  # horizontal
+            neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
+
             # Consider: check neighbours of position and add stone to a group if
             # there exists a stone of same color on cross. BE AWARE of "linking stones"
-            cond = lambda r, c: r >= 0 and r < self.size['height'] and c >= 0 and c < self.size['width']
-            neighb = [(r + i, c + j) for i in [-1, 0,  1] for j in [-1, 1] if cond(r + i, c + j)]
 
-            # update affiliation
+        # update groups
+        # (1) membership
+        # (2) liberties union. (same color) (to avoid circular patterns and false counting)
+        # different color: difference
 
-            # update groups
-            # (1) membership
-            # (2) liberties union. (same color) (to avoid circular patterns and false counting)
-            # different color: difference
+        # update affiliation
 
         pass
 
@@ -101,35 +104,36 @@ class Go:
             return ver[int(move[0])], hor.index(move[1])
 
     def _valid_move(self, position):
-        # ToDO check
         #  (1) if stone already @ pos.
         r, c = position
         if self.board[r][c] != '.':
             raise ValueError('cannot place a stone on top of another stone')
 
+        # TODO (2.1) if KO was started (placing @ 1st removed stone)
+
+        # (2.2) if KO (ongoing)
+        if self.history[-2] == position:
+            raise ValueError('Invalid move due to ongoing KO')
+
         # ToDO check
-        #  (2) if KO (look at history)
         #  (3) suicide move (before assigning: check that same colored groups dont die)
         #   what about connecting stones?
         #  (4) check boundary
-        pass
+
+        return True
 
     def turn(self):  # FIXME: property getter not class method
         # getter of current Turn color:
         return ['black', 'white'][len(self.history) % 2]
 
     def pass_turn(self):
-        # not making a move, incrementing the move_counter (==>)
-        # Consider adding an empty string to self.history. makeing history &
-        # KO consistent
-        pass
+        """player decides not to move"""
+        self.history.append('')
 
     def get_position(self, position):
         """
-        :param position: TODO check valid!
         :return: 'x', 'o' or '.'
         """
-
         position = self.parse_position(position)
         i, j = position
 
