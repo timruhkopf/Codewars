@@ -8,7 +8,7 @@
 #         x, y = coord
 #         self.neighb = [(x - i, y - j) for i in [-1, 1] for j in [-1, 1]]
 #
-#     #Consider (1) moving these methods to Go --OR-- (2) make stones instance aware
+#     # Consider (1) moving these methods to Go --OR-- (2) make stones instance aware
 #     def check_liberties(self):
 #         self.liberties = None
 #         pass
@@ -22,7 +22,7 @@ class Group:
     # FIXME: how to access the board? inheritance?
     def __init__(self, firststone, color):
         self.member = [firststone]
-        self.liberties = None
+        self.liberties = set()  # set of positions
         pass
 
     def update_liberties(self):
@@ -38,7 +38,7 @@ class Group:
 
 
 class Go:
-    _groups = dict()
+    _groups = dict()  # groupID: Group
 
     def __init__(self, height, width=None):
         """https://www.codewars.com/kata/59de9f8ff703c4891900005c"""
@@ -53,6 +53,7 @@ class Go:
         # Consider: board = {position:Stone(position)} for ease of fetching neighbours
         position, groupID = None, None
         self.affiliation = {position: groupID}  # dict to keep track of all group members
+        # i.e. asking neighbours' groupID here
 
         self.history = []  # strings of positions e.g. "A7" allows to check invalid
         # KO placements -i.e. player places stone at his turn in the same position
@@ -74,6 +75,14 @@ class Go:
 
         # Consider: check neighbours of position and add stone to a group if
         # there exists a stone of same color on cross. BE AWARE of "linking stones"
+        neighb = [(x - i, y - j) for i in [-1, 1] for j in [-1, 1]]
+
+        # update affiliation
+
+        # update groups
+        # (1) membership
+        # (2) liberties union. (same color) (to avoid circular patterns and false counting)
+        # different color: difference
 
         pass
 
@@ -81,7 +90,8 @@ class Go:
         # ToDO check
         #  (1) if stone already @ pos.
         #  (2) if KO (look at history)
-        #  (3) suicide move
+        #  (3) suicide move (before assigning: check that same colored groups dont die)
+        #   what about connecting stones?
         #  (4) check boundary
         pass
 
