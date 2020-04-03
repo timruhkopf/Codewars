@@ -1,23 +1,3 @@
-# class Stone:
-#     def __init__(self, coord, color='b'):
-#         self.color = color
-#         self.icon = {'w': 'o', 'b': 'x'}[color]
-#
-#         self.coord = coord
-#
-#         x, y = coord
-#         self.neighb = [(x - i, y - j) for i in [-1, 1] for j in [-1, 1]]
-#
-#     # Consider (1) moving these methods to Go --OR-- (2) make stones instance aware
-#     def check_liberties(self):
-#         self.liberties = None
-#         pass
-#
-#     def update_neigb(self, other):
-#         pass
-
-
-# consider using this to keep track of groups liberties (maybe even without stone instances)
 class Group:
     # FIXME: how to access the board? inheritance?
     def __init__(self, firststone, color):
@@ -53,25 +33,22 @@ class Go:
         # TODO: make board property: getter method uses dict representation
         self.board = [['.' for i in range(width)] for j in range(height)]
 
-        # for ease of fetching neighbours
-        self.affiliation = dict()  # {position: groupID}  # dict to keep track of all group members
-        # i.e. asking neighbours' groupID here
+        # for ease of fetching neighbours' group
+        self.affiliation = dict()  # {position: groupID}
 
-        self.history = []  # strings of positions e.g. "A7" allows to check invalid
-        # KO placements -i.e. player places stone at his turn in the same position
-        # he did on his previous turn.
-        # self.move_counter = 0 # == len(self.history)
+        self.history = []
 
     def handicap_stones(self, stones):
+        """:param stones: integer"""
         color = 'b'
-        # ToDo Board size dependent and order specific!
+        # ToDo Board size dependent and order specific! (odd shape in test cases?)
         pass
 
     def move(self, positions):
         """positions may take multiple values:
         move("4A", "5A", "6A")"""
         for position in positions:
-            r, c = position
+            r, c = self.parse_position(position)
 
             if self._valid_move(position):
                 self.board[r][c] = ['x', 'o'][len(self.history) % 2]
@@ -118,7 +95,6 @@ class Go:
         # ToDO check
         #  (3) suicide move (before assigning: check that same colored groups dont die)
         #   what about connecting stones?
-        #  (4) check boundary
 
         return True
 
