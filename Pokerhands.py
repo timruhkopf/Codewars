@@ -1,6 +1,21 @@
 from operator import sub
 
 
+def memoize(func):
+    """This particular use case always reuses the shuffled cards -
+    so rank must be computed only once"""
+    def wrapper(self):
+        if self.hand in mem.keys():
+            return mem[self.hand]
+        else:
+            func(self)
+            mem[self.hand] = self.rank
+            return mem[self.hand]
+
+    mem = {}
+    return wrapper
+
+
 class PokerCard(object):
     def __init__(self, card):
         self.card = card
@@ -18,7 +33,7 @@ class PokerCard(object):
     def __eq__(self, other):
         return (self.value == other.value)  # & (self.suit == other.suit)
 
-    def __lt__(self, other):  # for sorting
+    def __lt__(self, other):  # for sorting of cards
         return self.value < other.value
 
     def __gt__(self, other):  # for set
@@ -28,20 +43,25 @@ class PokerCard(object):
         return self.value
 
 
+
 class PokerHand(object):
     def __init__(self, hand):
+        self.hand = hand
         cards = hand.split(' ')
         self.cards = [PokerCard(card) for card in cards]
         self.cards.sort()
         self.myrank()
 
-        # print(self)
 
     def __repr__(self):
-        hand = ['highcard', 'pair', 'two_pair', 'three', 'straight', 'flush',
-                'full_house', 'four', 'straight_flush', 'royal_flush'][self.rank]
-        return 'rank {}, {}, {}'.format(self.rank, hand, self.cards)
+        return self.hand
 
+        # more advanced printing method:
+        # hand = ['highcard', 'pair', 'two_pair', 'three', 'straight', 'flush',
+        #         'full_house', 'four', 'straight_flush', 'royal_flush'][self.rank]
+        # return 'rank {}, {}, {}'.format(self.rank, hand, self.cards)
+
+    @memoize
     def myrank(self):
         # looking for pair orders
         d_values = {k: [] for k in set(card.value for card in self.cards)}
@@ -65,9 +85,19 @@ class PokerHand(object):
             return len(set(x.suit for x in self.cards)) == 1
 
         def straight():
+
             valuelist = list(x.value for x in self.cards)
             valuelist.sort()
-            return set(map(sub, valuelist[1:], valuelist[:-1])) == {1}
+            if set(map(sub, valuelist[1:-1], valuelist[:-2])) == {1}:
+
+                if valuelist[-1] - valuelist[-2] == 1:
+                    return True  # usual straight
+
+                elif valuelist[0] == 2 and valuelist[-1] == 14:
+                    # allowing low Ace
+                    return True
+                
+            return False
 
         def twopair():
             return (len(self.multiples) == 2) & (set(len(l) for l in self.multiples) == {2})
@@ -96,9 +126,23 @@ class PokerHand(object):
                     else:
                         continue
 
-            if self.rank in (0, 1, 2, 3, 4, 5, 7, 8):   # check unused cards
+            if self.rank in (0, 1, 2, 3, 4, 5, 7, 8):  # check unused cards
                 mine = self.remain - other.remain
                 oppo = other.remain - self.remain
+
+                if self.rank == 4:
+                     # straight, lower ace exception
+                    if 2 in [c.value for c in mine]:
+                        mine = set(c for c in mine if c.value != 14)
+
+                    if 2 in [c.value for c in oppo]:
+                        oppo = set(c for c in oppo if c.value != 14)
+
+                    if mine == set() and oppo != set():
+                        return 'Loss'
+                    elif mine != set() and oppo == set():
+                        return 'Win'
+
                 if any((mine == set(), oppo == set())):
                     return 'Tie'
                 elif max(mine) > max(oppo):
@@ -108,6 +152,13 @@ class PokerHand(object):
 
         return 'Tie'
 
+    def __lt__(self, other):
+        """
+        making Pokerhands sortable
+        https://www.codewars.com/kata/586423aa39c5abfcec0001e6/python
+        """
+        # must be 'Win' to ensure leftmost is highest
+        return self.compare_with(other) == 'Win'
 
 
 if __name__ == '__main__':
@@ -146,16 +197,16 @@ if __name__ == '__main__':
     # max(g) > max(h)
 
     # (PokerHand identification) -----------------------------------------------
-    high = PokerHand("3S 6H QH 5S 4C")
-    pair = PokerHand("3S 6H 4H 5S 4C")
-    pair2 = PokerHand("2S 2H 4H 5S 4C")
-    three = PokerHand("AH AC 5H 6H AS")
-    straight = PokerHand("2S 3H 4H 5S 6C")
-    flush = PokerHand("2S AS TS QS JS")
-    full_house = PokerHand("2S AH 2H AS AC")
-    four = PokerHand("JS JD JC JH AD")
-    straight_flush = PokerHand("2H 3H 4H 5H 6H")
-    royal_flush = PokerHand("AS KS QS JS TS")
+    # high = PokerHand("3S 6H QH 5S 4C")
+    # pair = PokerHand("3S 6H 4H 5S 4C")
+    # pair2 = PokerHand("2S 2H 4H 5S 4C")
+    # three = PokerHand("AH AC 5H 6H AS")
+    # straight = PokerHand("2S 3H 4H 5S 6C")
+    # flush = PokerHand("2S AS TS QS JS")
+    # full_house = PokerHand("2S AH 2H AS AC")
+    # four = PokerHand("JS JD JC JH AD")
+    # straight_flush = PokerHand("2H 3H 4H 5H 6H")
+    # royal_flush = PokerHand("AS KS QS JS TS")
 
     # (PokerHand behaviour) ----------------------------------------------------
     def runTest(msg, expected, hand, other):
@@ -191,6 +242,34 @@ if __name__ == '__main__':
     # runTest('pair pair', 'Loss', 'KS 8D 4D 9S 4S', 'KD 4S KC 3H 8S')
 
     # runTest('', 'Loss', '2D 6D 3D 4D 5D', 'JH 9H TH KH QH')
-    runTest('', 'Win', 'QC KH TS JS AH' ,'JS QS 9H TS KH')
+    # runTest('', 'Win', 'QC KH TS JS AH' ,'JS QS 9H TS KH')
+    runTest('two straigt, low ace', 'Loss', '2D AC 3H 4H 5S', '2S 3H 4H 5S 6C')
+
+    # (Sort behaviour) ---------------------------------------------------------
+    from random import shuffle
+    from itertools import chain
+
+    SORTED_POKER_HANDS = list(map(PokerHand, ["KS AS TS QS JS",
+                                              "2H 3H 4H 5H 6H",
+                                              "AS AD AC AH JD",
+                                              "JS JD JC JH 3D",
+                                              "2S AH 2H AS AC",
+                                              "AS 3S 4S 8S 2S",
+                                              "2H 3H 5H 6H 7H",
+                                              "2S 3H 4H 5S 6C",
+                                              "2D AC 3H 4H 5S",
+                                              "AH AC 5H 6H AS",
+                                              "2S 2H 4H 5S 4C",
+                                              "AH AC 5H 6H 7S",
+                                              "AH AC 4H 6H 7S",
+                                              "2S AH 4H 5S KC",
+                                              "2S 3H 6H 7S 9C"]))
+
+    lstCopy = SORTED_POKER_HANDS.copy()
+    shuffle(lstCopy)
+    userSortedHands = chain(sorted(lstCopy))
+
+    for hand in SORTED_POKER_HANDS:
+        assert next(userSortedHands), hand
 
 print('')
