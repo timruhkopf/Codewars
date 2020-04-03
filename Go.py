@@ -91,7 +91,17 @@ class Go:
 
         pass
 
+    def parse_position(self, move):
+        hor = [chr(i) for i in range(ord('A'), ord('Y') + 1)][0:self.size['width']]
+        ver = [i for i in reversed(range(self.size['height'] + 1))]
+
+        if int(move[0]) not in ver or move[1] not in hor:
+            raise ValueError('You are out of bounds')
+        else:
+            return ver[int(move[0])], hor.index(move[1])
+
     def _valid_move(self, position):
+        # ToDO check
         #  (1) if stone already @ pos.
         r, c = position
         if self.board[r][c] != '.':
