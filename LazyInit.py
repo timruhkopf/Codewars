@@ -34,7 +34,6 @@ if __name__ == '__main__':
 
     c = Hello(a=1, b=2)
     d = Hello(3, b=4)  # case with args
-    e = Hello(5,6)
     print(c.a, c.b)
     print(d.a, d.b)
 
