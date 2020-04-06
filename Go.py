@@ -48,7 +48,7 @@ class Go:
         elif len(stone_pos[self.size['height']]) < stones:
             raise ValueError('too many handicap stones for given boardsize')
         elif any(j == 'x' for i in board for j in i):
-            # do this by _groups
+            # TODO: replace this by _groups
             raise ValueError('game has already started or you called handicap_stones twice')
         else:
             ls = stone_pos[self.size['height']][0:stones]
