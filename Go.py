@@ -63,9 +63,24 @@ class Go:
         # self.move_counter = 0 # == len(self.history)
 
     def handicap_stones(self, stones):
-        color = 'b'
-        # ToDo Board size dependent and order specific!
-        pass
+        stone_pos = {9: ['G7', 'C3', 'G3', 'C7', 'E5'],
+                     13: ['10I', '4C', '4I', '10C', '7F', '6C', '7I', '3F', '9F'],
+                     19: ['16O', '4C', '16C', '4O', '10I', '10C', '10O', '16I', '4I']}
+
+        if list(self.size.values()) != [19, 19] and list(self.size.values()) != [13, 13] and list(size.values()) != [9, 9]:
+            raise ValueError('boardsize is not suitable for handicap stones')
+        elif len(stone_pos[self.size['height']]) < stones:
+            raise ValueError('too many handicap stones for given boardsize')
+        elif any(j == 'x' for i in board for j in i):
+            # do this by _groups
+            raise ValueError('game has already started or you called handicap_stones twice')
+        else:
+            ls = stone_pos[self.size['height']][0:stones]
+            move(ls)
+
+            # for i, j in stone_pos[self.size['height']][0:stones]:
+            #     self.board[i][j] = 'x'
+
 
     def move(self, positions):
         """positions may take multiple values:
@@ -95,7 +110,7 @@ class Go:
         hor = [chr(i) for i in range(ord('A'), ord('Y') + 1)][0:self.size['width']]
         ver = [i for i in reversed(range(self.size['height'] + 1))]
 
-        if int(move[0]) not in ver or move[1] not in hor:
+        if int(move[0:-1]) not in ver or move[-1] not in hor:
             raise ValueError('You are out of bounds')
         else:
             return ver[int(move[0])], hor.index(move[1])
