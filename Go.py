@@ -1,5 +1,4 @@
 class Group:
-    # FIXME: how to access the board? inheritance?
     def __init__(self, firststone, color):
         self.member = [firststone]
         self.liberties = set()  # set of positions
@@ -18,7 +17,7 @@ class Group:
 
 
 class Go:
-    _groups = dict()  # groupID: Group
+
 
     def __init__(self, height, width=None):
         """https://www.codewars.com/kata/59de9f8ff703c4891900005c"""
@@ -33,6 +32,8 @@ class Go:
         # TODO: make board property: getter method uses dict representation
         self.board = [['.' for i in range(width)] for j in range(height)]
 
+        self.groups = dict()  # groupID: Group
+
         # for ease of fetching neighbours' group
         self.affiliation = dict()  # {position: groupID}
 
@@ -43,19 +44,21 @@ class Go:
                      13: ['10I', '4C', '4I', '10C', '7F', '6C', '7I', '3F', '9F'],
                      19: ['16O', '4C', '16C', '4O', '10I', '10C', '10O', '16I', '4I']}
 
-        if list(self.size.values()) != [19, 19] and list(self.size.values()) != [13, 13] and list(size.values()) != [9, 9]:
+        if list(self.size.values()) != [19, 19] and list(self.size.values()) != [13, 13] and list(
+                self.size.values()) != [9, 9]:
             raise ValueError('boardsize is not suitable for handicap stones')
         elif len(stone_pos[self.size['height']]) < stones:
             raise ValueError('too many handicap stones for given boardsize')
-        elif any(j == 'x' for i in board for j in i):
+        elif any(j == 'x' for i in self.board for j in i):
             # TODO: replace this by _groups
             raise ValueError('game has already started or you called handicap_stones twice')
         else:
-            ls = stone_pos[self.size['height']][0:stones]
-            move(ls)
+            ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
-            # for i, j in stone_pos[self.size['height']][0:stones]:
-            #     self.board[i][j] = 'x'
+            self.groups.update(
+                {i: Group(firststone=stone, color='b')
+                 for i, stone in enumerate(ls)})
+            self.affiliation.update({pos:i for i, pos in enumerate(ls)})
 
 
     def move(self, positions):
@@ -74,7 +77,7 @@ class Go:
             neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
 
             # Consider: check neighbours of position and add stone to a group if
-            # there exists a stone of same color on cross. BE AWARE of "linking stones"
+            # there exists a stone of same color on cross. Carefull with "linking stones"
 
         # update groups
         # (1) membership
@@ -92,7 +95,7 @@ class Go:
         if int(move[0:-1]) not in ver or move[-1] not in hor:
             raise ValueError('You are out of bounds')
         else:
-            return ver[int(move[0])], hor.index(move[1])
+            return ver[int(move[0:-1])], hor.index(move[-1])
 
     def _valid_move(self, position):
         #  (1) if stone already @ pos.
@@ -150,7 +153,8 @@ class Go:
 
 if __name__ == '__main__':
 
-    go = Go(9)
+    go = Go(19)
+    go.handicap_stones(9)
 
     from random import choice, randint
     from Test_Codewars import test
