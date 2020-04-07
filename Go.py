@@ -39,6 +39,9 @@ class Go:
 
         self.history = []
 
+    def __repr__(self):
+        return '\n'.join(str(row) for row in self.board)
+
     def handicap_stones(self, stones):
         stone_pos = {9: ['7G', '3C', '3G', '7C', '5E'],
                      13: ['10I', '4C', '4I', '10C', '7F', '6C', '7I', '3F', '9F'],
@@ -61,9 +64,6 @@ class Go:
                  for i, stone in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
-    def __repr__(self):
-        return '\n'.join(str(row) for row in self.board)
-
     def move(self, positions):
         """positions may take multiple values:
         move("4A", "5A", "6A")"""
@@ -79,17 +79,25 @@ class Go:
             neighb = [(r + i, c) for i in [-1, 1] if cond(r + i, c)]  # horizontal
             neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
 
-            # Consider: check neighbours of position and add stone to a group if
-            # there exists a stone of same color on cross. Carefull with "linking stones"
+            if len(neighb) == 0:
+                groupID = len(self.history)
+                self.groups.update({groupID: Group(position, color=self.turn())})
+                self.affiliation.update({position: groupID})
+                self.board[position[0]][position[1]] = ['x', 'o'][groupID % 2]
 
-        # update groups
-        # (1) membership
-        # (2) liberties union. (same color) (to avoid circular patterns and false counting)
-        # different color: difference
 
-        # update affiliation
 
-        pass
+                # Consider: check neighbours of position and add stone to a group if
+                # there exists a stone of same color on cross. Carefull with "linking stones"
+
+            # update groups
+            # (1) membership
+            # (2) liberties union. (same color) (to avoid circular patterns and false counting)
+            # different color: difference
+
+            # update affiliation
+
+            pass
 
     def parse_position(self, move):
         hor = [chr(i) for i in range(ord('A'), ord('Y') + 1)][0:self.size['width']]
@@ -157,8 +165,9 @@ class Go:
 if __name__ == '__main__':
 
     go = Go(19)
-    go
+    go.__repr__()
     go.handicap_stones(9)
+
 
     from random import choice, randint
     from Test_Codewars import test
