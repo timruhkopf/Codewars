@@ -164,6 +164,9 @@ class Go:
 
 if __name__ == '__main__':
 
+    game = Go(4)
+    game.move('2B', '3D', '2C')
+
     go = Go(19)
     go.__repr__()
     go.handicap_stones(9)
@@ -406,6 +409,3 @@ if __name__ == '__main__':
     test.assert_equals(game.board, board)
     test.assert_equals(game.turn, "black")
 
-    test.it('Groups')
-    game = Go(4)
-    game.move('2B', '3D', '2C')
