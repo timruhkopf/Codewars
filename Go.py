@@ -4,7 +4,7 @@ class Group:
         self.liberties = set(liberties)  # set of positions
         self.color = color
 
-    def merge(self, others):
+    def merge(self, *others):
         """:param others: iterable of Group instances"""
         self.liberties.update(*(lib for lib in (group.liberties for group in others)))
         self.member.extend((item for group in others for item in group.members))
@@ -55,13 +55,13 @@ class Go:
             self.history.append('handicap')
             self.handicap = stones
 
-    def move(self, positions):
+    def move(self, *positions):
         """positions may take multiple values:
         move("4A", "5A", "6A")"""
         for position in positions:
             r, c = self.parse_position(position)
 
-            if self._valid_move(position):
+            if self._valid_move(r, c, position):
                 color = ['x', 'o'][len(self.history) % 2]
                 self.board[r][c] = color
                 self.history.append(position)
@@ -81,11 +81,26 @@ class Go:
             # groups = [aff.get(x) for x in neigh]
             # count = [list(aff.values()).count(x) for x in groups]
             # gr.id.max = groups[count.index(max(count))]
-            for id in groupIDs:
-                if self.groups[id].color == self.turn():  # same color
-                    pass
-                else:  # different colored neighbours: steal liberty
-                    self.groups[id].liberties.remove(position)
+
+            # same color
+            pos_same_col = [n for n in neighb if board[n[0]][n[1]] == color]
+            membersize = [len(self.groups[self.affiliation[n]].member) for n in pos_same_col]
+            pos_max_grsize = pos_same_col[membersize.index(max(membersize))]
+            pos_same_col.remove(pos_max_grsize)
+            same_col_nomax = [self.groups[id] for id in [self.affiliation[n] for n in pos_same_col]]
+            max_id = self.affiliation(pos_max_grsize)
+
+            self.groups[max_id].merge(self.groups[groupID],  *same_col_nomax)
+            pos_ogmember_nomax= [self.groups[self.affiliation[n]].member for n in same_col_nomax]
+            for tup in (*pos_ogmember_nomax, (r,c)):
+                self.affiliation[tup] = max_id
+
+            # different colored neighbours: steal liberty
+            # Fixme: no suicide (4 black white in middl)
+            pos_diff_col = [n for n in neighb if board[n[0]][n[1]] != color
+                            and board[n[0]][n[1]] != '.']
+            for tup in pos_diff_col:
+                self.groups[self.affiliation[tup]].liberties.remove((r,c))
 
             # Todo no interaction (no colored neighbours) condition
             self.affiliation.update({position: groupID})
@@ -94,10 +109,10 @@ class Go:
         # TODO  make next lines a oneliner
         cond = lambda r, c: r >= 0 and r < self.size['height'] and c >= 0 and c < self.size['width']
         neighb = [(r + i, c) for i in [-1, 1] if cond(r + i, c)]  # horizontal
-        neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
+        return neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
 
     def parse_position(self, move):
-        # TODO: outsource the next 4 lines (make it global?)
+        # TODO: make a dict
         alpha = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
         alpha.remove('I')
         hor = alpha[0:self.size['width']]
@@ -108,9 +123,8 @@ class Go:
         else:
             return ver[int(move[0:-1])], hor.index(move[-1])
 
-    def _valid_move(self, position):
+    def _valid_move(self, r, c, position):
         #  (1) if stone already @ pos.
-        r, c = position
         if self.board[r][c] != '.':
             raise ValueError('cannot place a stone on top of another stone')
 
