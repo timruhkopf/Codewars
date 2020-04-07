@@ -2,6 +2,7 @@ class Group:
     def __init__(self, firststone, color):
         self.member = [firststone]
         self.liberties = set()  # set of positions
+        self.color = color
         pass
 
     def update_liberties(self):
@@ -17,7 +18,6 @@ class Group:
 
 
 class Go:
-
 
     def __init__(self, height, width=None):
         """https://www.codewars.com/kata/59de9f8ff703c4891900005c"""
@@ -44,8 +44,9 @@ class Go:
                      13: ['10I', '4C', '4I', '10C', '7F', '6C', '7I', '3F', '9F'],
                      19: ['16O', '4C', '16C', '4O', '10I', '10C', '10O', '16I', '4I']}
 
-        if list(self.size.values()) != [19, 19] and list(self.size.values()) != [13, 13] and list(
-                self.size.values()) != [9, 9]:
+        if list(self.size.values()) != [19, 19] and \
+                list(self.size.values()) != [13, 13] and \
+                list(self.size.values()) != [9, 9]:
             raise ValueError('boardsize is not suitable for handicap stones')
         elif len(stone_pos[self.size['height']]) < stones:
             raise ValueError('too many handicap stones for given boardsize')
@@ -58,8 +59,10 @@ class Go:
             self.groups.update(
                 {i: Group(firststone=stone, color='b')
                  for i, stone in enumerate(ls)})
-            self.affiliation.update({pos:i for i, pos in enumerate(ls)})
+            self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
+    def __repr__(self):
+        return '\n'.join(str(row) for row in self.board)
 
     def move(self, positions):
         """positions may take multiple values:
@@ -154,6 +157,7 @@ class Go:
 if __name__ == '__main__':
 
     go = Go(19)
+    go
     go.handicap_stones(9)
 
     from random import choice, randint
