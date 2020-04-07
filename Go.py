@@ -77,6 +77,10 @@ class Go:
             self.board[r][c] = ['x', 'o'][groupID % 2]
 
             # interact with other stones
+            # get the group ID with most members
+            # groups = [aff.get(x) for x in neigh]
+            # count = [list(aff.values()).count(x) for x in groups]
+            # gr.id.max = groups[count.index(max(count))]
             for id in groupIDs:
                 if self.groups[id].color == self.turn():  # same color
                     pass
