@@ -1,7 +1,7 @@
 class Group:
-    def __init__(self, firststone, color):
+    def __init__(self, firststone, liberties, color):
         self.member = [firststone]
-        self.liberties = set()  # set of positions
+        self.liberties = set(liberties)  # set of positions
         self.color = color
         pass
 
@@ -18,7 +18,6 @@ class Group:
 
 
 class Go:
-
     def __init__(self, height, width=None):
         """https://www.codewars.com/kata/59de9f8ff703c4891900005c"""
         if width is None:
@@ -26,18 +25,12 @@ class Go:
 
         if height > 25 or width > 25:
             raise ValueError('max board size in any dimension is 25')
-        # required attribute
+
         self.size = {'height': height, 'width': width}
-
-        # TODO: make board property: getter method uses dict representation
         self.board = [['.' for i in range(width)] for j in range(height)]
-
-        self.groups = dict()  # groupID: Group
-
-        # for ease of fetching neighbours' group
-        self.affiliation = dict()  # {position: groupID}
-
         self.history = []
+        self.groups = dict()  # {groupID: Group}
+        self.affiliation = dict()  # {position: groupID} ease fetching neighb.group
 
     def __repr__(self):
         return '\n'.join(str(row) for row in self.board)
@@ -81,23 +74,34 @@ class Go:
 
             if len(neighb) == 0:
                 groupID = len(self.history)
-                self.groups.update({groupID: Group(position, color=self.turn())})
+                self.groups.update({groupID: Group(position, liberties=neighb, color=self.turn())})
                 self.affiliation.update({position: groupID})
-                self.board[position[0]][position[1]] = ['x', 'o'][groupID % 2]
+                self.board[r][c] = ['x', 'o'][groupID % 2]
+            else:
+                liberties = [n for n in neighb if n not in self.affiliation.keys()]
+                groupIDs = set(self.affiliation[n] for n in neighb if n in self.affiliation.keys())
 
+                for id in groupIDs:
+                    if self.groups[id].color == self.turn():  # same color
+                        pass
+                    else:  # different colors: steal liberty
+                        self.groups[id].liberties.remove(position)
 
-
-                # Consider: check neighbours of position and add stone to a group if
-                # there exists a stone of same color on cross. Carefull with "linking stones"
-
-            # update groups
-            # (1) membership
-            # (2) liberties union. (same color) (to avoid circular patterns and false counting)
-            # different color: difference
-
-            # update affiliation
+                # self.groups[groupID].liberties.union(liberties)
 
             pass
+
+            # Consider: check neighbours of position and add stone to a group if
+            # there exists a stone of same color on cross. Carefull with "linking stones"
+
+        # update groups
+        # (1) membership
+        # (2) liberties union. (same color) (to avoid circular patterns and false counting)
+        # different color: difference
+
+        # update affiliation
+
+        pass
 
     def parse_position(self, move):
         hor = [chr(i) for i in range(ord('A'), ord('Y') + 1)][0:self.size['width']]
@@ -170,7 +174,6 @@ if __name__ == '__main__':
     go = Go(19)
     go.__repr__()
     go.handicap_stones(9)
-
 
     from random import choice, randint
     from Test_Codewars import test
@@ -408,4 +411,3 @@ if __name__ == '__main__':
     game.reset()
     test.assert_equals(game.board, board)
     test.assert_equals(game.turn, "black")
-
