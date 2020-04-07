@@ -10,7 +10,6 @@ class Group:
         self.member.extend((item for group in others for item in group.members))
 
 
-
 class Go:
     def __init__(self, height, width=None):
         """https://www.codewars.com/kata/59de9f8ff703c4891900005c"""
@@ -25,6 +24,7 @@ class Go:
         self.history = []
         self.groups = dict()  # {groupID: Group}
         self.affiliation = dict()  # {position: groupID} ease fetching neighb.group
+        self.handicap = 0
 
     def __repr__(self):
         return '\n'.join(str(row) for row in self.board)
@@ -47,9 +47,13 @@ class Go:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
             self.groups.update(
-                {i: Group(firststone=stone, liberties=self._find_neighb(*stone),color='b')
+                {i: Group(firststone=stone, liberties=self._find_neighb(*stone), color='b')
                  for i, stone in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
+
+            # white starts to play after handicap
+            self.history.append('handicap')
+            self.handicap = stones
 
     def move(self, positions):
         """positions may take multiple values:
@@ -58,8 +62,8 @@ class Go:
             r, c = self.parse_position(position)
 
             if self._valid_move(position):
-                color =  ['x', 'o'][len(self.history) % 2]
-                self.board[r][c] =color
+                color = ['x', 'o'][len(self.history) % 2]
+                self.board[r][c] = color
                 self.history.append(position)
 
             neighb = self._find_neighb(r, c)
@@ -68,32 +72,19 @@ class Go:
             groupIDs = set(self.affiliation[n] for n in neighb if n in self.affiliation.keys())
 
             # create new group (single stone)
-            groupID = len(self.history)
+            groupID = len(self.history) + self.handicap
             self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
             self.board[r][c] = ['x', 'o'][groupID % 2]
 
             # interact with other stones
-
             for id in groupIDs:
                 if self.groups[id].color == self.turn():  # same color
                     pass
-                else:  # different colors: steal liberty
+                else:  # different colored neighbours: steal liberty
                     self.groups[id].liberties.remove(position)
 
-            # Todo no interaction?
+            # Todo no interaction (no colored neighbours) condition
             self.affiliation.update({position: groupID})
-
-            # self.groups[groupID].liberties.union(liberties)
-
-            # Consider: check neighbours of position and add stone to a group if
-            # there exists a stone of same color on cross. Carefull with "linking stones"
-
-        # update groups
-        # (1) membership
-        # (2) liberties union. (same color) (to avoid circular patterns and false counting)
-        # different color: difference
-
-        # update affiliation
 
     def _find_neighb(self, r, c):
         # TODO  make next lines a oneliner
@@ -153,11 +144,13 @@ class Go:
 
     def rollback(self, steps):
         '''rollback the last game moves'''
+
+        # CAREFULL with '' in history
         pass
 
     def reset(self):  # FIXME: CHECK ME!!!
         # remove all attributes of self
-        for name in [k for k in self.__dict__.keys() if k != 'size']:
+        for name in [k for k in self.__dict__.keys() if k not in ['size', 'handicap']]:
             delattr(self, name)
 
         # reset groups
@@ -166,11 +159,15 @@ class Go:
         # reinstate attributes.
         self.__init__(**self.size)
 
+        # restore handicap
+        self.handicap_stones(self.handicap)
+
+
 
 if __name__ == '__main__':
 
     game = Go(4)
-    #game.move('2B', '3D', '2C')
+    # game.move('2B', '3D', '2C')
 
     go = Go(19)
     go.__repr__()
