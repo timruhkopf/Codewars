@@ -3,18 +3,14 @@ class Group:
         self.member = [firststone]
         self.liberties = set(liberties)  # set of positions
         self.color = color
-        pass
 
     def update_liberties(self):
         pass
 
-    def merge(self, other):
-        self.liberties = None  # += other.liberties?
-        self.member.extend(other.member)
-        pass
-
-    def die(self):
-        pass
+    def merge(self, others):
+        """:param others: iterable of Group instances"""
+        self.liberties.union(lib for lib in (group.liberties for group in others))
+        self.member.extend(others.member)
 
 
 class Go:
@@ -53,7 +49,7 @@ class Go:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
             self.groups.update(
-                {i: Group(firststone=stone, color='b')
+                {i: Group(firststone=stone, color='b')  # FIXME LIBERTIES
                  for i, stone in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
@@ -67,29 +63,27 @@ class Go:
                 self.board[r][c] = ['x', 'o'][len(self.history) % 2]
                 self.history.append(position)
 
-            # find neighbours   # TODO  make next lines a oneliner
-            cond = lambda r, c: r >= 0 and r < self.size['height'] and c >= 0 and c < self.size['width']
-            neighb = [(r + i, c) for i in [-1, 1] if cond(r + i, c)]  # horizontal
-            neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
+            neighb = self._find_neighb(r, c)
 
-            if len(neighb) == 0:
-                groupID = len(self.history)
-                self.groups.update({groupID: Group(position, liberties=neighb, color=self.turn())})
-                self.affiliation.update({position: groupID})
-                self.board[r][c] = ['x', 'o'][groupID % 2]
-            else:
-                liberties = [n for n in neighb if n not in self.affiliation.keys()]
-                groupIDs = set(self.affiliation[n] for n in neighb if n in self.affiliation.keys())
+            liberties = set(n for n in neighb if n not in self.affiliation.keys())
+            groupIDs = set(self.affiliation[n] for n in neighb if n in self.affiliation.keys())
 
-                for id in groupIDs:
-                    if self.groups[id].color == self.turn():  # same color
-                        pass
-                    else:  # different colors: steal liberty
-                        self.groups[id].liberties.remove(position)
+            # create new group (single stone)
+            groupID = len(self.history)
+            self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
+            self.board[r][c] = ['x', 'o'][groupID % 2]
 
-                # self.groups[groupID].liberties.union(liberties)
+            # interact with other stones
+            for id in groupIDs:
+                if self.groups[id].color == self.turn():  # same color
+                    pass
+                else:  # different colors: steal liberty
+                    self.groups[id].liberties.remove(position)
 
-            pass
+            # Todo no interaction?
+            self.affiliation.update({position: groupID})
+
+            # self.groups[groupID].liberties.union(liberties)
 
             # Consider: check neighbours of position and add stone to a group if
             # there exists a stone of same color on cross. Carefull with "linking stones"
@@ -101,7 +95,11 @@ class Go:
 
         # update affiliation
 
-        pass
+    def _find_neighb(self, r, c):
+        # TODO  make next lines a oneliner
+        cond = lambda r, c: r >= 0 and r < self.size['height'] and c >= 0 and c < self.size['width']
+        neighb = [(r + i, c) for i in [-1, 1] if cond(r + i, c)]  # horizontal
+        neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
 
     def parse_position(self, move):
         # TODO: outsource the next 4 lines (make it global?)
