@@ -40,7 +40,7 @@ class Go:
         self.history = []
 
     def handicap_stones(self, stones):
-        stone_pos = {9: ['G7', 'C3', 'G3', 'C7', 'E5'],
+        stone_pos = {9: ['7G', '3C', '3G', '7C', '5E'],
                      13: ['10I', '4C', '4I', '10C', '7F', '6C', '7I', '3F', '9F'],
                      19: ['16O', '4C', '16C', '4O', '10I', '10C', '10O', '16I', '4I']}
 
