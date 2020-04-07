@@ -100,6 +100,7 @@ class Go:
             pass
 
     def parse_position(self, move):
+        # TODO: outsource the next 4 lines (make it global?)
         alpha = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
         alpha.remove('I')
         hor = alpha[0:self.size['width']]
