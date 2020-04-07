@@ -4,13 +4,11 @@ class Group:
         self.liberties = set(liberties)  # set of positions
         self.color = color
 
-    def update_liberties(self):
-        pass
-
     def merge(self, others):
         """:param others: iterable of Group instances"""
-        self.liberties.union(lib for lib in (group.liberties for group in others))
-        self.member.extend(others.member)
+        self.liberties.update(*(lib for lib in (group.liberties for group in others)))
+        self.member.extend((item for group in others for item in group.members))
+
 
 
 class Go:
@@ -49,7 +47,7 @@ class Go:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
             self.groups.update(
-                {i: Group(firststone=stone, color='b')  # FIXME LIBERTIES
+                {i: Group(firststone=stone, liberties=self._find_neighb(*stone),color='b')
                  for i, stone in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
@@ -60,7 +58,8 @@ class Go:
             r, c = self.parse_position(position)
 
             if self._valid_move(position):
-                self.board[r][c] = ['x', 'o'][len(self.history) % 2]
+                color =  ['x', 'o'][len(self.history) % 2]
+                self.board[r][c] =color
                 self.history.append(position)
 
             neighb = self._find_neighb(r, c)
@@ -74,6 +73,7 @@ class Go:
             self.board[r][c] = ['x', 'o'][groupID % 2]
 
             # interact with other stones
+
             for id in groupIDs:
                 if self.groups[id].color == self.turn():  # same color
                     pass
@@ -170,7 +170,7 @@ class Go:
 if __name__ == '__main__':
 
     game = Go(4)
-    game.move('2B', '3D', '2C')
+    #game.move('2B', '3D', '2C')
 
     go = Go(19)
     go.__repr__()
