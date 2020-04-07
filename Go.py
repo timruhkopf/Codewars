@@ -37,8 +37,8 @@ class Go:
 
     def handicap_stones(self, stones):
         stone_pos = {9: ['7G', '3C', '3G', '7C', '5E'],
-                     13: ['10I', '4C', '4I', '10C', '7F', '6C', '7I', '3F', '9F'],
-                     19: ['16O', '4C', '16C', '4O', '10I', '10C', '10O', '16I', '4I']}
+                     13: ['10Q', '4D', '4Q', '10D', '7K', '7D', '7Q', '10K', '4K'],
+                     19: ['16Q', '4D', '4Q', '16D', '10K', '10D', '10Q', '16K', '4K']}
 
         if list(self.size.values()) != [19, 19] and \
                 list(self.size.values()) != [13, 13] and \
@@ -104,7 +104,10 @@ class Go:
         pass
 
     def parse_position(self, move):
-        hor = [chr(i) for i in range(ord('A'), ord('Y') + 1)][0:self.size['width']]
+        # TODO: outsource the next 4 lines (make it global?)
+        alpha = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
+        alpha.remove('I')
+        hor = alpha[0:self.size['width']]
         ver = [i for i in reversed(range(self.size['height'] + 1))]
 
         if int(move[0:-1]) not in ver or move[-1] not in hor:
