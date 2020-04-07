@@ -392,3 +392,7 @@ if __name__ == '__main__':
     game.reset()
     test.assert_equals(game.board, board)
     test.assert_equals(game.turn, "black")
+
+    test.it('Groups')
+    game = GO(4)
+    game.move('2B', '3D', '2C')
