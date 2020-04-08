@@ -66,50 +66,57 @@ class Go:
                 self.board[r][c] = color
                 self.history.append(position)
 
-            neighb = self._find_neighb(r, c)
+                # check surroundings
+                neighb = self._find_neighb(r, c)
+                liberties = set(n for n in neighb if n not in self.affiliation.keys())
+                # Deprec groupIDs = [self.affiliation[n] for n in neighb if n in self.affiliation.keys()]
 
-            liberties = set(n for n in neighb if n not in self.affiliation.keys())
-            groupIDs = set(self.affiliation[n] for n in neighb if n in self.affiliation.keys())
+                # (0) create new group (single stone) with no affiliation
+                groupID = len(self.history) + self.handicap
+                self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
+                self.board[r][c] = ['x', 'o'][groupID % 2]
 
-            # create new group (single stone)
-            groupID = len(self.history) + self.handicap
-            self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
-            self.board[r][c] = ['x', 'o'][groupID % 2]
+                # FIXME: check if any group will be removed by capturing!
 
-            # interact with other stones
-            # get the group ID with most members
-            # groups = [aff.get(x) for x in neigh]
-            # count = [list(aff.values()).count(x) for x in groups]
-            # gr.id.max = groups[count.index(max(count))]
+                # (1) same color (including mid stone)
+                self._merge_same_color(self, neighb, color, groupID, r, c)
 
-            # same color
-            pos_same_col = [n for n in neighb if board[n[0]][n[1]] == color]
-            membersize = [len(self.groups[self.affiliation[n]].member) for n in pos_same_col]
-            pos_max_grsize = pos_same_col[membersize.index(max(membersize))]
-            pos_same_col.remove(pos_max_grsize)
-            same_col_nomax = [self.groups[id] for id in [self.affiliation[n] for n in pos_same_col]]
-            max_id = self.affiliation(pos_max_grsize)
+                # (2) different colored neighbours: steal liberty
+                self._different_color_update(neighb, color, r, c)
 
-            self.groups[max_id].merge(self.groups[groupID],  *same_col_nomax)
-            pos_ogmember_nomax= [self.groups[self.affiliation[n]].member for n in same_col_nomax]
-            for tup in (*pos_ogmember_nomax, (r,c)):
-                self.affiliation[tup] = max_id
+    def _merge_same_color(self, neighb, color, groupID, r, c):
+        pos_same_col = [n for n in neighb if board[n[0]][n[1]] == color]
 
-            # different colored neighbours: steal liberty
-            # Fixme: no suicide (4 black white in middl)
-            pos_diff_col = [n for n in neighb if board[n[0]][n[1]] != color
-                            and board[n[0]][n[1]] != '.']
-            for tup in pos_diff_col:
-                self.groups[self.affiliation[tup]].liberties.remove((r,c))
+        # find largest Group (a bit of extra logic for fast moves in mid/end game)
+        membersize = [len(self._fetch_group(n).member) for n in pos_same_col]
+        pos_max_grsize = pos_same_col[membersize.index(max(membersize))]
+        pos_same_col.remove(pos_max_grsize)
+        # update with: same_col_no_max=[self._fetch_group_by_pos(n) for n in pos_same_col]
+        same_col_nomax = [self.groups[id] for id in [self.affiliation[n] for n in pos_same_col]]
+        max_id = self.affiliation[pos_max_grsize]
 
-            # Todo no interaction (no colored neighbours) condition
-            self.affiliation.update({position: groupID})
+        # merge to max group
+        self.groups[max_id].merge(self.groups[groupID], *same_col_nomax)
+
+        # change the affiliation of all same colored to val of max group aff.
+        for tup in (*[self._fetch_group(n).member for n in same_col_nomax], (r, c)):
+            self.affiliation[tup] = max_id  # TODO check affiliation of single stone!
+
+    def _different_color_update(self, neighb, color, r, c):
+        # Fixme: no suicide (4 black white in middl)
+        pos_diff_col = [n for n in neighb if board[n[0]][n[1]] != color
+                        and board[n[0]][n[1]] != '.']
+        for tup in pos_diff_col:
+            self._fetch_group(tup).liberties.remove((r, c))
+
+    def _fetch_group(self, position):
+        return self.groups[self.affiliation[position]]
 
     def _find_neighb(self, r, c):
-        # TODO  make next lines a oneliner
         cond = lambda r, c: r >= 0 and r < self.size['height'] and c >= 0 and c < self.size['width']
         neighb = [(r + i, c) for i in [-1, 1] if cond(r + i, c)]  # horizontal
-        return neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
+        neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
+        return neighb
 
     def parse_position(self, move):
         # TODO: make a dict
@@ -140,8 +147,8 @@ class Go:
 
         return True
 
-    def turn(self):  # FIXME: property getter not class method
-        # getter of current Turn color:
+    def turn(self):
+        """getter of current Turn color"""
         return ['black', 'white'][len(self.history) % 2]
 
     def pass_turn(self):
@@ -149,9 +156,7 @@ class Go:
         self.history.append('')
 
     def get_position(self, position):
-        """
-        :return: 'x', 'o' or '.'
-        """
+        """:return: 'x', 'o' or '.'"""
         position = self.parse_position(position)
         i, j = position
 
@@ -162,8 +167,9 @@ class Go:
 
     def rollback(self, steps):
         '''rollback the last game moves'''
-
         # CAREFULL with '' in history
+        # CAREFULL with removed groups: consider a capture history
+        # list((newstone, captured group), ...)
         pass
 
     def reset(self):  # FIXME: CHECK ME!!!
@@ -181,10 +187,10 @@ class Go:
         self.handicap_stones(self.handicap)
 
 
-
 if __name__ == '__main__':
 
     game = Go(4)
+    game.parse_position('2B') == (2, 1)
     # game.move('2B', '3D', '2C')
 
     go = Go(19)
