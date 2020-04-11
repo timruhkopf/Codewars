@@ -74,7 +74,7 @@ class Go:
                 # (0) create new group (single stone) with no affiliation
                 groupID = len(self.history) + self.handicap
                 self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
-                self.board[r][c] = ['x', 'o'][groupID % 2]
+                self.board[r][c] = ['x', 'o'][(groupID + 1) % 2]
 
                 # FIXME: check if any group will be removed by capturing!
 
@@ -85,7 +85,7 @@ class Go:
                 self._different_color_update(neighb, color, r, c)
 
     def _merge_same_color(self, neighb, color, groupID, r, c):
-        pos_same_col = [n for n in neighb if board[n[0]][n[1]] == color]
+        pos_same_col = [n for n in neighb if self.board[n[0]][n[1]] == color]
 
         # find largest Group (a bit of extra logic for fast moves in mid/end game)
         membersize = [len(self._fetch_group(n).member) for n in pos_same_col]
@@ -104,8 +104,8 @@ class Go:
 
     def _different_color_update(self, neighb, color, r, c):
         # Fixme: no suicide (4 black white in middl)
-        pos_diff_col = [n for n in neighb if board[n[0]][n[1]] != color
-                        and board[n[0]][n[1]] != '.']
+        pos_diff_col = [n for n in neighb if self.board[n[0]][n[1]] != color
+                        and self.board[n[0]][n[1]] != '.']
         for tup in pos_diff_col:
             self._fetch_group(tup).liberties.remove((r, c))
 
