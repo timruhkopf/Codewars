@@ -72,9 +72,10 @@ class Go:
                 # Deprec groupIDs = [self.affiliation[n] for n in neighb if n in self.affiliation.keys()]
 
                 # (0) create new group (single stone) with no affiliation
-                groupID = len(self.history) + self.handicap
+                # -1 so that it follows the logic of handicap_stones
+                groupID = len(self.history) + self.handicap - 1
                 self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
-                self.board[r][c] = ['x', 'o'][(groupID + 1) % 2]
+                self.board[r][c] = ['x', 'o'][groupID % 2]
 
                 # FIXME: check if any group will be removed by capturing!
 
