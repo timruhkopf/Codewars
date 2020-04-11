@@ -55,6 +55,10 @@ class Go:
             self.history.append('handicap')
             self.handicap = stones
 
+            # bring black on board
+            for r, c in ls:
+                self.board[r][c] = 'x'
+
     def move(self, *positions):
         """positions may take multiple values:
         move("4A", "5A", "6A")"""
@@ -139,8 +143,8 @@ class Go:
         # TODO (2.1) if KO was started (placing @ 1st removed stone)
 
         # (2.2) if KO (ongoing)
-        if self.history[-2] == position:
-            raise ValueError('Invalid move due to ongoing KO')
+        # if self.history[-2] == position:
+        #     raise ValueError('Invalid move due to ongoing KO')
 
         # ToDO check
         #  (3) suicide move (before assigning: check that same colored groups dont die)
