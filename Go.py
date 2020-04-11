@@ -84,7 +84,7 @@ class Go:
                 # FIXME: check if any group will be removed by capturing!
 
                 # (1) same color (including mid stone)
-                self._merge_same_color(self, neighb, color, groupID, r, c)
+                self._merge_same_color(neighb, color, groupID, r, c)
 
                 # (2) different colored neighbours: steal liberty
                 self._different_color_update(neighb, color, r, c)
@@ -92,20 +92,21 @@ class Go:
     def _merge_same_color(self, neighb, color, groupID, r, c):
         pos_same_col = [n for n in neighb if self.board[n[0]][n[1]] == color]
 
-        # find largest Group (a bit of extra logic for fast moves in mid/end game)
-        membersize = [len(self._fetch_group(n).member) for n in pos_same_col]
-        pos_max_grsize = pos_same_col[membersize.index(max(membersize))]
-        pos_same_col.remove(pos_max_grsize)
-        # update with: same_col_no_max=[self._fetch_group_by_pos(n) for n in pos_same_col]
-        same_col_nomax = [self.groups[id] for id in [self.affiliation[n] for n in pos_same_col]]
-        max_id = self.affiliation[pos_max_grsize]
+        if pos_same_col != []:
+            # find largest Group (a bit of extra logic for fast moves in mid/end game)
+            membersize = [len(self._fetch_group(n).member) for n in pos_same_col]
+            pos_max_grsize = pos_same_col[membersize.index(max(membersize))]
+            pos_same_col.remove(pos_max_grsize)
+            # update with: same_col_no_max=[self._fetch_group_by_pos(n) for n in pos_same_col]
+            same_col_nomax = [self.groups[id] for id in [self.affiliation[n] for n in pos_same_col]]
+            max_id = self.affiliation[pos_max_grsize]
 
-        # merge to max group
-        self.groups[max_id].merge(self.groups[groupID], *same_col_nomax)
+            # merge to max group
+            self.groups[max_id].merge(self.groups[groupID], *same_col_nomax)
 
-        # change the affiliation of all same colored to val of max group aff.
-        for tup in (*[self._fetch_group(n).member for n in same_col_nomax], (r, c)):
-            self.affiliation[tup] = max_id  # TODO check affiliation of single stone!
+            # change the affiliation of all same colored to val of max group aff.
+            for tup in (*[self._fetch_group(n).member for n in same_col_nomax], (r, c)):
+                self.affiliation[tup] = max_id  # TODO check affiliation of single stone!
 
     def _different_color_update(self, neighb, color, r, c):
         # Fixme: no suicide (4 black white in middl)
