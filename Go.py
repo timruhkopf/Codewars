@@ -112,8 +112,10 @@ class Go:
         # Fixme: no suicide (4 black white in middl)
         pos_diff_col = [n for n in neighb if self.board[n[0]][n[1]] != color
                         and self.board[n[0]][n[1]] != '.']
-        for tup in pos_diff_col:
-            self._fetch_group(tup).liberties.remove((r, c))
+
+        if pos_diff_col != []:
+            for tup in pos_diff_col:
+                self._fetch_group(tup).liberties.remove((r, c))
 
     def _fetch_group(self, position):
         return self.groups[self.affiliation[position]]
