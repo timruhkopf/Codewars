@@ -1,16 +1,21 @@
 from itertools import chain
 
+
 class Group:
-    def __init__(self, firststone, liberties, color):
+    def __init__(self, firststone, groupID, liberties,  color):
         self.member = [firststone]
+        self.groupID = groupID
         self.liberties = set(liberties)  # set of positions
         self.color = color
 
     def merge(self, *others):
         """:param others: iterable of Group instances"""
-        self.liberties.update(*(lib for lib in (group.liberties for group in others)))
+        self.liberties.update(
+            *(lib for lib in (group.liberties for group in others)))
         self.member.extend((item for group in others for item in group.member))
 
+    def __hash__(self):  # for set behaviour on values
+        return self.groupID
 
 class Go:
     def __init__(self, height, width=None):
@@ -49,7 +54,7 @@ class Go:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
             self.groups.update(
-                {i: Group(firststone=pos, liberties=self._find_neighb(*pos), color='b')
+                {i: Group(firststone=pos, groupID=i, liberties=n,  color='b')
                  for i, pos in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
@@ -61,6 +66,12 @@ class Go:
             for r, c in ls:
                 self.board[r][c] = 'x'
 
+    # Deprec
+    # def _diff_neighb(self, neighb, color):
+    #     """find the differntly colored neighbours"""
+    #     return [n for n in neighb
+    #             if self.board[n[0]][n[1]] == ['x', 'o'][(len(self.history) + 1) % 2]]
+
     def move(self, *positions):
         """positions may take multiple values:
         move("4A", "5A", "6A")"""
@@ -70,17 +81,17 @@ class Go:
             if self._valid_move(r, c, position):
                 color = ['x', 'o'][len(self.history) % 2]
                 self.board[r][c] = color
-                self.history.append(position)
-
-                # check surroundings
                 neighb = self._find_neighb(r, c)
-                liberties = set(n for n in neighb if n not in self.affiliation.keys())
-                # Deprec groupIDs = [self.affiliation[n] for n in neighb if n in self.affiliation.keys()]
 
                 # (0) create new group (single stone) with no affiliation
                 # -1 so that it follows the logic of handicap_stones
                 groupID = len(self.history) + self.handicap
-                self.groups.update({groupID: Group((r,c), liberties=liberties, color=self.turn())})
+                self.groups.update({groupID: Group(
+                    firststone=(r, c),
+                    groupID=groupID,
+                    liberties=set(n for n in neighb if n not in self.affiliation.keys()),
+                    color=self.turn())})
+                self.history.append(position)
                 self.affiliation.update({(r, c): groupID})
 
                 # FIXME: check if any group will be removed by capturing!
@@ -107,8 +118,7 @@ class Go:
             self.groups[max_id].merge(self.groups[groupID], *same_col_nomax)
 
             # remove mid (new) stone liberty
-            self.groups[max_id].liberties.remove((r,c))
-
+            self.groups[max_id].liberties.remove((r, c))
 
             # change the affiliation of all same colored to val of max group aff.
             for tup in (*chain(*[group.member for group in same_col_nomax]), (r, c)):
@@ -121,14 +131,36 @@ class Go:
 
         if pos_diff_col != []:
             for tup in pos_diff_col:
-                self._fetch_group(tup).liberties.remove((r, c))
+                group = self._fetch_group(tup)
+                group.liberties.remove((r, c))
 
-    def _capture(self):
+                # check if group has no liberties
+                if not bool(group.liberties):
+                    self._capture(group=group)
+
+    def _capture(self, group):
         """remove group when it has no liberty after _different_color_update
         each member's neighbour's group must be added this members position is a
         new liberty of that neighbour's group."""
-        pass
+        color = ['x', 'o']
+        color.remove(group.color)
+        color = color[0]
 
+        # find neighb. of each member & give them the respective liberty!
+        member_neighb = list(map(lambda position: self._find_neighb(*position), group.member))
+        diff_group = [set(self._fetch_group(n) for n in neighb if self.board[n[0]][n[1]] == color)
+                             for neighb in member_neighb]
+
+        for member, ngroup in zip(group.member, diff_group):
+            ngroup.liberties.extend(member)
+
+
+        for i, pos in enumerate(group.member):
+            # remove affiliations of all group member:
+            self.affiliation.popitem(pos)
+
+            # remove member from board
+            board[pos[0]][pos[1]] = '.'
 
     def _fetch_group(self, position):
         return self.groups[self.affiliation[position]]
@@ -209,6 +241,9 @@ class Go:
 
 
 if __name__ == '__main__':
+    # TODO : debug capturing, particularly look at liberties of all neighbours of
+    #  the members of the group. (they should have the member as new liberty
+
     # check multiple different color linking stone: liberties correct
     go = Go(19)
     # go.handicap_stones(8)
@@ -221,10 +256,6 @@ if __name__ == '__main__':
     go.groups[1].member, go.groups[1].liberties
     go.groups[3].member, go.groups[3].liberties
     go.groups[4].member, go.groups[4].liberties
-
-
-
-
 
     # check same color merger linking stone
     go = Go(19)
@@ -242,7 +273,6 @@ if __name__ == '__main__':
     go.groups[1].member, go.groups[1].liberties
     go.groups[3].member, go.groups[3].liberties
     go.groups[5].member, go.groups[5].liberties
-
 
     # check same color group merger
     go = Go(19)
