@@ -123,6 +123,13 @@ class Go:
             for tup in pos_diff_col:
                 self._fetch_group(tup).liberties.remove((r, c))
 
+    def _capture(self):
+        """remove group when it has no liberty after _different_color_update
+        each member's neighbour's group must be added this members position is a
+        new liberty of that neighbour's group."""
+        pass
+
+
     def _fetch_group(self, position):
         return self.groups[self.affiliation[position]]
 
@@ -202,6 +209,22 @@ class Go:
 
 
 if __name__ == '__main__':
+    # check multiple different color linking stone: liberties correct
+    go = Go(19)
+    # go.handicap_stones(8)
+    go.move('2B')
+    go.move('10F')
+    go.move('3C')
+    print(go)
+    go.move('2C')
+
+    go.groups[1].member, go.groups[1].liberties
+    go.groups[3].member, go.groups[3].liberties
+    go.groups[4].member, go.groups[4].liberties
+
+
+
+
 
     # check same color merger linking stone
     go = Go(19)
