@@ -1,3 +1,5 @@
+from itertools import chain
+
 class Group:
     def __init__(self, firststone, liberties, color):
         self.member = [firststone]
@@ -47,8 +49,8 @@ class Go:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
             self.groups.update(
-                {i: Group(firststone=stone, liberties=self._find_neighb(*stone), color='b')
-                 for i, stone in enumerate(ls)})
+                {i: Group(firststone=pos, liberties=self._find_neighb(*pos), color='b')
+                 for i, pos in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
             # white starts to play after handicap
@@ -78,7 +80,7 @@ class Go:
                 # (0) create new group (single stone) with no affiliation
                 # -1 so that it follows the logic of handicap_stones
                 groupID = len(self.history) + self.handicap
-                self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
+                self.groups.update({groupID: Group((r,c), liberties=liberties, color=self.turn())})
                 self.affiliation.update({(r, c): groupID})
 
                 # FIXME: check if any group will be removed by capturing!
@@ -107,8 +109,9 @@ class Go:
             # remove mid (new) stone liberty
             self.groups[max_id].liberties.remove((r,c))
 
+
             # change the affiliation of all same colored to val of max group aff.
-            for tup in (*[self._fetch_group(n).member for n in same_col_nomax], (r, c)):
+            for tup in (*chain(*[group.member for group in same_col_nomax]), (r, c)):
                 self.affiliation[tup] = max_id  # TODO check affiliation of single stone!
 
     def _different_color_update(self, neighb, color, r, c):
@@ -199,6 +202,24 @@ class Go:
 
 
 if __name__ == '__main__':
+
+    # check same color merger linking stone
+    go = Go(19)
+    # go.handicap_stones(8)
+    go.move('2B')
+    go.move('10F')
+    go.move('3C')
+    go.move('19F')
+    print(go)
+    go.move('2C')
+    print(go)
+
+    # NOTICE keeping the "old" merged groups is intentional, since this may
+    # ease the recovery!
+    go.groups[1].member, go.groups[1].liberties
+    go.groups[3].member, go.groups[3].liberties
+    go.groups[5].member, go.groups[5].liberties
+
 
     # check same color group merger
     go = Go(19)
