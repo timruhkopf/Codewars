@@ -77,9 +77,9 @@ class Go:
 
                 # (0) create new group (single stone) with no affiliation
                 # -1 so that it follows the logic of handicap_stones
-                groupID = len(self.history) + self.handicap - 1
+                groupID = len(self.history) + self.handicap
                 self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
-                self.board[r][c] = ['x', 'o'][groupID % 2]
+                self.affiliation.update({(r,c):groupID})
 
                 # FIXME: check if any group will be removed by capturing!
 
@@ -202,8 +202,12 @@ if __name__ == '__main__':
     # game.move('2B', '3D', '2C')
 
     go = Go(19)
-    go.__repr__()
-    go.handicap_stones(9)
+
+    go.handicap_stones(8)
+    go.move('2B')
+    print(go)  # .__repr__()
+    go.move('3B')
+    print(go)  # .__repr__()
 
     from random import choice, randint
     from Test_Codewars import test
