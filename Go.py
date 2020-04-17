@@ -7,7 +7,7 @@ class Group:
     def merge(self, *others):
         """:param others: iterable of Group instances"""
         self.liberties.update(*(lib for lib in (group.liberties for group in others)))
-        self.member.extend((item for group in others for item in group.members))
+        self.member.extend((item for group in others for item in group.member))
 
 
 class Go:
@@ -79,7 +79,7 @@ class Go:
                 # -1 so that it follows the logic of handicap_stones
                 groupID = len(self.history) + self.handicap
                 self.groups.update({groupID: Group(position, liberties=liberties, color=self.turn())})
-                self.affiliation.update({(r,c):groupID})
+                self.affiliation.update({(r, c): groupID})
 
                 # FIXME: check if any group will be removed by capturing!
 
@@ -103,6 +103,9 @@ class Go:
 
             # merge to max group
             self.groups[max_id].merge(self.groups[groupID], *same_col_nomax)
+
+            # remove mid (new) stone liberty
+            self.groups[max_id].liberties.remove((r,c))
 
             # change the affiliation of all same colored to val of max group aff.
             for tup in (*[self._fetch_group(n).member for n in same_col_nomax], (r, c)):
@@ -197,12 +200,22 @@ class Go:
 
 if __name__ == '__main__':
 
+    # check same color group merger
+    go = Go(19)
+    go.move('2B')
+    go.move('10F')
+    print(go)
+    go.move('3B')
+
+    go.groups[1].member, go.groups[1].liberties
+
+    # check parse_position
     game = Go(4)
     game.parse_position('2B') == (2, 1)
     # game.move('2B', '3D', '2C')
 
+    # check handicap stones & moves + move liberty difference
     go = Go(19)
-
     go.handicap_stones(8)
     go.move('2B')
     print(go)  # .__repr__()
