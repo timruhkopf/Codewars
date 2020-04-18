@@ -264,7 +264,7 @@ if __name__ == '__main__':
 
     game.move(*["4C", "3C", "6H", "4B", "5H", "5B"])
     captured = ["6D", "6E", "4D", "5D", "5C", "4E", "3E", "3F", "2F", "2G", "1G", "4C"]
-    game.move(*moves)
+
     for capture in captured:
         assert game.get_position(capture), "."
 
