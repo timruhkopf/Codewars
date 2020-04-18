@@ -1,6 +1,5 @@
 from itertools import chain
 
-
 class Group:
     def __init__(self, firststone, groupID, liberties, color):
         self.member = set((firststone,))
@@ -33,6 +32,7 @@ class Go:
         self.groups = dict()  # {groupID: Group}
         self.affiliation = dict()  # {position: groupID} ease fetching neighb.group
         self.handicap = 0
+        self.capured = dict() # {len(history at capture): captured members}
 
     def __repr__(self):
         return '\n'.join(str(row) for row in self.board)
@@ -144,6 +144,13 @@ class Go:
         """remove group when it has no liberty after _different_color_update
         each member's neighbour's group must be added this members position is a
         new liberty of that neighbour's group."""
+        if len(self.history)-1 in self.capured.keys():
+            if set((self.parse_position(self.history[-1]), )) == self.capured[len(self.history)-1]:
+                # TODO: rollback 1 step
+                raise ValueError('Ko')
+
+        self.capured.update({len(self.history): group.member})
+
         color = ['x', 'o']
         color.remove(group.color)
         color = color[0]
@@ -246,13 +253,13 @@ if __name__ == '__main__':
     # TODO : debug capturing, particularly look at liberties of all neighbours of
     #  the members of the group. (they should have the member as new liberty
 
-    # # KO
-    # go = Go(5)
-    # moves = ["5C", "5B", "4D", "4A", "3C", "3B",
-    #          "2D", "2C", "4B", "4C", "4B"]
-    # go.move(*moves)
-    # print(go)
-    # go.move("2B")
+    # KO
+    go = Go(5)
+    moves = ["5C", "5B", "4D", "4A", "3C", "3B",
+             "2D", "2C", "4B", "4C", "4B"]
+    go.move(*moves)
+    print(go)
+    go.move("2B")
 
     # multiple stone capture
     game = Go(9)
