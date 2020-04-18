@@ -1,5 +1,6 @@
 from itertools import chain
 
+
 class Group:
     def __init__(self, firststone, groupID, liberties, color):
         self.member = set((firststone,))
@@ -32,7 +33,7 @@ class Go:
         self.groups = dict()  # {groupID: Group}
         self.affiliation = dict()  # {position: groupID} ease fetching neighb.group
         self.handicap = 0
-        self.capured = dict() # {len(history at capture): captured members}
+        self.capured = dict()  # {len(history at capture): captured members}
 
     def __repr__(self):
         return '\n'.join(str(row) for row in self.board)
@@ -95,13 +96,17 @@ class Go:
                 self.history.append(position)
                 self.affiliation.update({(r, c): groupID})
 
-                # FIXME: check if any group will be removed by capturing!
-
                 # (1) same color (including mid stone)
                 self._merge_same_color(neighb, color, groupID, r, c)
 
                 # (2) different colored neighbours: steal liberty
                 self._different_color_update(neighb, color, r, c)
+
+                # (3) check move was no suicide
+                # (the group above has new affil. after merger)
+                if not bool(self.groups[self.affiliation[(r, c)]].liberties):
+                    # TODO rollback 1 step
+                    raise ValueError('Suicide')
 
     def _merge_same_color(self, neighb, color, groupID, r, c):
         pos_same_col = [n for n in neighb if self.board[n[0]][n[1]] == color]
@@ -123,16 +128,15 @@ class Go:
 
             # change the affiliation of all same colored to val of max group aff.
             for tup in (*chain(*[group.member for group in same_col_nomax]), (r, c)):
-                self.affiliation[tup] = max_id  # TODO check affiliation of single stone!
+                self.affiliation[tup] = max_id
 
     def _different_color_update(self, neighb, color, r, c):
-        # Fixme: no suicide (4 black white in middl)
-        pos_diff_col = [n for n in neighb if self.board[n[0]][n[1]] != color
-                        and self.board[n[0]][n[1]] != '.']
+        pos_diff_col = set(self._fetch_group(n) for n in neighb
+                           if self.board[n[0]][n[1]] != color
+                           and self.board[n[0]][n[1]] != '.')
 
         if pos_diff_col != []:
-            for tup in pos_diff_col:
-                group = self._fetch_group(tup)
+            for group in pos_diff_col:
                 if (r, c) in group.liberties:
                     group.liberties.remove((r, c))
 
@@ -144,8 +148,9 @@ class Go:
         """remove group when it has no liberty after _different_color_update
         each member's neighbour's group must be added this members position is a
         new liberty of that neighbour's group."""
-        if len(self.history)-1 in self.capured.keys():
-            if set((self.parse_position(self.history[-1]), )) == self.capured[len(self.history)-1]:
+        if len(self.history) - 1 in self.capured.keys():
+            if set((self.parse_position(self.history[-1]),)) == \
+                    self.capured[len(self.history) - 1] and len(group.member) == 1:
                 # TODO: rollback 1 step
                 raise ValueError('Ko')
 
@@ -196,17 +201,6 @@ class Go:
         #  (1) if stone already @ pos.
         if self.board[r][c] != '.':
             raise ValueError('cannot place a stone on top of another stone')
-
-        # TODO (2.1) if KO was started (placing @ 1st removed stone)
-
-        # (2.2) if KO (ongoing)
-        # if self.history[-2] == position:
-        #     raise ValueError('Invalid move due to ongoing KO')
-
-        # ToDO check
-        #  (3) suicide move (before assigning: check that same colored groups dont die)
-        #   what about connecting stones?
-
         return True
 
     def turn(self):
@@ -229,24 +223,27 @@ class Go:
 
     def rollback(self, steps):
         '''rollback the last game moves'''
-        # CAREFULL with '' in history
+        # CAREFULL with '' & 'handicap' in history
         # CAREFULL with removed groups: consider a capture history
         # list((newstone, captured group), ...)
+
+        # handicap & self.size & self.history must survive
+        # rebuild from self.history!
         pass
 
     def reset(self):  # FIXME: CHECK ME!!!
-        # remove all attributes of self
-        for name in [k for k in self.__dict__.keys() if k not in ['size', 'handicap']]:
-            delattr(self, name)
 
-        # reset groups
-        Go._groups = dict()
-
-        # reinstate attributes.
-        self.__init__(**self.size)
-
-        # restore handicap
-        self.handicap_stones(self.handicap)
+        #Deprec
+        # # remove all attributes of self
+        # for name in [k for k in self.__dict__.keys() if k not in ['size', 'handicap']]:
+        #     delattr(self, name)
+        #
+        # # reinstate attributes.
+        # self.__init__(**self.size)
+        #
+        # # restore handicap # FIXME: handicap must survive
+        # self.handicap_stones(self.handicap)
+        pass
 
 
 if __name__ == '__main__':
@@ -256,10 +253,44 @@ if __name__ == '__main__':
     # KO
     go = Go(5)
     moves = ["5C", "5B", "4D", "4A", "3C", "3B",
-             "2D", "2C", "4B", "4C", "4B"]
+             "2D", "2C", "4B", "4C"]
     go.move(*moves)
     print(go)
+    go.move("4B")
     go.move("2B")
+
+    # "Snapback"
+    game = Go(5)
+    moves = ["5A", "1E", "5B", "2D", "5C", "2C", "3A",
+             "1C", "2A", "3D", "2B", "3E", "4D", "4B",
+             "4E", "4A", "3C", "3B", "1A", "4C"]
+    captured = ["4A", "4B", "4C", "3B"]
+    game.move(*moves)
+    game.move("3C")
+    for capture in captured:
+        assert game.get_position(capture), "."
+    # close_it()
+
+    # "Self-capturing throws an error.")
+    game = Go(9)
+    moves = ["4H", "8A", "8B", "9B"]
+    game.move(*moves)
+    print(game)
+    game.move("9A")
+
+    # test.expect_error("self capturing moves are illegal", lambda: game.move(*moves))
+    assert game.get_position("9A"), "."  # , "Illegal stone should be removed"
+    game.move("3B")
+    game.get_position("3B"), "x", "Black should have another try"
+
+    # multiple captures:
+    game = Go(9)
+    moves = ["5D", "5E", "4E", "6E", "7D", "4F", "7E", "3E", "5F", "4D",
+             "6F", "6D", "6C", "7F", "4E", "5E"]
+    captured = ["4E", "6D", "6E"]
+    game.move(*moves)
+    for capture in captured:
+        assert game.get_position(capture), "."
 
     # multiple stone capture
     game = Go(9)
@@ -293,8 +324,6 @@ if __name__ == '__main__':
     go.groups[0].member, go.groups[0].liberties
     go.groups[2].member, go.groups[2].liberties
     go.groups[4].member, go.groups[4].liberties
-    # go.groups[6].member, go.groups[6].liberties
-    # go.groups[8].member, go.groups[8].liberties
     go.groups[10].member, go.groups[10].liberties
 
     # check killing criteria
