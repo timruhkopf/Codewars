@@ -35,6 +35,8 @@ class Go:
         self.handicap = 0
         self.capured = dict()  # {len(history at capture): captured members}
 
+        self.parse_position = self._precompute_for_parsing()
+
     def __repr__(self):
         return '\n'.join(str(row) for row in self.board)
 
@@ -50,7 +52,6 @@ class Go:
         elif len(stone_pos[self.size['height']]) < stones:
             raise ValueError('too many handicap stones for given boardsize')
         elif len(self.history) != 0:
-            # TODO: replace this by _groups
             raise ValueError('game has already started or you called handicap_stones twice')
         else:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
@@ -64,7 +65,7 @@ class Go:
             self.history.append('handicap')
             self.handicap = stones
 
-            # bring black on board
+            # place handicap stones
             for r, c in ls:
                 self.board[r][c] = 'x'
 
@@ -73,13 +74,12 @@ class Go:
         for position in positions:
             r, c = self.parse_position(position)
 
-            if self._valid_move(r, c):
+            if self._occupied(r, c):
                 color = ['x', 'o'][len(self.history) % 2]
                 self.board[r][c] = color
                 neighb = self._find_neighb(r, c)
 
-                # (0) create new group (single stone) with no affiliation
-                # -1 so that it follows the logic of handicap_stones
+                # (0) create new group (single stone)
                 groupID = len(self.history) + self.handicap
                 self.groups.update({groupID: Group(
                     firststone=(r, c),
@@ -96,12 +96,19 @@ class Go:
                 self._different_color_update(neighb, color, r, c)
 
                 # (3) check move was no suicide
-                # (the group above has new affil. after merger)
+                # (notice the group above has new affil. after merger)
                 if not bool(self.groups[self.affiliation[(r, c)]].liberties):
                     self.rollback(1)
                     raise ValueError('Suicide')
 
+    def _occupied(self, r, c):
+        """returns true if no stone @ the requested position pos."""
+        if self.board[r][c] != '.':
+            raise ValueError('cannot place a stone on top of another stone')
+        return True
+
     def _merge_same_color(self, neighb, color, groupID, r, c):
+        """merge all stones of same color in neighb. including mid stone"""
         pos_same_col = [n for n in neighb if self.board[n[0]][n[1]] == color]
 
         if pos_same_col != []:
@@ -109,7 +116,6 @@ class Go:
             membersize = [len(self._fetch_group(n).member) for n in pos_same_col]
             pos_max_grsize = pos_same_col[membersize.index(max(membersize))]
             pos_same_col.remove(pos_max_grsize)
-            # update with: same_col_no_max=[self._fetch_group_by_pos(n) for n in pos_same_col]
             same_col_nomax = [self.groups[id] for id in [self.affiliation[n] for n in pos_same_col]]
             max_id = self.affiliation[pos_max_grsize]
 
@@ -124,6 +130,8 @@ class Go:
                 self.affiliation[tup] = max_id
 
     def _different_color_update(self, neighb, color, r, c):
+        """steal the liberty (of the new stone at r,c)
+        of all different colored neighbours"""
         pos_diff_col = set(self._fetch_group(n) for n in neighb
                            if self.board[n[0]][n[1]] != color
                            and self.board[n[0]][n[1]] != '.')
@@ -149,6 +157,7 @@ class Go:
 
         self.capured.update({len(self.history): group.member})
 
+        # opposite color
         color = ['x', 'o']
         color.remove(group.color)
         color = color[0]
@@ -170,31 +179,31 @@ class Go:
             self.board[pos[0]][pos[1]] = '.'
 
     def _fetch_group(self, position):
+        """return the instance of a group by position"""
         return self.groups[self.affiliation[position]]
 
     def _find_neighb(self, r, c):
+        """:return list of position tuples, representing
+        horizontal vertical adjacent positions"""
         cond = lambda r, c: r >= 0 and r < self.size['height'] and c >= 0 and c < self.size['width']
         neighb = [(r + i, c) for i in [-1, 1] if cond(r + i, c)]  # horizontal
         neighb.extend((r, c + j) for j in [-1, 1] if cond(r, c + j))  # vertical
         return neighb
 
-    def parse_position(self, move):
-        # TODO: make a dict
+    def _precompute_for_parsing(self):
+        """decorator to precompute the indicies for parsing only once in self.__init__"""
         alpha = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
         alpha.remove('I')
         hor = alpha[0:self.size['width']]
         ver = [i for i in reversed(range(self.size['height'] + 1))]
 
-        if int(move[0:-1]) not in ver or move[-1] not in hor:
-            raise ValueError('You are out of bounds')
-        else:
-            return ver[int(move[0:-1])], hor.index(move[-1])
+        def parse_position(move):
+            if int(move[0:-1]) not in ver or move[-1] not in hor:
+                raise ValueError('You are out of bounds')
+            else:
+                return ver[int(move[0:-1])], hor.index(move[-1])
 
-    def _valid_move(self, r, c):
-        #  (1) if stone already @ pos.
-        if self.board[r][c] != '.':
-            raise ValueError('cannot place a stone on top of another stone')
-        return True
+        return parse_position
 
     @property
     def turn(self):
@@ -248,7 +257,7 @@ if __name__ == '__main__':
     game.move("3B")
     assert game.turn == "white"
     game.move("4B")
-    assert game.turn ==  "black"
+    assert game.turn == "black"
 
     # KO
     go = Go(5)
@@ -316,7 +325,7 @@ if __name__ == '__main__':
 
     # check killing criteria remove a white group with multiple stones
     go = Go(19)
-    moves = ['6F','6G','6H','7G','5G','2A','7F','1A','7H','3A']
+    moves = ['6F', '6G', '6H', '7G', '5G', '2A', '7F', '1A', '7H', '3A']
     go.move(*moves)
     print(go)
     go.move('8G')
