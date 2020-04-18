@@ -3,7 +3,7 @@ from itertools import chain
 
 class Group:
     def __init__(self, firststone, groupID, liberties, color):
-        self.member = set((firststone,))
+        self.member = {firststone}
         self.groupID = groupID
         self.liberties = set(liberties)  # set of positions
         self.color = color
@@ -68,15 +68,8 @@ class Go:
             for r, c in ls:
                 self.board[r][c] = 'x'
 
-    # Deprec
-    # def _diff_neighb(self, neighb, color):
-    #     """find the differntly colored neighbours"""
-    #     return [n for n in neighb
-    #             if self.board[n[0]][n[1]] == ['x', 'o'][(len(self.history) + 1) % 2]]
-
     def move(self, *positions):
-        """positions may take multiple values:
-        move("4A", "5A", "6A")"""
+        """positions may take multiple values: move("4A", "5A", "6A")"""
         for position in positions:
             r, c = self.parse_position(position)
 
@@ -105,7 +98,7 @@ class Go:
                 # (3) check move was no suicide
                 # (the group above has new affil. after merger)
                 if not bool(self.groups[self.affiliation[(r, c)]].liberties):
-                    # TODO rollback 1 step
+                    self.rollback(1)
                     raise ValueError('Suicide')
 
     def _merge_same_color(self, neighb, color, groupID, r, c):
@@ -149,9 +142,9 @@ class Go:
         each member's neighbour's group must be added this members position is a
         new liberty of that neighbour's group."""
         if len(self.history) - 1 in self.capured.keys():
-            if set((self.parse_position(self.history[-1]),)) == \
+            if {self.parse_position(self.history[-1])} == \
                     self.capured[len(self.history) - 1] and len(group.member) == 1:
-                # TODO: rollback 1 step
+                self.rollback(1)
                 raise ValueError('Ko')
 
         self.capured.update({len(self.history): group.member})
@@ -197,7 +190,7 @@ class Go:
         else:
             return ver[int(move[0:-1])], hor.index(move[-1])
 
-    def _valid_move(self, r, c, position):
+    def _valid_move(self, r, c):
         #  (1) if stone already @ pos.
         if self.board[r][c] != '.':
             raise ValueError('cannot place a stone on top of another stone')
@@ -222,28 +215,27 @@ class Go:
             return '.'
 
     def rollback(self, steps):
-        '''rollback the last game moves'''
-        # CAREFULL with '' & 'handicap' in history
-        # CAREFULL with removed groups: consider a capture history
-        # list((newstone, captured group), ...)
+        """rollback the last game moves (by replaying the history)"""
+        history = self.history
+        handicap = self.handicap
 
-        # handicap & self.size & self.history must survive
-        # rebuild from self.history!
-        pass
+        # reinstate attributes.
+        self.__init__(**self.size)
 
-    def reset(self):  # FIXME: CHECK ME!!!
+        # restore handicap
+        if handicap != 0:
+            self.handicap_stones(handicap)
+            history = history[1:]
 
-        #Deprec
-        # # remove all attributes of self
-        # for name in [k for k in self.__dict__.keys() if k not in ['size', 'handicap']]:
-        #     delattr(self, name)
-        #
-        # # reinstate attributes.
-        # self.__init__(**self.size)
-        #
-        # # restore handicap # FIXME: handicap must survive
-        # self.handicap_stones(self.handicap)
-        pass
+        for m in history[:-steps]:
+            if bool(m):
+                self.move(m)
+            else:
+                self.pass_turn()
+
+    def reset(self):
+        """remove all stones of the board"""
+        self.__init__(**self.size)
 
 
 if __name__ == '__main__':
@@ -258,6 +250,14 @@ if __name__ == '__main__':
     print(go)
     go.move("4B")
     go.move("2B")
+
+    # reset the board:
+    go.reset()
+    print(go)
+    go.handicap
+    go.groups
+    go.affiliation
+    go.size
 
     # "Snapback"
     game = Go(5)
@@ -308,16 +308,8 @@ if __name__ == '__main__':
 
     # check killing criteria remove a white group with multiple stones
     go = Go(19)
-    go.move('6F')
-    go.move('6G')
-    go.move('6H')
-    go.move('7G')
-    go.move('5G')
-    go.move('2A')
-    go.move('7F')
-    go.move('1A')
-    go.move('7H')
-    go.move('3A')
+    moves = ['6F','6G','6H','7G','5G','2A','7F','1A','7H','3A']
+    go.move(*moves)
     print(go)
     go.move('8G')
 
