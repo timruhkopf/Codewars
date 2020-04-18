@@ -54,7 +54,7 @@ class Go:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
             self.groups.update(
-                {i: Group(firststone=pos, groupID=i, liberties=n,  color='b')
+                {i: Group(firststone=pos, groupID=i, liberties=n,  color='x')
                  for i, pos in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
@@ -90,7 +90,7 @@ class Go:
                     firststone=(r, c),
                     groupID=groupID,
                     liberties=set(n for n in neighb if n not in self.affiliation.keys()),
-                    color=self.turn())})
+                    color=color)})
                 self.history.append(position)
                 self.affiliation.update({(r, c): groupID})
 
@@ -151,16 +151,17 @@ class Go:
         diff_group = [set(self._fetch_group(n) for n in neighb if self.board[n[0]][n[1]] == color)
                              for neighb in member_neighb]
 
-        for member, ngroup in zip(group.member, diff_group):
-            ngroup.liberties.extend(member)
+        for member, ngroups in zip(group.member, diff_group):
+            for ngroup in ngroups:
+                ngroup.liberties.update({member})
 
 
         for i, pos in enumerate(group.member):
             # remove affiliations of all group member:
-            self.affiliation.popitem(pos)
+            self.affiliation.pop(pos)
 
             # remove member from board
-            board[pos[0]][pos[1]] = '.'
+            self.board[pos[0]][pos[1]] = '.'
 
     def _fetch_group(self, position):
         return self.groups[self.affiliation[position]]
@@ -244,6 +245,28 @@ if __name__ == '__main__':
     # TODO : debug capturing, particularly look at liberties of all neighbours of
     #  the members of the group. (they should have the member as new liberty
 
+    # check killing criteria remove a white group with multiple stones
+    go = Go(19)
+    go.move('6F')
+    go.move('6G')
+    go.move('6H')
+    go.move('7G')
+    go.move('5G')
+    go.move('2A')
+    go.move('7F')
+    go.move('1A')
+    go.move('7H')
+    go.move('3A')
+    print(go)
+    go.move('8G')
+
+    go.groups[0].member, go.groups[0].liberties
+    go.groups[2].member, go.groups[2].liberties
+    go.groups[4].member, go.groups[4].liberties
+    # go.groups[6].member, go.groups[6].liberties
+    # go.groups[8].member, go.groups[8].liberties
+    go.groups[10].member, go.groups[10].liberties
+
     # check killing criteria
     go = Go(19)
     go.move('6F')
@@ -252,7 +275,14 @@ if __name__ == '__main__':
     go.move('1A')
     go.move('5G')
     go.move('2A')
+    print(go)
     go.move('7G')
+    print(go)
+
+    go.groups[0].member, go.groups[0].liberties
+    go.groups[2].member, go.groups[2].liberties
+    go.groups[4].member, go.groups[4].liberties
+    go.groups[6].member, go.groups[6].liberties
 
     # check multiple different color linking stone: liberties correct
     go = Go(19)
