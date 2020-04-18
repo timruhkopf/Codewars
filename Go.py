@@ -2,8 +2,8 @@ from itertools import chain
 
 
 class Group:
-    def __init__(self, firststone, groupID, liberties,  color):
-        self.member = [firststone]
+    def __init__(self, firststone, groupID, liberties, color):
+        self.member = set((firststone,))
         self.groupID = groupID
         self.liberties = set(liberties)  # set of positions
         self.color = color
@@ -12,10 +12,11 @@ class Group:
         """:param others: iterable of Group instances"""
         self.liberties.update(
             *(lib for lib in (group.liberties for group in others)))
-        self.member.extend((item for group in others for item in group.member))
+        self.member.update((item for group in others for item in group.member))
 
     def __hash__(self):  # for set behaviour on values
         return self.groupID
+
 
 class Go:
     def __init__(self, height, width=None):
@@ -54,7 +55,7 @@ class Go:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
             self.groups.update(
-                {i: Group(firststone=pos, groupID=i, liberties=n,  color='b')
+                {i: Group(firststone=pos, groupID=i, liberties=n, color='x')
                  for i, pos in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
@@ -90,7 +91,7 @@ class Go:
                     firststone=(r, c),
                     groupID=groupID,
                     liberties=set(n for n in neighb if n not in self.affiliation.keys()),
-                    color=self.turn())})
+                    color=color)})
                 self.history.append(position)
                 self.affiliation.update({(r, c): groupID})
 
@@ -132,7 +133,8 @@ class Go:
         if pos_diff_col != []:
             for tup in pos_diff_col:
                 group = self._fetch_group(tup)
-                group.liberties.remove((r, c))
+                if (r, c) in group.liberties:
+                    group.liberties.remove((r, c))
 
                 # check if group has no liberties
                 if not bool(group.liberties):
@@ -149,18 +151,18 @@ class Go:
         # find neighb. of each member & give them the respective liberty!
         member_neighb = list(map(lambda position: self._find_neighb(*position), group.member))
         diff_group = [set(self._fetch_group(n) for n in neighb if self.board[n[0]][n[1]] == color)
-                             for neighb in member_neighb]
+                      for neighb in member_neighb]
 
-        for member, ngroup in zip(group.member, diff_group):
-            ngroup.liberties.extend(member)
-
+        for member, ngroups in zip(group.member, diff_group):
+            for ngroup in ngroups:
+                ngroup.liberties.update({member})
 
         for i, pos in enumerate(group.member):
             # remove affiliations of all group member:
-            self.affiliation.popitem(pos)
+            self.affiliation.pop(pos)
 
             # remove member from board
-            board[pos[0]][pos[1]] = '.'
+            self.board[pos[0]][pos[1]] = '.'
 
     def _fetch_group(self, position):
         return self.groups[self.affiliation[position]]
@@ -244,6 +246,50 @@ if __name__ == '__main__':
     # TODO : debug capturing, particularly look at liberties of all neighbours of
     #  the members of the group. (they should have the member as new liberty
 
+    # # KO
+    # go = Go(5)
+    # moves = ["5C", "5B", "4D", "4A", "3C", "3B",
+    #          "2D", "2C", "4B", "4C", "4B"]
+    # go.move(*moves)
+    # print(go)
+    # go.move("2B")
+
+    # multiple stone capture
+    game = Go(9)
+    moves = ["6D", "7E", "6E", "6F", "4D", "5E", "5D", "7D",
+             "5C", "6C", "7H", "3D", "4E", "4F", "3E", "2E",
+             "3F", "3G", "2F", "1F", "2G", "2H", "1G", "1H"]
+    game.move(*moves)
+    print(game)
+
+    game.move(*["4C", "3C", "6H", "4B", "5H", "5B"])
+    captured = ["6D", "6E", "4D", "5D", "5C", "4E", "3E", "3F", "2F", "2G", "1G", "4C"]
+    game.move(*moves)
+    for capture in captured:
+        assert game.get_position(capture), "."
+
+    # check killing criteria remove a white group with multiple stones
+    go = Go(19)
+    go.move('6F')
+    go.move('6G')
+    go.move('6H')
+    go.move('7G')
+    go.move('5G')
+    go.move('2A')
+    go.move('7F')
+    go.move('1A')
+    go.move('7H')
+    go.move('3A')
+    print(go)
+    go.move('8G')
+
+    go.groups[0].member, go.groups[0].liberties
+    go.groups[2].member, go.groups[2].liberties
+    go.groups[4].member, go.groups[4].liberties
+    # go.groups[6].member, go.groups[6].liberties
+    # go.groups[8].member, go.groups[8].liberties
+    go.groups[10].member, go.groups[10].liberties
+
     # check killing criteria
     go = Go(19)
     go.move('6F')
@@ -252,7 +298,14 @@ if __name__ == '__main__':
     go.move('1A')
     go.move('5G')
     go.move('2A')
+    print(go)
     go.move('7G')
+    print(go)
+
+    go.groups[0].member, go.groups[0].liberties
+    go.groups[2].member, go.groups[2].liberties
+    go.groups[4].member, go.groups[4].liberties
+    go.groups[6].member, go.groups[6].liberties
 
     # check multiple different color linking stone: liberties correct
     go = Go(19)
