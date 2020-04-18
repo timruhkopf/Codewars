@@ -245,7 +245,7 @@ if __name__ == '__main__':
     #  the members of the group. (they should have the member as new liberty
 
     # check killing criteria
-    go = GO(19)
+    go = Go(19)
     go.move('6F')
     go.move('6G')
     go.move('6H')
@@ -253,7 +253,6 @@ if __name__ == '__main__':
     go.move('5G')
     go.move('2A')
     go.move('7G')
-    print(go)
 
     # check multiple different color linking stone: liberties correct
     go = Go(19)
