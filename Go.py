@@ -40,7 +40,7 @@ class Go:
 
     def handicap_stones(self, stones):
         stone_pos = {9: ['7G', '3C', '3G', '7C', '5E'],
-                     13: ['10Q', '4D', '4Q', '10D', '7K', '7D', '7Q', '10K', '4K'],
+                     13: ['10K', '4D', '4K', '10D', '7G', '7D', '7K', '10G', '4G'],
                      19: ['16Q', '4D', '4Q', '16D', '10K', '10D', '10Q', '16K', '4K']}
 
         if list(self.size.values()) != [19, 19] and \
@@ -49,14 +49,14 @@ class Go:
             raise ValueError('boardsize is not suitable for handicap stones')
         elif len(stone_pos[self.size['height']]) < stones:
             raise ValueError('too many handicap stones for given boardsize')
-        elif any(j == 'x' for i in self.board for j in i):
+        elif len(self.history) != 0:
             # TODO: replace this by _groups
             raise ValueError('game has already started or you called handicap_stones twice')
         else:
             ls = [self.parse_position(stone) for stone in stone_pos[self.size['height']][0:stones]]
 
             self.groups.update(
-                {i: Group(firststone=pos, groupID=i, liberties=n, color='x')
+                {i: Group(firststone=pos, groupID=i, liberties=self._find_neighb(*pos), color='x')
                  for i, pos in enumerate(ls)})
             self.affiliation.update({pos: i for i, pos in enumerate(ls)})
 
@@ -73,7 +73,7 @@ class Go:
         for position in positions:
             r, c = self.parse_position(position)
 
-            if self._valid_move(r, c, position):
+            if self._valid_move(r, c):
                 color = ['x', 'o'][len(self.history) % 2]
                 self.board[r][c] = color
                 neighb = self._find_neighb(r, c)
@@ -196,6 +196,7 @@ class Go:
             raise ValueError('cannot place a stone on top of another stone')
         return True
 
+    @property
     def turn(self):
         """getter of current Turn color"""
         return ['black', 'white'][len(self.history) % 2]
@@ -209,13 +210,13 @@ class Go:
         position = self.parse_position(position)
         i, j = position
 
-        if self.board[i][j] != '.':
-            return self.affiliation[position].color
-        else:
-            return '.'
+        return self.board[i][j]
 
     def rollback(self, steps):
         """rollback the last game moves (by replaying the history)"""
+        if len(self.history) < steps:
+            raise ValueError('invalid rollback to few moves to unravel')
+
         history = self.history
         handicap = self.handicap
 
@@ -241,6 +242,13 @@ class Go:
 if __name__ == '__main__':
     # TODO : debug capturing, particularly look at liberties of all neighbours of
     #  the members of the group. (they should have the member as new liberty
+
+    # color of current turn
+    game = Go(9)
+    game.move("3B")
+    assert game.turn == "white"
+    game.move("4B")
+    assert game.turn ==  "black"
 
     # KO
     go = Go(5)
