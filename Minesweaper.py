@@ -1,13 +1,20 @@
 class Game:
+    dim = 0, 0 # FIXME: still not pretty!
+
     def __init__(self, map, result=None):
         """
         Game class allows interactive debugging in Pycharm
         :param map: true map
         """
+
         self.map = self.parse_map(map)
+
+        Game.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map # FIXME: still not pretty!
+        Position.clues = dict()  # resetting the clues for each new game
+
         if result is not None:
             self.result = self.parse_map(result)
-            self.count = result.count('x')  # number of bombs
+            self.count = result.count('x')  # no. of bombs
 
     def __repr__(self):
         return self.encode_map(self.map)
@@ -31,10 +38,27 @@ class Game:
         self.map[row][column] = value
         return value
 
+    @staticmethod
+    def interpret_zeros(gamemap):
+        """function to open all neighbours of zero in the beginning.
+        to be Deprec: one may be able to get instances for the zero,
+        which in turn will open & remove themselves immedieately?
+        # static method because the initial string map is used and shall not
+        # preserved in self!!
+        :param gamemap is the string map at the beginning of the game"""
+        zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
+        rowlen = len(gamemap[0])
+        zerotup = [(ind % rowlen, ind // rowlen) for ind in zeroind]
+
+        for zero in zerotup:
+            for neighb in Position._find_neighbours(zero):
+                clue = game.open(*neighb)
+                Position.clues.update({neighb: Position(neighb, clue)})
+                # THIS must act on Position.clues naturally (this is not pretty here)
+
 
 class Position:
     clues = dict()  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
-    rub, cub = 1, 1  # row/colum upper dim of map overwritten @ each solve_mine call!
 
     def __init__(self, position, clue):
         self.position = position
@@ -63,7 +87,7 @@ class Position:
         """returns the list of all neighbours (excluding self's position).
         all of them are bound checked"""
         r, c = position
-        cond = lambda r, c: 0 <= r <= Position.rub and 0 <= c <= Position.cub
+        cond = lambda r, c: 0 <= r <= Game.dim[0] and 0 <= c <= Game.dim[1]  # FIXME: still not pretty!
         neighb = [(r + i, c + j)
                   for i in (-1, 0, 1)
                   for j in (-1, 0, 1)
@@ -89,28 +113,10 @@ def solve_mine(gamemap, n):
 
     """
     # FIXME!
-    # resetting clues between function calls
-    Position.clues = dict()
     game = Game(gamemap)
 
     # (0) initially open all postions neighbouring zeros
-    # CONSIDER moving this to class Game
-    zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
-    rowlen = len(gamemap[0])
-    zerotup = [(ind % rowlen, ind // rowlen) for ind in zeroind]
 
-    for zero in zerotup:
-        for neighb in Position._find_neighbours(zero):
-            clue = game.open(*neighb)
-            Position.clues.update({neighb: Position(neighb, clue)})
-
-
-    # (1) parse position
-    gamemap = Game.parse_map(gamemap)
-
-    # to ease Position._find_neighbours() calls
-    Position.rub = len(gamemap[0])
-    Position.cub = len(gamemap)
 
     # uncovering mines using a method "open(row,column)"
     # Game.open(row, column) ????
