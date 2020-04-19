@@ -1,21 +1,6 @@
 from operator import sub
 
 
-def memoize(func):
-    """This particular use case always reuses the shuffled cards -
-    so rank must be computed only once"""
-    def wrapper(self):
-        if self.hand in mem.keys():
-            return mem[self.hand]
-        else:
-            func(self)
-            mem[self.hand] = self.rank
-            return mem[self.hand]
-
-    mem = {}
-    return wrapper
-
-
 class PokerCard(object):
     def __init__(self, card):
         self.card = card
@@ -33,7 +18,7 @@ class PokerCard(object):
     def __eq__(self, other):
         return (self.value == other.value)  # & (self.suit == other.suit)
 
-    def __lt__(self, other):  # for sorting of cards
+    def __lt__(self, other):  # for sorting
         return self.value < other.value
 
     def __gt__(self, other):  # for set
@@ -43,25 +28,20 @@ class PokerCard(object):
         return self.value
 
 
-
 class PokerHand(object):
     def __init__(self, hand):
-        self.hand = hand
         cards = hand.split(' ')
         self.cards = [PokerCard(card) for card in cards]
         self.cards.sort()
         self.myrank()
 
+        # print(self)
 
     def __repr__(self):
-        return self.hand
+        hand = ['highcard', 'pair', 'two_pair', 'three', 'straight', 'flush',
+                'full_house', 'four', 'straight_flush', 'royal_flush'][self.rank]
+        return 'rank {}, {}, {}'.format(self.rank, hand, self.cards)
 
-        # more advanced printing method:
-        # hand = ['highcard', 'pair', 'two_pair', 'three', 'straight', 'flush',
-        #         'full_house', 'four', 'straight_flush', 'royal_flush'][self.rank]
-        # return 'rank {}, {}, {}'.format(self.rank, hand, self.cards)
-
-    @memoize
     def myrank(self):
         # looking for pair orders
         d_values = {k: [] for k in set(card.value for card in self.cards)}
@@ -85,19 +65,9 @@ class PokerHand(object):
             return len(set(x.suit for x in self.cards)) == 1
 
         def straight():
-
             valuelist = list(x.value for x in self.cards)
             valuelist.sort()
-            if set(map(sub, valuelist[1:-1], valuelist[:-2])) == {1}:
-
-                if valuelist[-1] - valuelist[-2] == 1:
-                    return True  # usual straight
-
-                elif valuelist[0] == 2 and valuelist[-1] == 14:
-                    # allowing low Ace
-                    return True
-                
-            return False
+            return set(map(sub, valuelist[1:], valuelist[:-1])) == {1}
 
         def twopair():
             return (len(self.multiples) == 2) & (set(len(l) for l in self.multiples) == {2})
@@ -117,7 +87,7 @@ class PokerHand(object):
             return 'Loss'
         elif self.rank == other.rank:
 
-            if self.rank in (1, 2, 3, 6, 7):  # check non-empty multiples
+            if self.rank in (1, 2, 3, 6, 7):  # full house
                 for a, b in zip(self.multiples, other.multiples):
                     if a[0] > b[0]:
                         return 'Win'
@@ -126,39 +96,18 @@ class PokerHand(object):
                     else:
                         continue
 
-            if self.rank in (0, 1, 2, 3, 4, 5, 7, 8):  # check unused cards
+            if self.rank in (0, 1, 2, 3, 4, 5, 7, 8):
+                # check unused cards
                 mine = self.remain - other.remain
                 oppo = other.remain - self.remain
-
-                if self.rank == 4:
-                     # straight, lower ace exception
-                    if 2 in [c.value for c in mine]:
-                        mine = set(c for c in mine if c.value != 14)
-
-                    if 2 in [c.value for c in oppo]:
-                        oppo = set(c for c in oppo if c.value != 14)
-
-                    if mine == set() and oppo != set():
-                        return 'Loss'
-                    elif mine != set() and oppo == set():
-                        return 'Win'
-
                 if any((mine == set(), oppo == set())):
-                    return 'Tie'
+                    return 'Tie'  # longer set wins
                 elif max(mine) > max(oppo):
                     return 'Win'
                 elif max(mine) < max(oppo):
                     return 'Loss'
 
         return 'Tie'
-
-    def __lt__(self, other):
-        """
-        making Pokerhands sortable
-        https://www.codewars.com/kata/586423aa39c5abfcec0001e6/python
-        """
-        # must be 'Win' to ensure leftmost is highest
-        return self.compare_with(other) == 'Win'
 
 
 if __name__ == '__main__':
