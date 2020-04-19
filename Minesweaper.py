@@ -7,7 +7,7 @@ class Game:
         self.map = self.parse_map(map)
         if result is not None:
             self.result = self.parse_map(result)
-            self.count = 0  # Fixme: number of x in result map!
+            self.count = result.count('x')  # number of bombs
 
     def __repr__(self):
         return self.encode_map(self.map)
@@ -22,7 +22,6 @@ class Game:
         """method to get the desired format of the challenge (pass in solved)"""
         return '\n'.join(' '.join(row) for row in map)
 
-
     def open(self, row, column):
         value = self.result[row][column]
         if value == 'x':
@@ -34,7 +33,7 @@ class Game:
 
 
 class Position:
-    clues = dict()  # {position_tuple: Position_instance}
+    clues = dict()  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
     rub, cub = 1, 1  # row/colum upper dim of map overwritten @ each solve_mine call!
 
     def __init__(self, position, clue):
@@ -48,8 +47,9 @@ class Position:
         # have exacly (one or two) bombs - such that this info may uncover all others
 
     def broadcast_bomb(self, bomb_position):
-        """(remove the found bomb from self.neighbours)
-        tell relevant neighbours about the bomb (i.e. the bombs neighbours)"""
+        """remove the found bomb from self.neighbours &
+        tell relevant neighbours about the bomb (i.e. the bombs neighbours)
+        & todo if self.exacly_one is maintained, update self.exacly_one & others!"""
 
         bomb_neighb = self._find_neighbours(bomb_position)  # Experimental: when
         # each field of the board has its own position instance,
@@ -58,7 +58,8 @@ class Position:
         for neighb in bomb_neighb:
             Position.clues[neighb].bomb.extend(bomb_position)
 
-    def _find_neighbours(self, position):
+    @staticmethod
+    def _find_neighbours(position):
         """returns the list of all neighbours (excluding self's position).
         all of them are bound checked"""
         r, c = position
@@ -77,8 +78,6 @@ class Position:
         pass
 
 
-
-
 def solve_mine(gamemap, n):
     """
     https://www.codewars.com/kata/57ff9d3b8f7dda23130015fa
@@ -90,8 +89,24 @@ def solve_mine(gamemap, n):
 
     """
     # FIXME!
+    # resetting clues between function calls
+    Position.clues = dict()
     game = Game(gamemap)
-    open = game.open
+
+    # (0) initially open all postions neighbouring zeros
+    # CONSIDER moving this to class Game
+    zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
+    rowlen = len(gamemap[0])
+    zerotup = [(ind % rowlen, ind // rowlen) for ind in zeroind]
+
+    for zero in zerotup:
+        for neighb in Position._find_neighbours(zero):
+            clue = game.open(*neighb)
+            Position.clues.update({neighb: Position(neighb, clue)})
+
+
+    # (1) parse position
+    gamemap = Game.parse_map(gamemap)
 
     # to ease Position._find_neighbours() calls
     Position.rub = len(gamemap[0])
@@ -111,12 +126,12 @@ def solve_mine(gamemap, n):
 
     # If the game can not got a valid result, should return "?"
 
-    pass
+    return Game.encode_map(gamemap)
 
 
 # CAREFULL: if __name__ == '__main__':
-    # indentation & muliline string destroy format!
-    # definite & solvable
+# indentation & muliline string destroy format!
+# definite & solvable
 gamemap = """
 ? ? ? ? ? ?
 ? ? ? ? ? ?
