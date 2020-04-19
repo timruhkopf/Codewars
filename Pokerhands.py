@@ -29,6 +29,12 @@ class PokerCard(object):
 
 
 class PokerHand(object):
+    # TODO REFACTOR POKERHANDS with Statepattern for different comparision systems
+    #  (i.e. delegating the hand "identification" and the comparision of same rank
+    #  into a specific subclass. For instance class Straight. Further consider
+    #  decorator pattern for upgrading from straight behaviour to straight_flush.
+    #  All this eases read- & maintainability AND! allows for minor changes such
+    #  as rule change of lower Ace as required in this challenge in particular!
     def __init__(self, hand):
         cards = hand.split(' ')
         self.cards = [PokerCard(card) for card in cards]
