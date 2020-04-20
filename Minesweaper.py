@@ -1,10 +1,11 @@
 class Position:
     dim = 1, 1
 
-    def __init__(self, position, clue):
+    def __init__(self, position, clue=None):
         self.position = position
-        self.neighbours = None
+        self.neighbours = self._find_neighbours(position)
         self.clue = clue
+        self.questionmarks = None
         self.adja_bombds = list()  # known adjacent bomb positions. len of bombs == clue?
         # --> uncover all remaining neighbours.
 
@@ -60,7 +61,10 @@ class Game:
             self.result = self.parse_map(result)
             self.count = result.count('x')  # no. of bombs
 
-        self.clues = dict()  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
+        tuples = [(i, j) for i in range(self.dim[0]) for j in range(self.dim[1])]
+        self.clues = {k:Position(k) for k in tuples}  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
+        for Pos in self.clues.values():
+            Pos.questionmarks = self._find_questionmark(Pos.neighbours)
         self.interpret_zeros(map)
 
         print(self)
@@ -87,6 +91,9 @@ class Game:
         self.map[row][column] = value
         return value
 
+    def _find_questionmark(self, neighbours):
+        return [n for n in neighbours if self.map[n[0]][n[1]] == '?']
+
     def interpret_zeros(self, gamemap):
         """function to open all neighbours of zero in the beginning.
         to be Deprec: one may be able to get instances for the zero,
@@ -100,12 +107,11 @@ class Game:
 
         for zero in zerotup:
             for neighb in Position._find_neighbours(zero):
-                clue = self.open(*neighb)
-                self.clues.update({neighb: Position(neighb, clue=clue)})
-                # place opened clue on map!!
-                self.map[neighb[0]][neighb[1]] = str(clue)
+                self.clues[neighb].clue = self.open(*neighb)
+                # self.clues.update({neighb: Position(neighb, clue=self.open(*neighb))})
 
-        print('')
+        print(self)
+
 
 
 def solve_mine(gamemap, n):
