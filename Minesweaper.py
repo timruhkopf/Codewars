@@ -1,12 +1,9 @@
 class Game:
-    dim = 0, 0 # FIXME: still not pretty!
-
     def __init__(self, map, result=None):
         """
         Game class allows interactive debugging in Pycharm
         :param map: true map
         """
-
         self.map = self.parse_map(map)
 
         Game.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map # FIXME: still not pretty!
