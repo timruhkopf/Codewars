@@ -1,5 +1,6 @@
-
 class Position:
+    dim = 1, 1
+
     def __init__(self, position, clue):
         self.position = position
         self.neighbours = None
@@ -10,7 +11,7 @@ class Position:
         self.exacly_one = None  # a (nested) list of positions, at which it is known to
         # have exacly (one or two) bombs - such that this info may uncover all others
 
-    def broadcast_bomb(self, bomb_position): # others: neighbour instances?
+    def broadcast_bomb(self, bomb_position):  # others: neighbour instances?
         """remove the found bomb from self.neighbours &
         tell relevant neighbours about the bomb (i.e. the bombs neighbours)
         & todo if self.exacly_one is maintained, update self.exacly_one & others!"""
@@ -20,14 +21,16 @@ class Position:
         # this becomes a lookup: Position.clues[bomb_position].neighbours
 
         for neighb in bomb_neighb:
-            Position.clues[neighb].bomb.extend(bomb_position)  # fixme reference unresolved! also communication not readily available
+            Position.clues[neighb].bomb.extend(
+                bomb_position)  # fixme reference unresolved! also communication not readily available
 
     @staticmethod
     def _find_neighbours(position):
         """returns the list of all neighbours (excluding self's position).
         all of them are bound checked"""
         r, c = position
-        cond = lambda r, c: 0 <= r <= game.dim[0] and 0 <= c <= game.dim[1]  # FIXME: still not pretty! reference unresolved!
+        cond = lambda r, c: 0 <= r < Position.dim[0] and 0 <= c < Position.dim[1]
+        # FIXME: still not pretty! reference unresolved!
         neighb = [(r + i, c + j)
                   for i in (-1, 0, 1)
                   for j in (-1, 0, 1)
@@ -50,13 +53,17 @@ class Game:
         :param map: true map
         """
         self.map = self.parse_map(map)
-        self.clues = dict()  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
-
         self.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map # FIXME: still not pretty!
+        Position.dim = self.dim  # preset for all positions
 
         if result is not None:
             self.result = self.parse_map(result)
             self.count = result.count('x')  # no. of bombs
+
+        self.clues = dict()  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
+        self.interpret_zeros(map)
+
+        print(self)
 
     def __repr__(self):
         return self.encode_map(self.map)
@@ -80,7 +87,6 @@ class Game:
         self.map[row][column] = value
         return value
 
-
     def interpret_zeros(self, gamemap):
         """function to open all neighbours of zero in the beginning.
         to be Deprec: one may be able to get instances for the zero,
@@ -89,13 +95,17 @@ class Game:
         # preserved in self!!
         :param gamemap is the string map at the beginning of the game"""
         zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
-        rowlen = len(gamemap[0])
-        zerotup = [(ind % rowlen, ind // rowlen) for ind in zeroind]
+        rowlen = len(self.map[0])
+        zerotup = [(ind // rowlen, ind % rowlen) for ind in zeroind]
 
         for zero in zerotup:
             for neighb in Position._find_neighbours(zero):
-                self.clues.update({neighb: Position(neighb, clue=game.open(*neighb))})
+                clue = self.open(*neighb)
+                self.clues.update({neighb: Position(neighb, clue=clue)})
+                # place opened clue on map!!
+                self.map[neighb[0]][neighb[1]] = str(clue)
 
+        print('')
 
 
 def solve_mine(gamemap, n):
@@ -112,7 +122,6 @@ def solve_mine(gamemap, n):
     game = Game(gamemap)
 
     # (0) initially open all postions neighbouring zeros
-
 
     # uncovering mines using a method "open(row,column)"
     # Game.open(row, column) ????
