@@ -62,9 +62,12 @@ class Game:
             self.count = result.count('x')  # no. of bombs
 
         tuples = [(i, j) for i in range(self.dim[0]) for j in range(self.dim[1])]
-        self.clues = {k:Position(k) for k in tuples}  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
+        self.clues = {k: Position(k) for k in
+                      tuples}  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
+
         for Pos in self.clues.values():
             Pos.questionmarks = self._find_questionmark(Pos.neighbours)
+
         self.interpret_zeros(map)
 
         print(self)
@@ -89,6 +92,11 @@ class Game:
 
         # CAREFULL: make sure, the challenge actually allows us to maintain state this way
         self.map[row][column] = value
+
+        # "steal" questionmarks of instances
+        for neighb in self.clues[(row, column)].neighbours:
+            if (row, column) in self.clues[neighb].questionmarks:
+                self.clues[neighb].questionmarks.remove((row, column))
         return value
 
     def _find_questionmark(self, neighbours):
@@ -111,7 +119,6 @@ class Game:
                 # self.clues.update({neighb: Position(neighb, clue=self.open(*neighb))})
 
         print(self)
-
 
 
 def solve_mine(gamemap, n):
