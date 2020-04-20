@@ -1,3 +1,48 @@
+
+class Position:
+    def __init__(self, position, clue):
+        self.position = position
+        self.neighbours = None
+        self.clue = clue
+        self.adja_bombds = list()  # known adjacent bomb positions. len of bombs == clue?
+        # --> uncover all remaining neighbours.
+
+        self.exacly_one = None  # a (nested) list of positions, at which it is known to
+        # have exacly (one or two) bombs - such that this info may uncover all others
+
+    def broadcast_bomb(self, bomb_position): # others: neighbour instances?
+        """remove the found bomb from self.neighbours &
+        tell relevant neighbours about the bomb (i.e. the bombs neighbours)
+        & todo if self.exacly_one is maintained, update self.exacly_one & others!"""
+
+        bomb_neighb = self._find_neighbours(bomb_position)  # Experimental: when
+        # each field of the board has its own position instance,
+        # this becomes a lookup: Position.clues[bomb_position].neighbours
+
+        for neighb in bomb_neighb:
+            Position.clues[neighb].bomb.extend(bomb_position)  # fixme reference unresolved! also communication not readily available
+
+    @staticmethod
+    def _find_neighbours(position):
+        """returns the list of all neighbours (excluding self's position).
+        all of them are bound checked"""
+        r, c = position
+        cond = lambda r, c: 0 <= r <= game.dim[0] and 0 <= c <= game.dim[1]  # FIXME: still not pretty! reference unresolved!
+        neighb = [(r + i, c + j)
+                  for i in (-1, 0, 1)
+                  for j in (-1, 0, 1)
+                  if cond(r + i, c + j) and cond(r + i, c + j)]
+        neighb.remove((r, c))
+        return neighb
+
+    def die(self):
+        # FIXME: this method must be moved to Game!
+        """remove this position instance from classattribute clues once all bombs
+        are found & neighbours are uncovered & informed"""
+        Position.clues.pop(k=self.position)
+        pass
+
+
 class Game:
     def __init__(self, map, result=None):
         """
@@ -5,9 +50,9 @@ class Game:
         :param map: true map
         """
         self.map = self.parse_map(map)
+        self.clues = dict()  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
 
-        Game.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map # FIXME: still not pretty!
-        Position.clues = dict()  # resetting the clues for each new game
+        self.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map # FIXME: still not pretty!
 
         if result is not None:
             self.result = self.parse_map(result)
@@ -35,8 +80,8 @@ class Game:
         self.map[row][column] = value
         return value
 
-    @staticmethod
-    def interpret_zeros(gamemap):
+
+    def interpret_zeros(self, gamemap):
         """function to open all neighbours of zero in the beginning.
         to be Deprec: one may be able to get instances for the zero,
         which in turn will open & remove themselves immedieately?
@@ -49,54 +94,8 @@ class Game:
 
         for zero in zerotup:
             for neighb in Position._find_neighbours(zero):
-                clue = game.open(*neighb)
-                Position.clues.update({neighb: Position(neighb, clue)})
-                # THIS must act on Position.clues naturally (this is not pretty here)
+                self.clues.update({neighb: Position(neighb, clue=game.open(*neighb))})
 
-
-class Position:
-    clues = dict()  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
-
-    def __init__(self, position, clue):
-        self.position = position
-        self.neighbours = None
-        self.clue = clue
-        self.adja_bombds = list()  # known adjacent bomb positions. len of bombs == clue?
-        # --> uncover all remaining neighbours.
-
-        self.exacly_one = None  # a (nested) list of positions, at which it is known to
-        # have exacly (one or two) bombs - such that this info may uncover all others
-
-    def broadcast_bomb(self, bomb_position):
-        """remove the found bomb from self.neighbours &
-        tell relevant neighbours about the bomb (i.e. the bombs neighbours)
-        & todo if self.exacly_one is maintained, update self.exacly_one & others!"""
-
-        bomb_neighb = self._find_neighbours(bomb_position)  # Experimental: when
-        # each field of the board has its own position instance,
-        # this becomes a lookup: Position.clues[bomb_position].neighbours
-
-        for neighb in bomb_neighb:
-            Position.clues[neighb].bomb.extend(bomb_position)
-
-    @staticmethod
-    def _find_neighbours(position):
-        """returns the list of all neighbours (excluding self's position).
-        all of them are bound checked"""
-        r, c = position
-        cond = lambda r, c: 0 <= r <= Game.dim[0] and 0 <= c <= Game.dim[1]  # FIXME: still not pretty!
-        neighb = [(r + i, c + j)
-                  for i in (-1, 0, 1)
-                  for j in (-1, 0, 1)
-                  if cond(r + i, c + j) and cond(r + i, c + j)]
-        neighb.remove((r, c))
-        return neighb
-
-    def die(self):
-        """remove this position instance from classattribute clues once all bombs
-        are found & neighbours are uncovered & informed"""
-        Position.clues.pop(k=self.position)
-        pass
 
 
 def solve_mine(gamemap, n):
