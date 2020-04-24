@@ -1,7 +1,29 @@
 class Calculator(object):
-  # https://www.codewars.com/kata/5235c913397cbf2508000048
-  def evaluate(self, string):
-    return 0
+    # https: // www.codewars.com / kata / 5235c913397cbf2508000048
+
+    def evaluate(self, string):
+        interval_string = string.split(' ')
+        interval_string = self.calculate(interval_string, ['*','/'])
+        return int(self.calculate(interval_string, ['+','-'])[0])
+
+    @staticmethod
+    def calculate(interval_string, operator):
+
+        operation = {'*': lambda x, y: x * y,
+                     '/': lambda x, y: x / y,
+                     '+': lambda x, y: x + y,
+                     '-': lambda x, y: x - y}
+        new_list = []
+
+        for i, j in enumerate(interval_string):
+            if j == operator[0] or j == operator[1]:
+                new_list.append(operation[j](int(new_list[-1]), int(interval_string[i + 1])))
+                new_list.pop(-2)
+                interval_string.pop(i + 1)
+            else:
+                new_list.append(j)
+
+        return new_list
 
 if __name__ == '__main__':
-    Calculator.evaluate('10 * 5 / 2') == 25
+    Calculator().evaluate("2 / 2 + 3 * 4 - 6") == 7
