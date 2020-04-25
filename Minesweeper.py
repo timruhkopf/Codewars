@@ -6,6 +6,8 @@ class Position:
         self.position = position
         self.neighbours = self._find_neighbours(position)
 
+        self.neighb_inst = set()
+
         self._clue = clue
         self.state = 0
 
@@ -24,10 +26,9 @@ class Position:
 
     @clue.setter
     def clue(self, value):
+        # called at open of this position.
         self._clue = value
-        self.state = value
-        # if self.state is None and value != '?':
-        #     self.state = int(value)  # leverrage state.setter
+        self.state = value - self.state
 
     @staticmethod
     def _find_neighbours(position):
@@ -35,7 +36,6 @@ class Position:
         all of them are bound checked"""
         r, c = position
         cond = lambda r, c: 0 <= r < Position.dim[0] and 0 <= c < Position.dim[1]
-        # FIXME: still not pretty! reference unresolved!
         neighb = set((r + i, c + j)
                      for i in (-1, 0, 1)
                      for j in (-1, 0, 1)
@@ -85,6 +85,9 @@ class Game:
 
     def open(self, row, column):
         """:param opened_by prevents feedback loop communication"""
+        if self.clues[(row, column)] != '?':
+            raise ValueError('Do not open opened positions! this would invoke clue.setter and alter state!')
+
         value = self.result[row][column]  # FIXME: this is an int not a string!!!
         if value == 'x':
             raise ValueError('What a bummer.')
