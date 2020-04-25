@@ -1,50 +1,46 @@
 class Position:
+    game = None
     dim = 1, 1
 
-    def __init__(self, position, clue=None):
+    def __init__(self, position, clue='?'):
         self.position = position
         self.neighbours = self._find_neighbours(position)
-        self.clue = clue
-        self.questionmarks = None
-        self.adja_bombds = list()  # known adjacent bomb positions. len of bombs == clue?
-        # --> uncover all remaining neighbours.
 
-        self.exacly_one = None  # a (nested) list of positions, at which it is known to
-        # have exacly (one or two) bombs - such that this info may uncover all others
+        self._clue = clue
+        self._state = None
 
-    def broadcast_bomb(self, bomb_position):  # others: neighbour instances?
-        """remove the found bomb from self.neighbours &
-        tell relevant neighbours about the bomb (i.e. the bombs neighbours)
-        & todo if self.exacly_one is maintained, update self.exacly_one & others!"""
+    def __repr__(self):  # for debugging only
+        return str((self.position, 'clue:', self._clue, 'state:', self._state))
 
-        bomb_neighb = self._find_neighbours(bomb_position)  # Experimental: when
-        # each field of the board has its own position instance,
-        # this becomes a lookup: Position.clues[bomb_position].neighbours
+    def __hash__(self):  # to support in
+        return hash(self.position)
 
-        for neighb in bomb_neighb:
-            Position.clues[neighb].bomb.extend(
-                bomb_position)  # fixme reference unresolved! also communication not readily available
+    def __eq__(self, other):  # to support in
+        return self.position == other.position
+
+    @property
+    def clue(self):
+        return self._clue
+
+    @clue.setter
+    def clue(self, value):
+        self._clue = value
+        if self._state is None and value != '?':
+            self._state = int(value)  # leverrage state.setter
 
     @staticmethod
     def _find_neighbours(position):
-        """returns the list of all neighbours (excluding self's position).
+        """returns the set of all neighbours (excluding self's position).
         all of them are bound checked"""
         r, c = position
         cond = lambda r, c: 0 <= r < Position.dim[0] and 0 <= c < Position.dim[1]
         # FIXME: still not pretty! reference unresolved!
-        neighb = [(r + i, c + j)
-                  for i in (-1, 0, 1)
-                  for j in (-1, 0, 1)
-                  if cond(r + i, c + j) and cond(r + i, c + j)]
+        neighb = set((r + i, c + j)
+                     for i in (-1, 0, 1)
+                     for j in (-1, 0, 1)
+                     if cond(r + i, c + j) and cond(r + i, c + j))
         neighb.remove((r, c))
         return neighb
-
-    def die(self):
-        # FIXME: this method must be moved to Game!
-        """remove this position instance from classattribute clues once all bombs
-        are found & neighbours are uncovered & informed"""
-        Position.clues.pop(k=self.position)
-        pass
 
 
 class Game:
@@ -54,7 +50,7 @@ class Game:
         :param map: true map
         """
         self.map = self.parse_map(map)
-        self.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map # FIXME: still not pretty!
+        self.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map
         Position.dim = self.dim  # preset for all positions
 
         if result is not None:
@@ -62,66 +58,43 @@ class Game:
             self.count = result.count('x')  # no. of bombs
 
         tuples = [(i, j) for i in range(self.dim[0]) for j in range(self.dim[1])]
-        self.clues = {k: Position(k) for k in
-                      tuples}  # {position_tuple: Position_instance} # CONSIDER moving this to class Game!
+        self.clues = {k: Position(k) for k in tuples}  # {position_tuple: Position_instance}
 
-        for Pos in self.clues.values():
-            Pos.questionmarks = self._find_questionmark(Pos.neighbours)
-
-        self.interpret_zeros(map)
-
-        print(self)
+        # setting up the neighbourhood structure
+        for inst in self.clues.values():
+            inst.neighb_inst = set(self.clues[k] for k in inst.neighbours)
 
     def __repr__(self):
-        return self.encode_map(self.map)
+        # Experimental
+        return self.encode_map_from_Position()
 
     @staticmethod
     def parse_map(map):
         """:return nested list of strings"""
         return [row.split() for row in map.split('\n')]
 
-    @staticmethod
-    def encode_map(map):
-        """method to get the desired format of the challenge (pass in solved)"""
-        return '\n'.join(' '.join(row) for row in map)
+    def encode_map_from_Position(self):
+        # EXPERIMENTAL REPRESENTATION METHOD
+
+        gamemap = [['' for i in range(self.dim[0])] for j in range(self.dim[1])]
+        for (r, c), inst in self.clues.items():
+            gamemap[r][c] = str(inst)
+
+        return '\n'.join(' '.join(row) for row in gamemap)
 
     def open(self, row, column):
-        value = self.result[row][column]
+        """:param opened_by prevents feedback loop communication"""
+        value = self.result[row][column]  # FIXME: this is an int not a string!!!
         if value == 'x':
             raise ValueError('What a bummer.')
 
-        # CAREFULL: make sure, the challenge actually allows us to maintain state this way
-        self.map[row][column] = value
-
-        # "steal" questionmarks of instances
-        for neighb in self.clues[(row, column)].neighbours:
-            if (row, column) in self.clues[neighb].questionmarks:
-                self.clues[neighb].questionmarks.remove((row, column))
         return value
 
-    def _find_questionmark(self, neighbours):
-        return [n for n in neighbours if self.map[n[0]][n[1]] == '?']
-
-    def interpret_zeros(self, gamemap):
-        """function to open all neighbours of zero in the beginning.
-        to be Deprec: one may be able to get instances for the zero,
-        which in turn will open & remove themselves immedieately?
-        # static method because the initial string map is used and shall not
-        # preserved in self!!
-        :param gamemap is the string map at the beginning of the game"""
-        zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
-        rowlen = len(self.map[0])
-        zerotup = [(ind // rowlen, ind % rowlen) for ind in zeroind]
-
-        for zero in zerotup:
-            for neighb in Position._find_neighbours(zero):
-                self.clues[neighb].clue = self.open(*neighb)
-                # self.clues.update({neighb: Position(neighb, clue=self.open(*neighb))})
-
-        print(self)
+    def solve(self):
+        pass
 
 
-def solve_mine(gamemap, n):
+def solve_mine(gamemap, n, resultmap=None):
     """
     https://www.codewars.com/kata/57ff9d3b8f7dda23130015fa
 
@@ -131,31 +104,16 @@ def solve_mine(gamemap, n):
     :return: a solved string map, containing only integers & 'x'`s for bomb markers
 
     """
-    # FIXME!
-    game = Game(gamemap)
-
-    # (0) initially open all postions neighbouring zeros
-
-    # uncovering mines using a method "open(row,column)"
-    # Game.open(row, column) ????
-    #  It will return a number that is how many mines around this grid.
-    #  If there is an error in your logical reasoning, when you use the open
-    #  method to open a grid, but there is a mine hidden in this grid, then
-    #  the test will fail. Please note, method open only return a number,
-    #  but did not modify the map, you should modify the map by yourself.
-
-    # call open
-    pos = (1, 2)
-    # val = open(*)
-
-    # If the game can not got a valid result, should return "?"
-
-    return Game.encode_map(gamemap)
+    Position.game = Game(gamemap, resultmap)
+    Position.game.solve()
 
 
-# CAREFULL: if __name__ == '__main__':
-# indentation & muliline string destroy format!
-# definite & solvable
+
+
+
+
+
+
 gamemap = """
 ? ? ? ? ? ?
 ? ? ? ? ? ?
@@ -173,7 +131,9 @@ result = """
 0 0 0 1 1 1
 """.strip()
 game = Game(gamemap, result)
-assert solve_mine(gamemap, game.count) == result
+# game.open_result = open_result(result)
+# print(game.open_result(5, 1))  # FIXME: temporary workaround
+assert solve_mine(gamemap, game.count, result) == result
 
 # Ambivalent state
 gamemap = """
@@ -185,7 +145,8 @@ result = """
 0 1 1
 """.strip()
 game = Game(gamemap, result)
-assert solve_mine(gamemap, game.count) == "?"
+# game.open_result = open_result(result)
+assert solve_mine(gamemap, game.count, result) == "?"
 
 gamemap = """
 ? ? ? ? 0 0 0
@@ -210,7 +171,8 @@ result = """
 0 0 0 0 0 1 1
 """.strip()
 game = Game(gamemap, result)
-assert solve_mine(gamemap, game.count) == result
+# game.open_result = open_result(result)
+assert solve_mine(gamemap, game.count, result) == result
 
 # Huge ambivalent state
 gamemap = """
@@ -264,7 +226,8 @@ x 1 0 1 x 1 0 0 2 x 2 0 0 0 0 1 x 2 1
 0 0 0 0 1 x 1 1 x 2 1 1 x 1 0 1 x 3 x
 """.strip()
 game = Game(gamemap, result)
-assert solve_mine(gamemap, game.count) == "?"
+# game.open_result = open_result(result)
+assert solve_mine(gamemap, game.count, result) == "?"
 
 # differently shaped ambivalent state
 gamemap = """
@@ -290,4 +253,5 @@ x 1 0 0 0 1 1 1 0 1 x 1 0 0 0 1 1 1 1 x 1
 1 1 1 0 0 0 0 0 0 0 1 x x 1 0 0 1 x 1 0 0
 """.strip()
 game = Game(gamemap, result)
-assert solve_mine(gamemap, game.count) == "?"
+# game.open_result = open_result(result)
+assert solve_mine(gamemap, game.count, result) == "?"
