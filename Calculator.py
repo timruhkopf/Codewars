@@ -1,10 +1,10 @@
 class Calculator(object):
-    # https: // www.codewars.com / kata / 5235c913397cbf2508000048
-
+    # https://www.codewars.com/kata/5235c913397cbf2508000048
+    
     def evaluate(self, string):
         interval_string = string.split(' ')
         interval_string = self.calculate(interval_string, ['*','/'])
-        return int(self.calculate(interval_string, ['+','-'])[0])
+        return float(self.calculate(interval_string, ['+','-'])[0])
 
     @staticmethod
     def calculate(interval_string, operator):
@@ -17,7 +17,7 @@ class Calculator(object):
 
         for i, j in enumerate(interval_string):
             if j == operator[0] or j == operator[1]:
-                new_list.append(operation[j](int(new_list[-1]), int(interval_string[i + 1])))
+                new_list.append(operation[j](float(new_list[-1]), float(interval_string[i + 1])))
                 new_list.pop(-2)
                 interval_string.pop(i + 1)
             else:
