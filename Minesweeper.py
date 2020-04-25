@@ -7,10 +7,10 @@ class Position:
         self.neighbours = self._find_neighbours(position)
 
         self._clue = clue
-        self._state = None
+        self.state = 0
 
     def __repr__(self):  # for debugging only
-        return str((self.position, 'clue:', self._clue, 'state:', self._state))
+        return str((self.position, 'clue:', self._clue, 'state:', self.state))
 
     def __hash__(self):  # to support in
         return hash(self.position)
@@ -25,8 +25,9 @@ class Position:
     @clue.setter
     def clue(self, value):
         self._clue = value
-        if self._state is None and value != '?':
-            self._state = int(value)  # leverrage state.setter
+        self.state = value
+        # if self.state is None and value != '?':
+        #     self.state = int(value)  # leverrage state.setter
 
     @staticmethod
     def _find_neighbours(position):
