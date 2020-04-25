@@ -88,14 +88,20 @@ class Game:
         if self.clues[(row, column)] != '?':
             raise ValueError('Do not open opened positions! this would invoke clue.setter and alter state!')
 
-        value = self.result[row][column]  # FIXME: this is an int not a string!!!
+        value = int(self.result[row][column])  # FIXME: this is an int not a string!!!
         if value == 'x':
             raise ValueError('What a bummer.')
 
+
+
         return value
 
-    def solve(self):
-        pass
+    def solve(self, gamemap):
+        zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
+        zerotup = [(ind // self.dim[0], ind % self.dim[0]) for ind in zeroind]
+
+        for zero in zerotup:
+            self.open(*zero, )
 
 
 def solve_mine(gamemap, n, resultmap=None):
@@ -109,7 +115,7 @@ def solve_mine(gamemap, n, resultmap=None):
 
     """
     Position.game = Game(gamemap, resultmap)
-    Position.game.solve()
+    Position.game.solve(gamemap)
 
 
 
