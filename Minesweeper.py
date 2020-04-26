@@ -42,39 +42,35 @@ class Position:
     def state(self, value):
         # once the state = 0 is "called" !
         questions = self._find_questionmarks()
-        proposal = value - self.state
 
-        # open all by state hitting 0
-        if proposal == 0:
-            Position.game.open(*self.position)
+        # open all questionmarks by state hitting 0
+        if value == 0:
+            self._state = 0
             for q in questions:
                 Position.game.open(*q.position)
 
         # found bomb by remaining ?
-        elif proposal == len(questions):
-            self._clue = 'x'  # set immediately. not calling clue setter
-            for n in self.neighb_inst:
-                n.state -= 1
-
-            self._check_neighbour_state()
+        elif value == len(questions):
+            self._state = 0
+            for q in questions:
+                q._clue = 'x'
+                for n in q.neighb_inst:
+                    n.state -= 1
 
         # default case
         else:
             self._state = value
-            self._check_neighbour_state() # FIXME: recursion depth reached: stack overflow
 
+            for neighb in self.neighb_inst - questions:
+                if neighb.state != 0:
+                    qs = neighb._find_questionmarks()
+                    if neighb.state == len(qs):  # check of those neighbours if they are solved
+                        neighb._state = 0
+                        for q in qs :
+                            q._clue = 'x'
+                            for n in q.neighb_inst:
+                                n.state -= 1
 
-    def _check_neighbour_state(self):
-        """check indirect neighbour consequences after placing a bomb or opening
-        a position."""
-        for n in self.neighb_inst:
-            questions = n._find_questionmarks()
-            # length of questionmarks might have changed due to the opened postion
-            # from which this function is invoked!
-            if n.state == len(questions):
-                self._clue = 'x'
-                for n in self.neighb_inst:
-                    n.state -= 1
 
 
     @staticmethod
