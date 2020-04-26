@@ -9,10 +9,14 @@ class Position:
         self.neighb_inst = set()
 
         self._clue = clue
-        self.state = 0
+        self._state = 0
 
     def __repr__(self):  # for debugging only
+        # return str(self._clue)
         return str((self.position, 'clue:', self._clue, 'state:', self.state))
+
+    def __str__(self):
+        return str(self._clue)
 
     def __hash__(self):  # to support in
         return hash(self.position)
@@ -30,6 +34,32 @@ class Position:
         self._clue = value
         self.state = value - self.state
 
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
+        # once the state = 0 is "called" !
+        questions = self._find_questionmarks()
+
+        # open all by state hitting 0
+        if value == 0:
+            Position.game.open(*self.position)
+            for q in questions:
+                Position.game.open(*q.position)
+
+        # found bomb by remaining ?
+        elif value == len(questions):
+            self._clue = 'x' # set immediately. not calling clue setter
+            for n in self.neighb_inst:
+                n.state -= 1
+
+        # default case
+        else:
+            self._state = value
+
+
     @staticmethod
     def _find_neighbours(position):
         """returns the set of all neighbours (excluding self's position).
@@ -43,6 +73,10 @@ class Position:
         neighb.remove((r, c))
         return neighb
 
+    def _find_questionmarks(self):
+        """ask neighbours if they are questionmarks"""
+        return set(n for n in self.neighb_inst if n.clue == '?')
+
 
 class Game:
     def __init__(self, map, result=None):
@@ -53,6 +87,9 @@ class Game:
         self.map = self.parse_map(map)
         self.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map
         Position.dim = self.dim  # preset for all positions
+
+        zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
+        self.zerotup = [(ind // self.dim[0], ind % self.dim[0]) for ind in zeroind]
 
         if result is not None:
             self.result = self.parse_map(result)
@@ -85,23 +122,63 @@ class Game:
 
     def open(self, row, column):
         """:param opened_by prevents feedback loop communication"""
-        if self.clues[(row, column)] != '?':
-            raise ValueError('Do not open opened positions! this would invoke clue.setter and alter state!')
+        if self.clues[(row, column)].clue == '?':
 
-        value = int(self.result[row][column])  # FIXME: this is an int not a string!!!
-        if value == 'x':
-            raise ValueError('What a bummer.')
+            value = int(self.result[row][column])  # FIXME: this is an int not a string!!!
+            if value == 'x':
+                raise ValueError('What a bummer.')
+
+            inst = self.clues[(row, column)]
+            inst.clue = value
+
+            # find zero
+            # questionmarks = inst._find_questionmarks()
+            # if inst.state == 0:
+            #     for n in questionmarks:
+            #         self.open(*n.position)
+
+                # succeeded with update for all neighbours of this recursion level.
+                # now check state of neighbours
+            # questionmarks = inst._find_questionmarks()
+            # for n in questionmarks:
+            #     questions = n._find_questionmarks()
+            #     if n.state == len(questions):
+            #         for q in questions:
+            #             q.clue = 'x'
+            #         for n0 in n.neighb_inst:
+            #             n0.state -= 1
 
 
 
-        return value
+            # find bomb by remaining questionmarks
 
-    def solve(self, gamemap):
-        zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
-        zerotup = [(ind // self.dim[0], ind % self.dim[0]) for ind in zeroind]
 
-        for zero in zerotup:
-            self.open(*zero, )
+    def solve(self):
+
+        for zero in self.zerotup:
+            self.open(*zero)
+
+            # FIXME: once next iter is reached:
+            # row, column
+            # (5, 0)
+            # game
+            # ? ? ? ? ? ?
+            # ? ? 2 1 2 ?
+            # ? ? 2 0 1 ?
+            # ? ? 2 1 2 ?
+            # ? ? ? ? ? ?
+            # ? ? ? ? ? ?
+            # self
+            # ? ? ? ? ? ?
+            # ? ? ? ? ? ?
+            # ? ? ? 0 ? ?
+            # ? ? ? ? ? ?
+            # ? ? ? ? ? ?
+            # ? ? ? ? ? ?
+            # id(self)
+            # 139748564936464
+            # id(game)
+            # 139748564936520
 
 
 def solve_mine(gamemap, n, resultmap=None):
@@ -115,13 +192,7 @@ def solve_mine(gamemap, n, resultmap=None):
 
     """
     Position.game = Game(gamemap, resultmap)
-    Position.game.solve(gamemap)
-
-
-
-
-
-
+    Position.game.solve()
 
 
 gamemap = """
@@ -140,10 +211,10 @@ result = """
 1 1 1 1 x 1
 0 0 0 1 1 1
 """.strip()
-game = Game(gamemap, result)
+game1 = Game(gamemap, result)
 # game.open_result = open_result(result)
 # print(game.open_result(5, 1))  # FIXME: temporary workaround
-assert solve_mine(gamemap, game.count, result) == result
+assert solve_mine(gamemap, game1.count, result) == result
 
 # Ambivalent state
 gamemap = """
