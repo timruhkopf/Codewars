@@ -42,22 +42,39 @@ class Position:
     def state(self, value):
         # once the state = 0 is "called" !
         questions = self._find_questionmarks()
+        proposal = value - self.state
 
         # open all by state hitting 0
-        if value == 0:
+        if proposal == 0:
             Position.game.open(*self.position)
             for q in questions:
                 Position.game.open(*q.position)
 
         # found bomb by remaining ?
-        elif value == len(questions):
-            self._clue = 'x' # set immediately. not calling clue setter
+        elif proposal == len(questions):
+            self._clue = 'x'  # set immediately. not calling clue setter
             for n in self.neighb_inst:
                 n.state -= 1
+
+            self._check_neighbour_state()
 
         # default case
         else:
             self._state = value
+            self._check_neighbour_state() # FIXME: recursion depth reached: stack overflow
+
+
+    def _check_neighbour_state(self):
+        """check indirect neighbour consequences after placing a bomb or opening
+        a position."""
+        for n in self.neighb_inst:
+            questions = n._find_questionmarks()
+            # length of questionmarks might have changed due to the opened postion
+            # from which this function is invoked!
+            if n.state == len(questions):
+                self._clue = 'x'
+                for n in self.neighb_inst:
+                    n.state -= 1
 
 
     @staticmethod
@@ -103,17 +120,14 @@ class Game:
             inst.neighb_inst = set(self.clues[k] for k in inst.neighbours)
 
     def __repr__(self):
-        # Experimental
         return self.encode_map_from_Position()
 
     @staticmethod
     def parse_map(map):
-        """:return nested list of strings"""
         return [row.split() for row in map.split('\n')]
 
     def encode_map_from_Position(self):
         # EXPERIMENTAL REPRESENTATION METHOD
-
         gamemap = [['' for i in range(self.dim[0])] for j in range(self.dim[1])]
         for (r, c), inst in self.clues.items():
             gamemap[r][c] = str(inst)
@@ -121,7 +135,6 @@ class Game:
         return '\n'.join(' '.join(row) for row in gamemap)
 
     def open(self, row, column):
-        """:param opened_by prevents feedback loop communication"""
         if self.clues[(row, column)].clue == '?':
 
             value = int(self.result[row][column])  # FIXME: this is an int not a string!!!
@@ -131,58 +144,15 @@ class Game:
             inst = self.clues[(row, column)]
             inst.clue = value
 
-            # find zero
-            # questionmarks = inst._find_questionmarks()
-            # if inst.state == 0:
-            #     for n in questionmarks:
-            #         self.open(*n.position)
-
-                # succeeded with update for all neighbours of this recursion level.
-                # now check state of neighbours
-            # questionmarks = inst._find_questionmarks()
-            # for n in questionmarks:
-            #     questions = n._find_questionmarks()
-            #     if n.state == len(questions):
-            #         for q in questions:
-            #             q.clue = 'x'
-            #         for n0 in n.neighb_inst:
-            #             n0.state -= 1
-
-
-
-            # find bomb by remaining questionmarks
-
-
     def solve(self):
-
+        """internal solver"""
         for zero in self.zerotup:
             self.open(*zero)
-
-            # FIXME: once next iter is reached:
-            # row, column
-            # (5, 0)
-            # game
-            # ? ? ? ? ? ?
-            # ? ? 2 1 2 ?
-            # ? ? 2 0 1 ?
-            # ? ? 2 1 2 ?
-            # ? ? ? ? ? ?
-            # ? ? ? ? ? ?
-            # self
-            # ? ? ? ? ? ?
-            # ? ? ? ? ? ?
-            # ? ? ? 0 ? ?
-            # ? ? ? ? ? ?
-            # ? ? ? ? ? ?
-            # ? ? ? ? ? ?
-            # id(self)
-            # 139748564936464
-            # id(game)
-            # 139748564936520
 
 
 def solve_mine(gamemap, n, resultmap=None):
     """
+    surrogate solver to match this katas desired interface
     https://www.codewars.com/kata/57ff9d3b8f7dda23130015fa
 
     :param map: string map, containing the 'board' with all zeros uncovered &
