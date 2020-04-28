@@ -32,7 +32,8 @@ class Position:
     def clue(self, value):
         # called at open of this position.
         self._clue = value
-        self.state = value - self.state
+        self.state = value + self.state
+
 
     @property
     def state(self):
@@ -53,6 +54,10 @@ class Position:
         elif value == len(questions):
             self._state = 0
             for q in questions:
+
+                if q == self.game.clues[(2, 5)]:
+                    print()
+
                 q._clue = 'x'
                 for n in q.neighb_inst:
                     n.state -= 1
@@ -66,12 +71,19 @@ class Position:
                     qs = neighb._find_questionmarks()
                     if neighb.state == len(qs):  # check of those neighbours if they are solved
                         neighb._state = 0
-                        for q in qs :
+                        for q in qs:
                             q._clue = 'x'
+
+                            if q == self.game.clues[(2, 5)]:
+                                print()
+
                             for n in q.neighb_inst:
-                                n.state -= 1
+                                n._state -= 1
 
-
+                        for q in qs:
+                            for n in q.neighb_inst:
+                                if n.state == 0:
+                                    n.state = 0
 
     @staticmethod
     def _find_neighbours(position):
