@@ -5,6 +5,9 @@ class Position:
     def __init__(self, position, clue='?'):
         self.position = position
         self.neighbours = self._find_neighbours(position)
+        self.hood = {(r, c): self._find_neighbours((r, c))
+                     for r in range(self.dim[0])
+                     for c in range(self.dim[1])}
 
         self.neighb_inst = set()
 
