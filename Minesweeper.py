@@ -54,10 +54,6 @@ class Position:
         elif value == len(questions):
             self._state = 0
             for q in questions:
-
-                if q == self.game.clues[(2, 5)]:
-                    print()
-
                 q._clue = 'x'
                 for n in q.neighb_inst:
                     n._state -= 1
@@ -77,10 +73,6 @@ class Position:
                         neighb._state = 0
                         for q in qs:
                             q._clue = 'x'
-
-                            if q == self.game.clues[(2, 5)]:
-                                print()
-
                             for n in q.neighb_inst:
                                 n._state -= 1
 
@@ -118,7 +110,7 @@ class Game:
         Position.dim = self.dim  # preset for all positions
 
         zeroind = [i for i, val in enumerate(gamemap.replace(' ', '').replace('\n', '')) if val == '0']
-        self.zerotup = [(ind // self.dim[0], ind % self.dim[0]) for ind in zeroind]
+        self.zerotup = [(ind // self.dim[1], ind % self.dim[1]) for ind in zeroind]
 
         if result is not None:
             self.result = self.parse_map(result)
@@ -140,7 +132,7 @@ class Game:
 
     def encode_map_from_Position(self):
         # EXPERIMENTAL REPRESENTATION METHOD
-        gamemap = [['' for i in range(self.dim[0])] for j in range(self.dim[1])]
+        gamemap = [['' for i in range(self.dim[1])] for j in range(self.dim[0])]
         for (r, c), inst in self.clues.items():
             gamemap[r][c] = str(inst)
 
@@ -148,6 +140,8 @@ class Game:
 
     def open(self, row, column):
         if self.clues[(row, column)].clue == '?':
+            if (row, column) == (1,8):
+                pass
 
             value = int(self.result[row][column])  # FIXME: this is an int not a string!!!
             if value == 'x':
@@ -174,42 +168,45 @@ def solve_mine(gamemap, n, resultmap=None):
 
     """
     Position.game = Game(gamemap, resultmap)
+    print(Position.game)
     Position.game.solve()
 
+    print('')
 
-gamemap = """
-? ? ? ? ? ?
-? ? ? ? ? ?
-? ? ? 0 ? ?
-? ? ? ? ? ?
-? ? ? ? ? ?
-0 0 0 ? ? ?
-""".strip()
-result = """
-1 x 1 1 x 1
-2 2 2 1 2 2
-2 x 2 0 1 x
-2 x 2 1 2 2
-1 1 1 1 x 1
-0 0 0 1 1 1
-""".strip()
-game1 = Game(gamemap, result)
-# game.open_result = open_result(result)
-# print(game.open_result(5, 1))  # FIXME: temporary workaround
-assert solve_mine(gamemap, game1.count, result) == result
 
-# Ambivalent state
-gamemap = """
-0 ? ?
-0 ? ?
-""".strip()
-result = """
-0 1 x
-0 1 1
-""".strip()
-game = Game(gamemap, result)
-# game.open_result = open_result(result)
-assert solve_mine(gamemap, game.count, result) == "?"
+# gamemap = """
+# ? ? ? ? ? ?
+# ? ? ? ? ? ?
+# ? ? ? 0 ? ?
+# ? ? ? ? ? ?
+# ? ? ? ? ? ?
+# 0 0 0 ? ? ?
+# """.strip()
+# result = """
+# 1 x 1 1 x 1
+# 2 2 2 1 2 2
+# 2 x 2 0 1 x
+# 2 x 2 1 2 2
+# 1 1 1 1 x 1
+# 0 0 0 1 1 1
+# """.strip()
+# game1 = Game(gamemap, result)
+# # game.open_result = open_result(result)
+# # print(game.open_result(5, 1))  # FIXME: temporary workaround
+# assert solve_mine(gamemap, game1.count, result) == result
+#
+# # Ambivalent state
+# gamemap = """
+# 0 ? ?
+# 0 ? ?
+# """.strip()
+# result = """
+# 0 1 x
+# 0 1 1
+# """.strip()
+# game = Game(gamemap, result)
+# # game.open_result = open_result(result)
+# assert solve_mine(gamemap, game.count, result) == "?"
 
 gamemap = """
 ? ? ? ? 0 0 0
