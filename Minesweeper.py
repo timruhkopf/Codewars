@@ -1,3 +1,8 @@
+import sys
+
+sys.setrecursionlimit(10 ** 6)
+
+
 class Position:
     game = None
     dim = 1, 1
@@ -34,7 +39,6 @@ class Position:
         self._clue = value
         self.state = value + self.state
 
-
     @property
     def state(self):
         return self._state
@@ -47,7 +51,7 @@ class Position:
         # open all questionmarks by state hitting 0
         if value == 0:
             self._state = 0
-            for q in questions:
+            for q in [q for q in questions if q._clue != 0]:
                 Position.game.open(*q.position)
 
         # found bomb by remaining ?
@@ -55,14 +59,14 @@ class Position:
             self._state = 0
             for q in questions:
                 q._clue = 'x'
+                # Now two loops to ensure the state is correct when proceed
                 for n in q.neighb_inst:
                     n._state -= 1
 
                 for n in q.neighb_inst:
-                    if n.state == 0:
-                        n.state = 0
+                    n.state = n._state
 
-        # default case
+        # default case, setting the received value
         else:
             self._state = value
 
@@ -78,8 +82,7 @@ class Position:
 
                         for q in qs:
                             for n in q.neighb_inst:
-                                if n.state == 0:
-                                    n.state = 0
+                                n.state = n._state
 
     @staticmethod
     def _find_neighbours(position):
@@ -131,7 +134,6 @@ class Game:
         return [row.split() for row in map.split('\n')]
 
     def encode_map_from_Position(self):
-        # EXPERIMENTAL REPRESENTATION METHOD
         gamemap = [['' for i in range(self.dim[1])] for j in range(self.dim[0])]
         for (r, c), inst in self.clues.items():
             gamemap[r][c] = str(inst)
@@ -139,10 +141,10 @@ class Game:
         return '\n'.join(' '.join(row) for row in gamemap)
 
     def open(self, row, column):
+        # if (row, column) == (20,14):
+        #     print()
+        # print(self)
         if self.clues[(row, column)].clue == '?':
-            if (row, column) == (1,8):
-                pass
-
             value = int(self.result[row][column])  # FIXME: this is an int not a string!!!
             if value == 'x':
                 raise ValueError('What a bummer.')
@@ -151,9 +153,30 @@ class Game:
             inst.clue = value
 
     def solve(self):
-        """internal solver"""
+        # (0) causal (state) communication logic from initial zeros
         for zero in self.zerotup:
             self.open(*zero)
+
+        print('')
+
+        # (1) exacly one bomb in questionmarks logic
+        before = Position.game
+        after = False
+        while before != after:
+            [q for q in self.clues.values() if q.clue == '?']
+
+            # if set.issubset()
+
+            # TODO exacly one
+            after = Position.game
+
+        # (2) Endgame logic based on number of bombs.
+
+        # ambiguity?
+        if '?' in Position.game:
+            return '?'
+        else:
+            return Position.game
 
 
 def solve_mine(gamemap, n, resultmap=None):
@@ -168,33 +191,28 @@ def solve_mine(gamemap, n, resultmap=None):
 
     """
     Position.game = Game(gamemap, resultmap)
-    print(Position.game)
-    Position.game.solve()
-
-    print('')
+    return Position.game.solve()
 
 
-# gamemap = """
-# ? ? ? ? ? ?
-# ? ? ? ? ? ?
-# ? ? ? 0 ? ?
-# ? ? ? ? ? ?
-# ? ? ? ? ? ?
-# 0 0 0 ? ? ?
-# """.strip()
-# result = """
-# 1 x 1 1 x 1
-# 2 2 2 1 2 2
-# 2 x 2 0 1 x
-# 2 x 2 1 2 2
-# 1 1 1 1 x 1
-# 0 0 0 1 1 1
-# """.strip()
-# game1 = Game(gamemap, result)
-# # game.open_result = open_result(result)
-# # print(game.open_result(5, 1))  # FIXME: temporary workaround
-# assert solve_mine(gamemap, game1.count, result) == result
-#
+gamemap = """
+? ? ? ? ? ?
+? ? ? ? ? ?
+? ? ? 0 ? ?
+? ? ? ? ? ?
+? ? ? ? ? ?
+0 0 0 ? ? ?
+""".strip()
+result = """
+1 x 1 1 x 1
+2 2 2 1 2 2
+2 x 2 0 1 x
+2 x 2 1 2 2
+1 1 1 1 x 1
+0 0 0 1 1 1
+""".strip()
+game1 = Game(gamemap, result)
+assert solve_mine(gamemap, game1.count, result) == result
+
 # # Ambivalent state
 # gamemap = """
 # 0 ? ?
@@ -208,31 +226,32 @@ def solve_mine(gamemap, n, resultmap=None):
 # # game.open_result = open_result(result)
 # assert solve_mine(gamemap, game.count, result) == "?"
 
-gamemap = """
-? ? ? ? 0 0 0
-? ? ? ? 0 ? ?
-? ? ? 0 0 ? ?
-? ? ? 0 0 ? ?
-0 ? ? ? 0 0 0
-0 ? ? ? 0 0 0
-0 ? ? ? 0 ? ?
-0 0 0 0 0 ? ?
-0 0 0 0 0 ? ?
-""".strip()
-result = """
-1 x x 1 0 0 0
-2 3 3 1 0 1 1
-1 x 1 0 0 1 x
-1 1 1 0 0 1 1
-0 1 1 1 0 0 0
-0 1 x 1 0 0 0
-0 1 1 1 0 1 1
-0 0 0 0 0 1 x
-0 0 0 0 0 1 1
-""".strip()
-game = Game(gamemap, result)
-# game.open_result = open_result(result)
-assert solve_mine(gamemap, game.count, result) == result
+# Deterministic board
+# gamemap = """
+# ? ? ? ? 0 0 0
+# ? ? ? ? 0 ? ?
+# ? ? ? 0 0 ? ?
+# ? ? ? 0 0 ? ?
+# 0 ? ? ? 0 0 0
+# 0 ? ? ? 0 0 0
+# 0 ? ? ? 0 ? ?
+# 0 0 0 0 0 ? ?
+# 0 0 0 0 0 ? ?
+# """.strip()
+# result = """
+# 1 x x 1 0 0 0
+# 2 3 3 1 0 1 1
+# 1 x 1 0 0 1 x
+# 1 1 1 0 0 1 1
+# 0 1 1 1 0 0 0
+# 0 1 x 1 0 0 0
+# 0 1 1 1 0 1 1
+# 0 0 0 0 0 1 x
+# 0 0 0 0 0 1 1
+# """.strip()
+# game = Game(gamemap, result)
+# # game.open_result = open_result(result)
+# assert solve_mine(gamemap, game.count, result) == result
 
 # Huge ambivalent state
 gamemap = """
