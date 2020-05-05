@@ -16,6 +16,9 @@ class Position:
         self._clue = clue
         self._state = 0
 
+        self.questionmarks = set()
+        self.exacly_one = list()
+
     def __repr__(self):  # for debugging only
         # return str(self._clue)
         return str((self.position, 'clue:', self._clue, 'state:', self.state))
@@ -45,44 +48,37 @@ class Position:
 
     @state.setter
     def state(self, value):
-        # once the state = 0 is "called" !
-        questions = self._find_questionmarks()
-
         # open all questionmarks by state hitting 0
         if value == 0:
             self._state = 0
-            for q in [q for q in questions if q._clue != 0]:
+            toopen = self.questionmarks.copy()
+            for q in toopen:
                 Position.game.open(*q.position)
 
-        # found bomb by remaining ?
-        elif value == len(questions):
-            self._state = 0
-            for q in questions:
-                q._clue = 'x'
-                # Now two loops to ensure the state is correct when proceed
-                for n in q.neighb_inst:
-                    n._state -= 1
-
-                for n in q.neighb_inst:
-                    n.state = n._state
+            for n in self.neighb_inst:
+                n.find_bomb_stateeqQ()
 
         # default case, setting the received value
         else:
             self._state = value
+            print(Position.game)
+            self.find_bomb_stateeqQ()
 
-            for neighb in self.neighb_inst - questions:
-                if neighb.state != 0:
-                    qs = neighb._find_questionmarks()
-                    if neighb.state == len(qs):  # check of those neighbours if they are solved
-                        neighb._state = 0
-                        for q in qs:
-                            q._clue = 'x'
-                            for n in q.neighb_inst:
-                                n._state -= 1
+    def find_bomb_stateeqQ(self):
+        if self.state == len(self.questionmarks):
+            self._state = 0
+            toopen = self.questionmarks.copy()
+            for q in toopen:
+                q._clue = 'x'
 
-                        for q in qs:
-                            for n in q.neighb_inst:
-                                n.state = n._state
+                # Now two loops to ensure the state is correct when proceed
+                for n in q.neighb_inst:
+                    n._state -= 1
+                    if q in n.questionmarks:
+                        n.questionmarks.remove(q)
+
+                for n in q.neighb_inst:
+                    n.state = n._state
 
     @staticmethod
     def _find_neighbours(position):
@@ -96,10 +92,6 @@ class Position:
                      if cond(r + i, c + j) and cond(r + i, c + j))
         neighb.remove((r, c))
         return neighb
-
-    def _find_questionmarks(self):
-        """ask neighbours if they are questionmarks"""
-        return set(n for n in self.neighb_inst if n.clue == '?')
 
 
 class Game:
@@ -125,6 +117,7 @@ class Game:
         # setting up the neighbourhood structure
         for inst in self.clues.values():
             inst.neighb_inst = set(self.clues[k] for k in inst.neighbours)
+            inst.questionmarks = inst.neighb_inst.copy()
 
     def __repr__(self):
         return self.encode_map_from_Position()
@@ -141,15 +134,17 @@ class Game:
         return '\n'.join(' '.join(row) for row in gamemap)
 
     def open(self, row, column):
-        # if (row, column) == (20,14):
-        #     print()
-        # print(self)
+
         if self.clues[(row, column)].clue == '?':
-            value = int(self.result[row][column])  # FIXME: this is an int not a string!!!
+            value = int(self.result[row][column])
+
             if value == 'x':
                 raise ValueError('What a bummer.')
 
             inst = self.clues[(row, column)]
+            for n in inst.neighb_inst:
+                n.questionmarks.remove(inst)
+
             inst.clue = value
 
     def solve(self):
@@ -163,7 +158,15 @@ class Game:
         before = Position.game
         after = False
         while before != after:
+            # first find the neighbours to remaining questionmarks
             [q for q in self.clues.values() if q.clue == '?']
+
+            q_neighb = set()
+            for q in self.clues.values():
+                if q.clue == '?':
+                    q_neighb.update(q.neighb_inst)
+
+            # for q_neighb:
 
             # if set.issubset()
 
