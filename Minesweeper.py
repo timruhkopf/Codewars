@@ -61,7 +61,6 @@ class Position:
         # default case, setting the received value
         else:
             self._state = value
-            print(Position.game)
             self.find_bomb_stateeqQ()
 
     def find_bomb_stateeqQ(self):
@@ -159,12 +158,10 @@ class Game:
         after = False
         while before != after:
             # first find the neighbours to remaining questionmarks
-            [q for q in self.clues.values() if q.clue == '?']
 
-            q_neighb = set()
-            for q in self.clues.values():
-                if q.clue == '?':
-                    q_neighb.update(q.neighb_inst)
+            set(n for q in self.clues.values() for n in q.neighb_inst if q.clue == '?' and n.clue != '?')
+
+            print()
 
             # for q_neighb:
 
