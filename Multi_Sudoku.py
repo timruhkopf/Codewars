@@ -1,5 +1,5 @@
 from functools import wraps
-
+from copy import deepcopy
 
 def memoize(f):
     """decorator to memoize the results of the recursive call"""
@@ -33,7 +33,6 @@ class Sudoku:
         self.problem = problem
 
         self.sudokuindex = list((r, c, self.blockindex(r, c)) for r in range(9) for c in range(9))
-        self.zero = [(r, c, b) for r, c, b in self.sudokuindex if self.problem[r][c] == 0]
 
         B = [set(self.problem[r][c] for r, c, b in self.sudokuindex
                  if self.problem[r][c] != 0 and b == i) for i in range(9)]
@@ -43,6 +42,9 @@ class Sudoku:
         self.candcol = [set(range(10)) - set(column) for column in list(zip(*self.problem))]  # make use of transpose
 
         self.valid_grid(problem)
+        self.zero = [(r, c, b) for r, c, b in self.sudokuindex if self.problem[r][c] == 0]
+        if any([not bool(self.options(r, c, b)) for r, c, b in self.zero]):
+            raise ValueError('This Grid is invalid. Some zero has no options.')
 
         self.memo = dict()
 
@@ -56,9 +58,9 @@ class Sudoku:
     @property
     def solution(self):
         """helper method to reformat dict solution to nested list format"""
-        return [[self._solve_single.memo[(r, c, self.blockindex(r, c))]
-                 if (r, c, self.blockindex(r, c)) in self._solve_single.memo.keys()
-                    and self._solve_single.memo[(r, c, self.blockindex(r, c))] is not None
+        return [[self.memo[(r, c, self.blockindex(r, c))]
+                 if (r, c, self.blockindex(r, c)) in self.memo.keys()
+                    and self.memo[(r, c, self.blockindex(r, c))] is not None
                  else self.problem[r][c] for c in range(9)] for r in range(9)]
 
     def options(self, r, c, b, reverse=False):
@@ -98,33 +100,35 @@ class Sudoku:
         return None
 
     def solve(self):
+        """
+        first solve_single with sorted options
+        for check on second solution:
+        fill the sudoku until zeros position [:-1] and try to solve
+        with reversed options. if unsuccessful fill until zeros_position [:-2]
+        continue until we reach the very exact solution as before (i.e.
+        there is only this solution) EARLY STOP - once the first differing
+        solution is found, throw an error!
+        """
         self._solve_single(position=self.zero[0], counter=0, reverse=False)
-
-        # CONSIDER
-        # save result & clear memoize argument
-        # self.memo = self._solve_single.memo
-        # self._solve_single.memo = dict()
+        self.memo = deepcopy(self._solve_single.memo)
 
         if self.solution == self.problem:
             raise ValueError('This Sudoku has no solutions')
 
-        # fill the sudoku until zeros position [:-1] and try to solve
-        # with reversed options. if unsuccessful fill until zeros_position [:-2]
-        # continue until we reach the very exact solution as before (i.e.
-        # there is only this solution) EARLY STOP - once the first differing
-        # solution is found, throw an error!
-
-        for i in range(1, len(self.zero) + 1):  # TODO check if index is correct
-            unfinished = self.problem.copy()
+        for i in range(2, len(self.zero) + 1):
+            unfinished = deepcopy(self.problem)
             for (r, c, b) in self.zero[:-i]:
-                val = self._solve_single.memo[(r, c, b)]
+                val = self.memo[(r, c, b)]
                 if val is not None:
                     unfinished[r][c] = val
             uSudoku = Sudoku(unfinished)
             uSudoku._solve_single(position=self.zero[-i], counter=0, reverse=True)
+            uSudoku.memo = uSudoku._solve_single.memo
 
             if uSudoku.solution != unfinished and \
                     uSudoku.solution != self.solution:
+                for row, row1 in zip(self.solution, uSudoku.solution):
+                    print(row, '\n', row1)
                 raise ValueError('This Sudoku has multiple solutions')
 
         return self.solution
@@ -135,9 +139,6 @@ class Sudoku:
 
         if set.union(*[set(row) for row in problem]) != set(range(10)):
             raise ValueError('Values of problem are not in range 1~9')
-
-        if any([not bool(self.options(r, c, b)) for r, c, b in self.zero]):
-            raise ValueError('This Grid is invalid. Some zero has no options.')
 
     def valid_solution(self):
         """for debugging only"""
