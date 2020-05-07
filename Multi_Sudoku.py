@@ -1,6 +1,10 @@
+from functools import wraps
+
+
 def memoize(f):
     """decorator to memoize the results of the recursive call"""
 
+    @wraps(f)
     def helper(self, position, *args, **kwargs):
         helper.calls += 1
         helper.memo[position] = f(self, position, *args, **kwargs)
@@ -12,7 +16,7 @@ def memoize(f):
 
 
 class Sudoku:
-    def __init__(self, problem, checks=False):
+    def __init__(self, problem):
         """
         https://www.codewars.com/kata/5588bd9f28dbb06f43000085
         TASK:
@@ -25,8 +29,11 @@ class Sudoku:
         (1) multiple solutions for the same puzzle
         (2) the puzzle is unsolvable
         """
+
         self.problem = problem
+
         self.sudokuindex = list((r, c, self.blockindex(r, c)) for r in range(9) for c in range(9))
+        self.zero = [(r, c, b) for r, c, b in self.sudokuindex if self.problem[r][c] == 0]
 
         B = [set(self.problem[r][c] for r, c, b in self.sudokuindex
                  if self.problem[r][c] != 0 and b == i) for i in range(9)]
@@ -35,13 +42,7 @@ class Sudoku:
         self.candrow = [set(range(10)) - set(row) for row in self.problem]
         self.candcol = [set(range(10)) - set(column) for column in list(zip(*self.problem))]  # make use of transpose
 
-        if checks:
-            self.valid_grid(problem)
-        self.zero = [(r, c, b) for r, c, b in self.sudokuindex if self.problem[r][c] == 0]
-
-        if checks:
-            if any([not bool(self.options(r, c, b)) for r, c, b in self.zero]):
-                raise ValueError('This Grid is invalid. Some zero has no options.')
+        self.valid_grid(problem)
 
         self.memo = dict()
 
@@ -55,10 +56,10 @@ class Sudoku:
     @property
     def solution(self):
         """helper method to reformat dict solution to nested list format"""
-        return [[self.problem[r][c]
-                 if self.problem[r][c] != 0
-                 else self.memo[(r, c, self.blockindex(r, c))]
-                 for c in range(9)] for r in range(9)]
+        return [[self._solve_single.memo[(r, c, self.blockindex(r, c))]
+                 if (r, c, self.blockindex(r, c)) in self._solve_single.memo.keys()
+                    and self._solve_single.memo[(r, c, self.blockindex(r, c))] is not None
+                 else self.problem[r][c] for c in range(9)] for r in range(9)]
 
     def options(self, r, c, b, reverse=False):
         """returns sorted intersection of possible values at that location"""
@@ -98,7 +99,11 @@ class Sudoku:
 
     def solve(self):
         self._solve_single(position=self.zero[0], counter=0, reverse=False)
-        self.memo = self._solve_single.memo.copy()  # FIXME: memo does not contain last value!
+
+        # CONSIDER
+        # save result & clear memoize argument
+        # self.memo = self._solve_single.memo
+        # self._solve_single.memo = dict()
 
         if self.solution == self.problem:
             raise ValueError('This Sudoku has no solutions')
@@ -109,21 +114,17 @@ class Sudoku:
         # there is only this solution) EARLY STOP - once the first differing
         # solution is found, throw an error!
 
-        for i in range(2, len(self.zero) + 1):  # TODO check if index is correct
+        for i in range(1, len(self.zero) + 1):  # TODO check if index is correct
             unfinished = self.problem.copy()
             for (r, c, b) in self.zero[:-i]:
-                val = self.memo[(r, c, b)]
+                val = self._solve_single.memo[(r, c, b)]
                 if val is not None:
                     unfinished[r][c] = val
-            uSudoku = Sudoku(unfinished, checks=False)
+            uSudoku = Sudoku(unfinished)
             uSudoku._solve_single(position=self.zero[-i], counter=0, reverse=True)
-            uSudoku.memo = uSudoku._solve_single.memo
 
-            print(uSudoku == unfinished)
-            print(uSudoku == self.solution)
-            print(uSudoku)
-            if not (uSudoku.solution == unfinished and \
-                    uSudoku.solution != self.solution):
+            if uSudoku.solution != unfinished and \
+                    uSudoku.solution != self.solution:
                 raise ValueError('This Sudoku has multiple solutions')
 
         return self.solution
@@ -132,8 +133,11 @@ class Sudoku:
         if len(problem) != 9 or not all([len(row) == 9 for row in problem]):
             raise ValueError('Problem is not not of proper dimensions')
 
-        if not set.union(*[set(row) for row in problem]).issubset(set(range(10))):
+        if set.union(*[set(row) for row in problem]) != set(range(10)):
             raise ValueError('Values of problem are not in range 1~9')
+
+        if any([not bool(self.options(r, c, b)) for r, c, b in self.zero]):
+            raise ValueError('This Grid is invalid. Some zero has no options.')
 
     def valid_solution(self):
         """for debugging only"""
@@ -161,51 +165,6 @@ def sudoku_solver(puzzle):
 
 
 if __name__ == '__main__':
-
-    # Multiple Solutions
-    problem = [[9, 0, 6, 0, 7, 0, 4, 0, 3],
-               [0, 0, 0, 4, 0, 0, 2, 0, 0],
-               [0, 7, 0, 0, 2, 3, 0, 1, 0],
-               [5, 0, 0, 0, 0, 0, 1, 0, 0],
-               [0, 4, 0, 2, 0, 8, 0, 6, 0],
-               [0, 0, 3, 0, 0, 0, 0, 0, 5],
-               [0, 3, 0, 7, 0, 0, 0, 5, 0],
-               [0, 0, 7, 0, 0, 5, 0, 0, 0],
-               [4, 0, 5, 0, 1, 0, 7, 0, 8]]
-
-    p = Sudoku(problem)
-    p.solve()
-    p.valid_solution()
-
-    problem = [[8, 0, 0, 0, 0, 5, 0, 0, 0],
-               [0, 0, 0, 8, 0, 4, 0, 0, 0],
-               [0, 0, 0, 3, 0, 0, 0, 0, 6],
-               [0, 8, 0, 0, 0, 9, 7, 4, 3],
-               [0, 5, 0, 0, 0, 8, 0, 1, 0],
-               [0, 1, 0, 0, 0, 0, 0, 0, 0],
-               [0, 0, 0, 0, 0, 0, 0, 7, 0],
-               [0, 3, 0, 5, 0, 0, 0, 8, 0],
-               [9, 7, 2, 4, 0, 0, 0, 5, 0]]
-
-
-    p = Sudoku(problem)
-    p.solve()
-    p.valid_solution()
-
-    problem = [[0, 0, 0, 0, 0, 2, 7, 5, 0],
-               [0, 1, 8, 0, 9, 0, 0, 0, 0],
-               [0, 0, 0, 0, 0, 0, 0, 0, 0],
-               [4, 9, 0, 0, 0, 0, 0, 0, 0],
-               [0, 3, 0, 0, 0, 0, 0, 0, 8],
-               [0, 0, 0, 7, 0, 0, 2, 0, 0],
-               [0, 0, 0, 0, 3, 0, 0, 0, 9],
-               [7, 0, 0, 0, 0, 0, 0, 0, 0],
-               [5, 0, 0, 0, 0, 0, 0, 8, 0]]
-
-    p = Sudoku(problem)
-    p.solve()
-    sudoku_solver(problem)
-
     # deterministic case, test case of codewars:
     problem = [[0, 0, 6, 1, 0, 0, 0, 0, 8],
                [0, 8, 0, 0, 9, 0, 0, 3, 0],
