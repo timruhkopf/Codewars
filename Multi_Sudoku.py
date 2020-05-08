@@ -1,6 +1,7 @@
 from functools import wraps
 from copy import deepcopy
 
+
 def memoize(f):
     """decorator to memoize the results of the recursive call"""
 
@@ -112,24 +113,39 @@ class Sudoku:
         self._solve_single(position=self.zero[0], counter=0, reverse=False)
         self.memo = deepcopy(self._solve_single.memo)
 
+        # NOTICE: AT THIS point self.solution is correct, but is altered in the course
+        # of the following code
+
         if self.solution == self.problem:
             raise ValueError('This Sudoku has no solutions')
 
-        for i in range(2, len(self.zero) + 1):
-            unfinished = deepcopy(self.problem)
-            for (r, c, b) in self.zero[:-i]:
-                val = self.memo[(r, c, b)]
-                if val is not None:
-                    unfinished[r][c] = val
-            uSudoku = Sudoku(unfinished)
-            uSudoku._solve_single(position=self.zero[-i], counter=0, reverse=True)
-            uSudoku.memo = uSudoku._solve_single.memo
+        # Update: alternatively: do only a single run on forward pass with no
+        # solution values passed in , but with reversed intersection:
+        uSudoku = Sudoku(self.problem)
+        uSudoku._solve_single(position=self.zero[0], counter=0, reverse=True)
+        if uSudoku.solution != self.problem and \
+                uSudoku.solution != self.solution:
+            raise ValueError('This Sudoku has multiple solutions')
 
-            if uSudoku.solution != unfinished and \
-                    uSudoku.solution != self.solution:
-                for row, row1 in zip(self.solution, uSudoku.solution):
-                    print(row, '\n', row1)
-                raise ValueError('This Sudoku has multiple solutions')
+        # Deprec?? backward pass
+        # for i in range(2, len(self.zero) + 1):
+        #     unfinished = deepcopy(self.problem)
+        #     for (r, c, b) in self.zero[:-i]:
+        #         val = self.memo[(r, c, b)]
+        #         if val is not None:
+        #             unfinished[r][c] = val
+        #     uSudoku = Sudoku(unfinished)
+        #     uSudoku._solve_single(position=self.zero[-i], counter=0, reverse=True)
+        #     uSudoku.memo = uSudoku._solve_single.memo
+        #
+        #     if uSudoku.solution != unfinished and \
+        #             uSudoku.solution != self.solution:
+        #
+        #         # Deprec for debug only
+        #         for row, row1 in zip(self.solution, uSudoku.solution):
+        #             print(' ', row, '\n ', row1)
+        #
+        #         raise ValueError('This Sudoku has multiple solutions')
 
         return self.solution
 
@@ -166,6 +182,30 @@ def sudoku_solver(puzzle):
 
 
 if __name__ == '__main__':
+    problem = [[6, 0, 0, 0, 0, 0, 0, 0, 2],
+               [0, 0, 3, 6, 0, 1, 7, 0, 0],
+               [0, 7, 0, 0, 4, 0, 0, 1, 0],
+               [0, 5, 0, 9, 0, 4, 0, 3, 0],
+               [0, 0, 9, 0, 0, 0, 1, 0, 0],
+               [0, 6, 0, 7, 0, 8, 0, 2, 0],
+               [0, 3, 0, 0, 6, 0, 0, 5, 0],
+               [0, 0, 5, 3, 0, 9, 4, 0, 0],
+               [7, 0, 0, 0, 0, 0, 0, 0, 3]]
+
+    solution = [[6, 1, 8, 5, 9, 7, 3, 4, 2],
+                [4, 9, 3, 6, 2, 1, 7, 8, 5],
+                [5, 7, 2, 8, 4, 3, 9, 1, 6],
+                [2, 5, 7, 9, 1, 4, 6, 3, 8],
+                [3, 8, 9, 2, 5, 6, 1, 7, 4],
+                [1, 6, 4, 7, 3, 8, 5, 2, 9],
+                [9, 3, 1, 4, 6, 2, 8, 5, 7],
+                [8, 2, 5, 3, 7, 9, 4, 6, 1],
+                [7, 4, 6, 1, 8, 5, 2, 9, 3]]
+    p = Sudoku(problem)
+    p.solve()
+
+    assert p.solution == solution  # FIXME: depending on which sudoku was executed first, the
+    # value at first position may differ & be invalid
     # deterministic case, test case of codewars:
     problem = [[0, 0, 6, 1, 0, 0, 0, 0, 8],
                [0, 8, 0, 0, 9, 0, 0, 3, 0],
@@ -190,7 +230,10 @@ if __name__ == '__main__':
     p = Sudoku(problem)
     p.solve()
     p.valid_solution()
-    assert p.solution == solution
+    assert p.solution == solution  # Fixme: my solution is invalid: same row exhibits
+    # multiple times the same value
+    for r, r1 in zip(p.solution, solution):
+        print(r, '\n', r1)
 
     # deterministic case
     problem = [[9, 0, 0, 0, 8, 0, 0, 0, 1],
