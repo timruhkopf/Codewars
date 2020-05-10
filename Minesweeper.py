@@ -191,7 +191,7 @@ class Game:
             a = inst1.questionmarks
             b = inst2.questionmarks
 
-            if b.issuperset(a):  # SUPERSET
+            if b.issuperset(a) and bool(a):  # SUPERSET
                 remain = (b - a)
 
                 # remaining can be opened
