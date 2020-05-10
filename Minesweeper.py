@@ -1,3 +1,4 @@
+from itertools import product, permutations  # permutations is deprec
 import sys
 
 sys.setrecursionlimit(10 ** 6)
@@ -9,9 +10,12 @@ class Position:
 
     def __init__(self, position, clue='?'):
         self.position = position
-        self.neighbours = self._find_neighbours(position)
+        neighbours, intermediate = self._find_neighbours(position)
+        self.neighbours = neighbours
+        self.intermediate = intermediate
 
         self.neighb_inst = set()
+        self.intermediate_inst = set()
 
         self._clue = clue
         self._state = 0
@@ -31,6 +35,12 @@ class Position:
 
     def __eq__(self, other):  # to support in
         return self.position == other.position
+
+    def isneighb(self, other):
+        return other in self.neighb_inst
+
+    def isintermediate(self, other):
+        return other in self.intermediate_inst
 
     @property
     def clue(self):
@@ -56,28 +66,29 @@ class Position:
                 Position.game.open(*q.position)
 
             for n in self.neighb_inst:
-                n.find_bomb_stateeqQ()
+                if n.state == len(n.questionmarks):
+                    n.found_bomb()
 
         # default case, setting the received value
         else:
             self._state = value
-            self.find_bomb_stateeqQ()
+            if self.state == len(self.questionmarks):
+                self.found_bomb()
 
-    def find_bomb_stateeqQ(self):
-        if self.state == len(self.questionmarks):
-            self._state = 0
-            toopen = self.questionmarks.copy()
-            for q in toopen:
-                q._clue = 'x'
+    def found_bomb(self):
+        self._state = 0
+        toopen = self.questionmarks.copy()
+        for q in toopen:
+            q._clue = 'x'
 
-                # Now two loops to ensure the state is correct when proceed
-                for n in q.neighb_inst:
-                    n._state -= 1
-                    if q in n.questionmarks:
-                        n.questionmarks.remove(q)
+            # Now two loops to ensure the state is correct when proceed
+            for n in q.neighb_inst:
+                n._state -= 1
+                if q in n.questionmarks:
+                    n.questionmarks.remove(q)
 
-                for n in q.neighb_inst:
-                    n.state = n._state
+            for n in q.neighb_inst:
+                n.state = n._state
 
     @staticmethod
     def _find_neighbours(position):
@@ -85,12 +96,18 @@ class Position:
         all of them are bound checked"""
         r, c = position
         cond = lambda r, c: 0 <= r < Position.dim[0] and 0 <= c < Position.dim[1]
-        neighb = set((r + i, c + j)
-                     for i in (-1, 0, 1)
-                     for j in (-1, 0, 1)
-                     if cond(r + i, c + j) and cond(r + i, c + j))
+        square = lambda kernel: set((r + i, c + j) for i in kernel for j in kernel
+                                    if cond(r + i, c + j) and cond(r + i, c + j))
+
+        # find the direct neighbours
+        neighb = square(kernel=(-1, 0, 1))
+
+        # finding the bounded intermediate neighbours
+        intermediate = square(kernel=(-2, -1, 0, 1, 2))
+        intermediate.difference_update(neighb)
+
         neighb.remove((r, c))
-        return neighb
+        return neighb, intermediate
 
 
 class Game:
@@ -116,6 +133,7 @@ class Game:
         # setting up the neighbourhood structure
         for inst in self.clues.values():
             inst.neighb_inst = set(self.clues[k] for k in inst.neighbours)
+            inst.intermediate_inst = set(self.clues[k] for k in inst.intermediate)
             inst.questionmarks = inst.neighb_inst.copy()
 
     def __repr__(self):
@@ -146,6 +164,41 @@ class Game:
 
             inst.clue = value
 
+    def intersection_solver(self):
+        # first find the neighbours to remaining questionmarks
+        inquestion = set(n for q in self.clues.values()
+                         for n in q.neighb_inst
+                         if q.clue == '?' and n.clue != '?')  # TODO remove this simplification
+
+        # Deprec: too many combinations
+        # candidates = ([inst1, inst2] for inst1, inst2 in permutations(inquestion, 2)
+        #               if (inst1.isneighb(inst2) or inst1.isintermediate(inst2))
+        #               and (inst1._state == 1 or inst2._state == 1))  # TODO remove this simplification
+
+        # most informative intersections start with:
+        single = set(n for n in inquestion if n._state ==1)
+        candidates = ([inst1, inst2] for inst1, inst2 in product(single, inquestion)
+                      if (inst1.isneighb(inst2) or inst1.isintermediate(inst2)))
+
+        for inst1, inst2 in candidates:
+            a = inst1.neighb_inst
+            b = inst2.neighb_inst
+
+            if b.issuperset(a):  # SUPERSET
+                if len(b.questionmarks) == inst1._state:
+                    toopen = (b - a).copy()
+                    for n in toopen:
+                        self.open(*n.position)
+
+                elif len(b - a) == len(b.questionmarks):
+                    for n in b.questionmarks:
+                        n.found_bomb()
+
+
+            # CAREFULL with the state consequence behaviour & this loop! - do not change
+            #
+
+
     def solve(self):
         # (0) causal (state) communication logic from initial zeros
         for zero in self.zerotup:
@@ -157,15 +210,9 @@ class Game:
         before = Position.game
         after = False
         while before != after:
-            # first find the neighbours to remaining questionmarks
-
-            set(n for q in self.clues.values() for n in q.neighb_inst if q.clue == '?' and n.clue != '?')
+            self.intersection_solver()
 
             print()
-
-            # for q_neighb:
-
-            # if set.issubset()
 
             # TODO exacly one
             after = Position.game
