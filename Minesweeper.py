@@ -182,22 +182,23 @@ class Game:
         #               and (inst1._state == 1 or inst2._state == 1))  # TODO remove this simplification
 
         # most informative intersections start with:
-        single = set(n for n in inquestion if n._state ==1)
+        single = set(n for n in inquestion if n._state == 1)
         candidates = ([inst1, inst2] for inst1, inst2 in product(single, inquestion)
                       if (inst1.isneighb(inst2) or inst1.isintermediate(inst2)))
 
         for inst1, inst2 in candidates:
-            a = inst1.neighb_inst
-            b = inst2.neighb_inst
+            a = inst1.questionmarks
+            b = inst2.questionmarks
 
             if b.issuperset(a):  # SUPERSET
-                if len(b.questionmarks) == inst1._state:
-                    toopen = (b - a).copy()
+                bminusa = (b - a)
+                if inst2._state - inst1._state == 0:  # since inst1 is subset
+                    toopen = bminusa.copy()
                     for n in toopen:
                         self.open(*n.position)
 
-                elif len(b - a) == len(b.questionmarks):
-                    for n in b.questionmarks:
+                elif len(bminusa) == len(b):
+                    for n in b:
                         n.found_bomb()
 
 
