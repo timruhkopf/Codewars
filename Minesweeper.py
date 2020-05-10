@@ -234,12 +234,10 @@ def solve_mine(gamemap, n, resultmap=None):
     """
     surrogate solver to match this katas desired interface
     https://www.codewars.com/kata/57ff9d3b8f7dda23130015fa
-
     :param map: string map, containing the 'board' with all zeros uncovered &
     ? as unknown values.
     :param n: number of mines on that board.
     :return: a solved string map, containing only integers & 'x'`s for bomb markers
-
     """
     Position.game = Game(gamemap, resultmap)
     return str(Position.game.solve())
