@@ -81,7 +81,7 @@ if __name__ == '__main__':
                 [2, 8, 4, 7, 9, 5, 6, 1, 3],
                 [1, 3, 9, 6, 4, 2, 8, 5, 7]]
 
-print(solve(problem) == solution)
+    print(solve(problem) == solution)
 
 # ensure, that each memoize.memo is confinded to the problem
 # solver_instance0 = memoize(self._solve_single)
