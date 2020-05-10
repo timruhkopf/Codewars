@@ -23,7 +23,6 @@ class Position:
         self._state = 0
 
         self.questionmarks = set()
-        self.exacly_one = list()
 
     def __repr__(self):  # for debugging only
         # return str(self._clue)
@@ -138,6 +137,8 @@ class Game:
             inst.intermediate_inst = set(self.clues[k] for k in inst.intermediate)
             inst.questionmarks = inst.neighb_inst.copy()
 
+        self.exacly_one = list()
+
     def __repr__(self):
         return self.encode_map_from_Position()
 
@@ -170,7 +171,7 @@ class Game:
 
             inst.clue = value
 
-    def intersection_solver(self):
+    def superset_solver(self):
         # first find the neighbours to remaining questionmarks
         inquestion = set(n for q in self.clues.values()
                          for n in q.neighb_inst
@@ -192,15 +193,23 @@ class Game:
 
             if b.issuperset(a):  # SUPERSET
                 remain = (b - a)
+
+                # remaining can be opened
                 if inst2._state - inst1._state == 0:  # since inst1 is subset
                     toopen = remain.copy()
                     for n in toopen:
                         self.open(*n.position)
 
+                # remaining are bombs
                 elif len(remain) == len(b):
                     for n in remain:
                         n.found_bomb()
 
+                # merely found an exacly one
+                else:
+                    intersect = a.intersection(b)
+                    if inst1._state==1: # it cannot be a 2 out of 3. but could be 2 hidden in 3 Notice this condition is currently always true (by design)
+                        self.exacly_one.append(intersect)
 
 
     def solve(self):
@@ -211,20 +220,16 @@ class Game:
         print('')
 
         # (1) exacly one bomb in questionmarks logic
-        before = Position.game
-        after = False
-        while before != after:
-            self.intersection_solver()
-
-            print()
-
-            # TODO exacly one
-            after = Position.game
+        before = str(self)
+        after = before
+        while before == after:
+            self.superset_solver()
+            after = str(self)
 
         # (2) Endgame logic based on number of bombs.
 
         # ambiguity?
-        if bool([inst._clue  for inst in self.clues.values() if inst._clue == '?']):
+        if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
             return '?'
         else:
             return Position.game
@@ -242,7 +247,7 @@ def solve_mine(gamemap, n, resultmap=None):
     Position.game = Game(gamemap, resultmap)
     return str(Position.game.solve())
 
-
+#
 # gamemap = """
 # ? ? ? ? ? ?
 # ? ? ? ? ? ?
@@ -280,45 +285,45 @@ result = """
 game1 = Game(gamemap, result)
 assert solve_mine(gamemap, game1.count, result) == result
 
-# # Ambivalent state
-# gamemap = """
-# 0 ? ?
-# 0 ? ?
-# """.strip()
-# result = """
-# 0 1 x
-# 0 1 1
-# """.strip()
-# game = Game(gamemap, result)
-# # game.open_result = open_result(result)
-# assert solve_mine(gamemap, game.count, result) == "?"
+# Ambivalent state
+gamemap = """
+0 ? ?
+0 ? ?
+""".strip()
+result = """
+0 1 x
+0 1 1
+""".strip()
+game = Game(gamemap, result)
+# game.open_result = open_result(result)
+assert solve_mine(gamemap, game.count, result) == "?"
 
 # Deterministic board
-# gamemap = """
-# ? ? ? ? 0 0 0
-# ? ? ? ? 0 ? ?
-# ? ? ? 0 0 ? ?
-# ? ? ? 0 0 ? ?
-# 0 ? ? ? 0 0 0
-# 0 ? ? ? 0 0 0
-# 0 ? ? ? 0 ? ?
-# 0 0 0 0 0 ? ?
-# 0 0 0 0 0 ? ?
-# """.strip()
-# result = """
-# 1 x x 1 0 0 0
-# 2 3 3 1 0 1 1
-# 1 x 1 0 0 1 x
-# 1 1 1 0 0 1 1
-# 0 1 1 1 0 0 0
-# 0 1 x 1 0 0 0
-# 0 1 1 1 0 1 1
-# 0 0 0 0 0 1 x
-# 0 0 0 0 0 1 1
-# """.strip()
-# game = Game(gamemap, result)
-# # game.open_result = open_result(result)
-# assert solve_mine(gamemap, game.count, result) == result
+gamemap = """
+? ? ? ? 0 0 0
+? ? ? ? 0 ? ?
+? ? ? 0 0 ? ?
+? ? ? 0 0 ? ?
+0 ? ? ? 0 0 0
+0 ? ? ? 0 0 0
+0 ? ? ? 0 ? ?
+0 0 0 0 0 ? ?
+0 0 0 0 0 ? ?
+""".strip()
+result = """
+1 x x 1 0 0 0
+2 3 3 1 0 1 1
+1 x 1 0 0 1 x
+1 1 1 0 0 1 1
+0 1 1 1 0 0 0
+0 1 x 1 0 0 0
+0 1 1 1 0 1 1
+0 0 0 0 0 1 x
+0 0 0 0 0 1 1
+""".strip()
+game = Game(gamemap, result)
+# game.open_result = open_result(result)
+assert solve_mine(gamemap, game.count, result) == result
 
 # Huge ambivalent state
 gamemap = """
