@@ -198,7 +198,7 @@ class Game:
                         self.open(*n.position)
 
                 elif len(remain) == len(b):
-                    for n in b:
+                    for n in remain:
                         n.found_bomb()
 
 
@@ -245,26 +245,42 @@ def solve_mine(gamemap, n, resultmap=None):
     return str(Position.game.solve())
 
 
+# gamemap = """
+# ? ? ? ? ? ?
+# ? ? ? ? ? ?
+# ? ? ? 0 ? ?
+# ? ? ? ? ? ?
+# ? ? ? ? ? ?
+# 0 0 0 ? ? ?
+# """.strip()
+# result = """
+# 1 x 1 1 x 1
+# 2 2 2 1 2 2
+# 2 x 2 0 1 x
+# 2 x 2 1 2 2
+# 1 1 1 1 x 1
+# 0 0 0 1 1 1
+# """.strip()
+# game1 = Game(gamemap, result)
+# assert solve_mine(gamemap, game1.count, result) == result
+
 gamemap = """
-? ? ? ? ? ?
-? ? ? ? ? ?
-? ? ? 0 ? ?
-? ? ? ? ? ?
-? ? ? ? ? ?
-0 0 0 ? ? ?
+? ? ? ? 0 0 0 0 0 0 0 0 ? ? ? 0 0 0 0 0 0 ? ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0 0 0 ? ? ? 0 0 0 ? ? ? ? ? ? ? ? ?
+? ? ? ? 0 0 ? ? ? 0 0 0 0 0 0 0 0 0 ? ? ? ? ? ? 0 0 0
+0 ? ? ? ? ? ? ? ? ? 0 0 0 0 0 0 0 0 ? ? ? ? ? ? 0 0 0
+0 ? ? ? ? ? ? ? ? ? 0 0 0 0 0 0 0 0 0 ? ? ? ? ? 0 0 0
 """.strip()
+
 result = """
-1 x 1 1 x 1
-2 2 2 1 2 2
-2 x 2 0 1 x
-2 x 2 1 2 2
-1 1 1 1 x 1
-0 0 0 1 1 1
+1 2 x 1 0 0 0 0 0 0 0 0 1 x 1 0 0 0 0 0 0 1 1 1 1 x 1
+1 x 2 1 0 0 0 0 0 0 0 0 1 1 1 0 0 0 1 1 1 1 x 1 1 1 1
+1 2 2 1 0 0 1 1 1 0 0 0 0 0 0 0 0 0 1 x 2 2 1 1 0 0 0
+0 1 x 2 1 2 2 x 2 1 0 0 0 0 0 0 0 0 1 3 x 3 1 1 0 0 0
+0 1 1 2 x 2 x 3 x 1 0 0 0 0 0 0 0 0 0 2 x 3 x 1 0 0 0
 """.strip()
 game1 = Game(gamemap, result)
 assert solve_mine(gamemap, game1.count, result) == result
-
-
 
 # # Ambivalent state
 # gamemap = """
