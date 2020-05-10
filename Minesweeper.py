@@ -191,19 +191,16 @@ class Game:
             b = inst2.questionmarks
 
             if b.issuperset(a):  # SUPERSET
-                bminusa = (b - a)
+                remain = (b - a)
                 if inst2._state - inst1._state == 0:  # since inst1 is subset
-                    toopen = bminusa.copy()
+                    toopen = remain.copy()
                     for n in toopen:
                         self.open(*n.position)
 
-                elif len(bminusa) == len(b):
+                elif len(remain) == len(b):
                     for n in b:
                         n.found_bomb()
 
-
-            # CAREFULL with the state consequence behaviour & this loop! - do not change
-            #
 
 
     def solve(self):
@@ -227,7 +224,7 @@ class Game:
         # (2) Endgame logic based on number of bombs.
 
         # ambiguity?
-        if '?' in Position.game:
+        if bool([inst._clue  for inst in self.clues.values() if inst._clue == '?']):
             return '?'
         else:
             return Position.game
@@ -266,6 +263,8 @@ result = """
 """.strip()
 game1 = Game(gamemap, result)
 assert solve_mine(gamemap, game1.count, result) == result
+
+
 
 # # Ambivalent state
 # gamemap = """
