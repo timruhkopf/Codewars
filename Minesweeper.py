@@ -219,6 +219,19 @@ class Game:
                     if inst1._state == 1:  # it cannot be a 2 out of 3. but could be 2 hidden in 3 Notice this condition is currently always true (by design)
                         self.exacly_one.append(intersect)
 
+            elif inst2._state - inst1._state == len(a.union(b) - a):
+                remain = a.union(b) - a
+
+                for n in remain:
+                    n._clue = 'x'  # TODO replace by functioning found bomb call
+                    for q in n.neighb_inst:
+                        q._state -= 1
+                        if n in q.questionmarks:
+                            q.questionmarks.discard(n)
+
+                    for q in n.neighb_inst:
+                        q.state = q._state
+
         # search for all direct neighbor triplet who share the same questionmarks to make inferrence about bomb location
         inquestion = set(n for q in self.clues.values()
                          for n in q.neighb_inst
@@ -299,25 +312,77 @@ def solve_mine(gamemap, n, resultmap=None):
     return str(Position.game.solve())
 
 # !!!!!!!!! ENDGAME ENDGAME ENDGAME !!!!!!
+# gamemap = """
+# 0 0 0 0 ? ? ? ? ? ?
+# 0 0 0 ? ? ? ? ? ? ?
+# 0 ? ? ? ? ? ? ? ? ?
+# ? ? ? ? ? ? ? ? ? 0
+# ? ? ? ? 0 0 0 0 0 0
+# ? ? ? 0 0 0 0 0 0 0
+# """.strip()
+# result = """
+# 0 0 0 0 1 1 1 1 1 1
+# 0 0 0 1 2 x 2 2 x 1
+# 0 1 1 2 x 2 2 x 2 1
+# 1 2 x 2 1 1 1 1 1 0
+# 1 x 2 1 0 0 0 0 0 0
+# 1 1 1 0 0 0 0 0 0 0
+# """.strip()
+# game1 = Game(gamemap, result)
+# assert solve_mine(gamemap, game1.count, result) == result
+
 gamemap = """
+0 0 0 0 0 0 0 ? ? ?
+? ? ? ? ? ? 0 ? ? ?
+? ? ? ? ? ? 0 ? ? ?
+? ? ? ? ? ? 0 ? ? ?
+0 0 ? ? ? ? ? ? 0 0
+0 0 ? ? ? ? ? ? ? ?
+0 0 ? ? ? ? ? ? ? ?
 0 0 0 0 ? ? ? ? ? ?
-0 0 0 ? ? ? ? ? ? ?
-0 ? ? ? ? ? ? ? ? ?
+0 0 0 0 ? ? ? ? ? ?
+0 0 0 ? ? ? ? 0 0 0
+0 0 0 ? ? ? ? 0 0 0
+0 0 0 ? ? ? ? 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+? ? 0 ? ? ? 0 0 0 0
+? ? 0 ? ? ? 0 0 0 0
 ? ? ? ? ? ? ? ? ? 0
-? ? ? ? 0 0 0 0 0 0
-? ? ? 0 0 0 0 0 0 0
+? ? ? ? ? ? ? ? ? ?
+? ? ? ? ? ? ? ? ? ?
+0 0 ? ? ? 0 0 ? ? ?
+0 0 ? ? ? ? ? ? ? ?
+0 0 ? ? ? ? ? ? ? ?
+0 0 0 0 0 ? ? ? ? ?
 """.strip()
 result = """
+0 0 0 0 0 0 0 1 1 1
+1 1 1 1 1 1 0 2 x 2
+1 x 2 2 x 1 0 2 x 2
+1 1 2 x 2 1 0 1 1 1
+0 0 2 2 2 1 1 1 0 0
+0 0 1 x 1 1 x 2 1 1
+0 0 1 1 2 2 2 3 x 2
+0 0 0 0 1 x 1 2 x 2
 0 0 0 0 1 1 1 1 1 1
-0 0 0 1 2 x 2 2 x 1
-0 1 1 2 x 2 2 x 2 1
-1 2 x 2 1 1 1 1 1 0
-1 x 2 1 0 0 0 0 0 0
-1 1 1 0 0 0 0 0 0 0
+0 0 0 1 2 2 1 0 0 0
+0 0 0 1 x x 1 0 0 0
+0 0 0 1 2 2 1 0 0 0
+0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0
+1 1 0 1 1 1 0 0 0 0
+x 1 0 1 x 1 0 0 0 0
+2 3 1 3 2 2 1 1 1 0
+x 2 x 2 x 1 1 x 2 1
+1 2 1 2 1 1 1 2 x 1
+0 0 1 1 1 0 0 1 1 1
+0 0 1 x 1 1 1 2 2 2
+0 0 1 1 1 1 x 2 x x
+0 0 0 0 0 1 1 2 2 2
 """.strip()
 game1 = Game(gamemap, result)
 assert solve_mine(gamemap, game1.count, result) == result
-
 
 # gamemap = """
 # ? ? ? ? ? ?
