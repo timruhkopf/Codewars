@@ -219,7 +219,7 @@ class Game:
                     if inst1._state == 1:  # it cannot be a 2 out of 3. but could be 2 hidden in 3 Notice this condition is currently always true (by design)
                         self.exacly_one.append(intersect)
 
-
+        # search for all direct neighbor triplet who share the same questionmarks to make inferrence about bomb location
         candidates2 = ([inst1, inst2, inst3] for inst1, inst2, inst3 in product(single, inquestion, single)
                        if (inst1.isneighb(inst2) and inst3.isneighb(inst2)) and inst2._state != 0 and inst1 != inst3)
 
