@@ -7,11 +7,18 @@ class Node:
         self.position = position
         self.value = value
 
+    def __repr__(self):
+        return str(self.value)
+
 
 class Row(list):
     def __init__(self, *args):
+        """
+
+        :param args: a multitude of Node instances
+        """
         super(Row, self).__init__(*args)
-        self.valqueue = deque(*args)  # TODO this argument allows shifting fairly easily
+        self.valqueue = deque([node.value for node in args[0]])  # TODO this argument allows shifting fairly easily
         # by popping the last argument and append from the other side
 
     def rowshift(self, direction):
@@ -43,15 +50,15 @@ class Cyclic_shift:
         (including rectangular grids like 4x5)
         """
 
-        self.rows = [Row([Node((i, j), val) for i, row in enumerate(mixed_up_board) for j, val in enumerate(row)])]
-        self.cols = [Row(col) for col in zip(*self.rows)]  # potentially reversed
+        self.rows = [Row([Node((i, j), val) for j, val in enumerate(row)]) for i, row in enumerate(mixed_up_board)]
+        self.cols = [Row(col) for col in zip(*self.rows)]  # carefull potentially reversed
         self.nodes = {node.position: node for node in chain(*self.rows)}
 
         self.board = {'rows': self.rows, 'cols': self.cols}
         self.solved_board = solved_board
 
     def __repr__(self):
-        return ''.join([' '.join([str(self.nodes[(r, c)].value)
+        return ''.join([' '.join([str(self.nodes[(r, c)])
                                   for c in range(len(self.rows[0]))]) + '\n'
                         for r in range(len(self.rows))])
 
@@ -80,6 +87,12 @@ class Cyclic_shift:
 
         return board == self.solved_board
 
+    def shuffle(self, number):
+        from random import randint
+        pass
+
+
+
 
 def loopover(mixed_up_board, solved_board):
     Cyclic_shift(mixed_up_board, solved_board)
@@ -88,10 +101,11 @@ def loopover(mixed_up_board, solved_board):
 
 
 if __name__ == '__main__':
+    def board(str):
+        return [list(row) for row in str.split('\n')]
 
     def run_test(start, end, unsolvable):
-        def board(str):
-            return [list(row) for row in str.split('\n')]
+
 
         # print_info(board(start), board(end))
         moves = loopover(board(start), board(end))
@@ -101,6 +115,15 @@ if __name__ == '__main__':
         else:
             assert Cyclic_shift(start, end).check(moves) == True
             # TODO write check function!
+
+
+    c = Cyclic_shift(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'),
+    board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
+
+    c.shift('L0')
+    c.shift('U0')
+
+    print()
 
 
     # @test.it('Test 2x2 (1)')
