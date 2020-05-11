@@ -252,7 +252,8 @@ class Game:
 
                 remain = (b - union)
 
-                if inst2._state - inst1._state - inst3._state == 0:  # since inst1 is subset
+                if inst2._state - inst1._state - inst3._state == 0 \
+                        and len(union) == len(a) + len(c):  # otherwise the code opens fields which it cannot
                     toopen = remain.copy()
                     for n in toopen:
                         self.open(*n.position)
