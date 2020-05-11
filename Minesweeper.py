@@ -86,7 +86,7 @@ class Position:
             for n in q.neighb_inst:
                 n._state -= 1
                 if q in n.questionmarks:
-                    n.questionmarks.remove(q)
+                    n.questionmarks.discard(q)
 
             for n in q.neighb_inst:
                 n.state = n._state
@@ -107,7 +107,7 @@ class Position:
         intermediate = square(kernel=(-2, -1, 0, 1, 2))
         intermediate.difference_update(neighb)
 
-        neighb.remove((r, c))
+        neighb.discard((r, c))
         return neighb, intermediate
 
 
@@ -164,7 +164,7 @@ class Game:
 
             inst = self.clues[(row, column)]
             for n in inst.neighb_inst:
-                n.questionmarks.remove(inst)
+                n.questionmarks.discard(inst)
 
             inst.clue = value
 
@@ -189,8 +189,6 @@ class Game:
             b = inst2.questionmarks
             print(inst1.position, inst2.position)
 
-            if (inst1.position, inst2.position) == ((26, 26), (28, 26)):
-                print()
             if b.issuperset(a) and bool(a):  # SUPERSET and a was not filled
                 # in the meantime whilest iterating over candidates
                 remain = (b - a)
@@ -208,21 +206,10 @@ class Game:
                         for q in n.neighb_inst:
                             q._state -= 1
                             if q in n.questionmarks:
-                                n.questionmarks.remove(q)
+                                n.questionmarks.discard(q)
 
                         for q in n.neighb_inst:
                             q.state = q._state
-
-                    # q._clue = 'x'
-                    #
-                    # # Now two loops to ensure the state is correct when proceed
-                    # for n in q.neighb_inst:
-                    #     n._state -= 1
-                    #     if q in n.questionmarks:
-                    #         n.questionmarks.remove(q)
-                    #
-                    # for n in q.neighb_inst:
-                    #     n.state = n._state
 
                 # merely found an exacly one
                 else:
@@ -269,6 +256,26 @@ def solve_mine(gamemap, n, resultmap=None):
     """
     Position.game = Game(gamemap, resultmap)
     return str(Position.game.solve())
+
+
+gamemap = """
+0 0 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 ? ? ? ? ? ? ? ?
+? ? 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ? ? ? ? ? ? ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0 ? ? ? 0 ? ? ? ? ? ? 0 ? ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0 ? ? ? 0 0 0 0 ? ? ? 0 ? ? ? ? ? ?
+0 ? ? ? 0 0 0 0 0 0 ? ? ? 0 0 0 0 0 0 0 0 ? ? ? ? ? ?
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0
+""".strip()
+result = """
+0 0 0 1 x 1 1 x 1 0 0 0 0 0 1 1 1 0 0 1 x 3 x 3 1 2 1
+1 1 0 1 1 1 1 1 1 0 0 0 0 0 1 x 1 1 1 2 1 3 x 3 x 2 x
+x 2 1 1 0 0 0 0 0 0 1 1 1 0 1 1 1 1 x 1 0 2 2 3 1 3 2
+1 2 x 1 0 0 0 0 0 0 1 x 1 0 0 0 0 1 1 1 0 1 x 2 1 2 x
+0 1 1 1 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 1 2 3 x 2 1
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
+""".strip()
+game1 = Game(gamemap, result)
+assert solve_mine(gamemap, game1.count, result) == result
 
 
 # gamemap = """
