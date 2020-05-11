@@ -207,8 +207,8 @@ class Game:
                         n._clue = 'x'  # TODO replace by functioning found bomb call
                         for q in n.neighb_inst:
                             q._state -= 1
-                            if q in n.questionmarks:
-                                n.questionmarks.discard(q)
+                            if n in q.questionmarks:
+                                q.questionmarks.discard(n)
 
                         for q in n.neighb_inst:
                             q.state = q._state
@@ -245,8 +245,8 @@ class Game:
                         n._clue = 'x'  # TODO replace by functioning found bomb call
                         for q in n.neighb_inst:
                             q._state -= 1
-                            if q in n.questionmarks:
-                                n.questionmarks.discard(q)
+                            if n in q.questionmarks:
+                                q.questionmarks.discard(n)
 
                         for q in n.neighb_inst:
                             q.state = q._state
