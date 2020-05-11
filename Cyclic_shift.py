@@ -14,24 +14,23 @@ class Node:
 class Row(list):
     def __init__(self, *args):
         """
-
         :param args: a multitude of Node instances
         """
         super(Row, self).__init__(*args)
-        self.valqueue = deque([node.value for node in args[0]])  # TODO this argument allows shifting fairly easily
-        # by popping the last argument and append from the other side
 
     def rowshift(self, direction):
         """:param direction: integer, either 0 (left) or 1 (right)"""
 
-        if direction == 0:
-            val = self.valqueue.popleft()
-            self.valqueue.append(val)
-        else:
-            val = self.valqueue.pop()
-            self.valqueue.appendleft(val)
+        valqueue = deque([node.value for node in self])
 
-        for node, v in zip(self, self.valqueue):
+        if direction == 0:
+            val = valqueue.popleft()
+            valqueue.append(val)
+        else:
+            val = valqueue.pop()
+            valqueue.appendleft(val)
+
+        for node, v in zip(self, valqueue):
             node.value = v
 
 
@@ -127,7 +126,6 @@ if __name__ == '__main__':
 
     c.shift('L0')
     c.shift('U0')
-
     print()
 
 
