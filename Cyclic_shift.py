@@ -36,7 +36,7 @@ class Row(list):
 
 
 class Cyclic_shift:
-    direct = {'L': 0, 'R': 1, 'D': 0, 'U': 1}
+    direct = {'L': 0, 'R': 1, 'D': 1, 'U': 0}
     perspective = {'L': 'rows', 'R': 'rows', 'D': 'cols', 'U': 'cols'}
 
     def __init__(self, mixed_up_board, solved_board):
@@ -61,6 +61,11 @@ class Cyclic_shift:
         return ''.join([' '.join([str(self.nodes[(r, c)])
                                   for c in range(len(self.rows[0]))]) + '\n'
                         for r in range(len(self.rows))])
+
+    def repr(self): # to print the columns
+        print(''.join([' '.join([str(self.nodes[(c, r)])
+                           for c in range(len(self.cols[0]))]) + '\n'
+                 for r in range(len(self.cols))]))
 
     def shift(self, direction):
         """:param direction: string such as L0, R1, D1, U2
