@@ -220,6 +220,11 @@ class Game:
                         self.exacly_one.append(intersect)
 
         # search for all direct neighbor triplet who share the same questionmarks to make inferrence about bomb location
+        inquestion = set(n for q in self.clues.values()
+                         for n in q.neighb_inst
+                         if q.clue == '?' and n.clue not in ['?', 'x'])
+
+        single = set(n for n in inquestion if n._state == 1)
         candidates2 = ([inst1, inst2, inst3] for inst1, inst2, inst3 in product(single, inquestion, single)
                        if (inst1.isneighb(inst2) and inst3.isneighb(inst2)) and inst2._state != 0 and inst1 != inst3)
 
