@@ -12,26 +12,24 @@ class Node:
 
 
 class Row(list):
-    def __init__(self, *args):
-        """
-        :param args: a multitude of Node instances
-        """
-        super(Row, self).__init__(*args)
+    def __init__(self, iterable):
+        """:param iterable: an ordered collection of Node instances"""
+        super(Row, self).__init__(iterable)
+        self.queue = deque(maxlen=len(iterable))
 
     def rowshift(self, direction):
         """:param direction: integer, either 0 (left) or 1 (right)"""
-
-        valqueue = deque([node.value for node in self])
+        self.queue.extend([node.value for node in self])
 
         if direction == 0:
-            val = valqueue.popleft()
-            valqueue.append(val)
+            self.queue.append(self.queue[0])
         else:
-            val = valqueue.pop()
-            valqueue.appendleft(val)
+            self.queue.appendleft(self.queue[-1])
 
-        for node, v in zip(self, valqueue):
+        for node, v in zip(self, self.queue):
             node.value = v
+
+        self.queue.clear()  # necessary! to ensure the state is always correct!
 
 
 class Cyclic_shift:
@@ -56,6 +54,8 @@ class Cyclic_shift:
         self.board = {'rows': self.rows, 'cols': self.cols}
         self.solved_board = solved_board
 
+        print(self)
+
     def __repr__(self):
         return ''.join([' '.join([str(self.nodes[(r, c)])
                                   for c in range(len(self.rows[0]))]) + '\n'
@@ -72,6 +72,8 @@ class Cyclic_shift:
         direct, pos = tuple(direction)
         board = self.board[self.perspective[direct]]
         board[int(pos)].rowshift(direction=self.direct[direct])
+
+        print(self)
 
     def solve(self):
         """Your task: return a List of moves that will transform the unsolved
