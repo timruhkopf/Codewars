@@ -79,17 +79,20 @@ class Position:
     def found_bomb(self):
         self._state = 0
         toopen = self.questionmarks.copy()
-        for q in toopen:
-            q._clue = 'x'
+        self.bombastic(bombs=toopen)
 
-            # Now two loops to ensure the state is correct when proceed
-            for n in q.neighb_inst:
-                n._state -= 1
-                if q in n.questionmarks:
-                    n.questionmarks.discard(q)
+    @staticmethod
+    def bombastic(bombs):
+         for b in bombs:
+             b._clue = 'x'
 
-            for n in q.neighb_inst:
-                n.state = n._state
+             for n in b.neighb_inst:
+                 n._state -= 1
+                 if b in n.questionmarks:
+                     n.questionmarks.discard(b)
+
+             for n in b.neighb_inst:
+                 n.state = n._state
 
     @staticmethod
     def _find_neighbours(position):
@@ -203,15 +206,7 @@ class Game:
 
                 # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state:
-                    for n in remain:
-                        n._clue = 'x'  # TODO replace by functioning found bomb call
-                        for q in n.neighb_inst:
-                            q._state -= 1
-                            if n in q.questionmarks:
-                                q.questionmarks.discard(n)
-
-                        for q in n.neighb_inst:
-                            q.state = q._state
+                    Position.bombastic(bombs=remain)
 
                 # merely found an exacly one
                 else:
@@ -221,16 +216,7 @@ class Game:
 
             elif inst2._state - inst1._state == len(a.union(b) - a):
                 remain = a.union(b) - a
-
-                for n in remain:
-                    n._clue = 'x'  # TODO replace by functioning found bomb call
-                    for q in n.neighb_inst:
-                        q._state -= 1
-                        if n in q.questionmarks:
-                            q.questionmarks.discard(n)
-
-                    for q in n.neighb_inst:
-                        q.state = q._state
+                Position.bombastic(bombs=remain)
 
         # search for all direct neighbor triplet who share the same questionmarks to make inferrence about bomb location
         inquestion = set(n for q in self.clues.values()
@@ -248,8 +234,6 @@ class Game:
             union = a.union(c)
 
             if b.issuperset(union) and bool(a) and bool(b):
-                print(inst1, inst2, inst3)
-
                 remain = (b - union)
 
                 if inst2._state - inst1._state - inst3._state == 0 \
@@ -260,15 +244,8 @@ class Game:
 
                     # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state - inst3._state:
-                    for n in remain:
-                        n._clue = 'x'  # TODO replace by functioning found bomb call
-                        for q in n.neighb_inst:
-                            q._state -= 1
-                            if n in q.questionmarks:
-                                q.questionmarks.discard(n)
+                    Position.bombastic(bombs=remain)
 
-                        for q in n.neighb_inst:
-                            q.state = q._state
 
 
 
