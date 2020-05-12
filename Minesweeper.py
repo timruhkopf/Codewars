@@ -286,6 +286,7 @@ def solve_mine(gamemap, n, resultmap=None):
     :return: a solved string map, containing only integers & 'x'`s for bomb markers
 
     """
+    if n == 0: return '0'
     Position.game = Game(gamemap, resultmap)
     return str(Position.game.solve())
 
