@@ -289,6 +289,9 @@ class Game:
         remain_q = [_ for _ in self.clues.values() if _._clue == '?']
         if self.remain_bomb == len(remain_q):
             Position.bombastic(remain_q)
+        elif self.remain_bomb == 0 and len(remain_q) != 0:
+            for _ in remain_q:
+                self.open(*_.position)
 
         # (2) Endgame logic based on number of bombs.
         if bool(self.remain_bomb):
@@ -319,30 +322,30 @@ def solve_mine(gamemap, n, resultmap=None):
 
 
 # !!!!!!!!! ENDGAME ENDGAME ENDGAME !!!!!!
-# gamemap = """
-# 0 0 0 0 0 0 0 0 0 0 0
-# 0 0 0 ? ? ? ? ? ? 0 0
-# 0 0 ? ? ? ? ? ? ? 0 0
-# 0 0 ? ? ? ? ? ? ? 0 0
-# 0 0 ? ? ? ? ? ? ? 0 0
-# 0 0 ? ? ? ? ? ? ? 0 0
-# 0 0 ? ? ? ? ? ? ? 0 0
-# 0 0 ? ? ? ? ? ? 0 0 0
-# 0 0 0 0 0 0 0 0 0 0 0
-# """.strip()
-# result = """
-# 0 0 0 0 0 0 0 0 0 0 0
-# 0 0 0 1 2 3 3 2 1 0 0
-# 0 0 1 3 x x x x 1 0 0
-# 0 0 2 x x 6 x 5 2 0 0
-# 0 0 3 x 4 4 x x 2 0 0
-# 0 0 3 x 5 5 x x 2 0 0
-# 0 0 2 x x x x 3 1 0 0
-# 0 0 1 2 3 3 2 1 0 0 0
-# 0 0 0 0 0 0 0 0 0 0 0
-# """.strip()
-# game1 = Game(gamemap, 17,  result)
-# assert solve_mine(gamemap, 17, result) == result
+gamemap = """
+0 0 0 0 0 0 0 0 0 0 0
+0 0 0 ? ? ? ? ? ? 0 0
+0 0 ? ? ? ? ? ? ? 0 0
+0 0 ? ? ? ? ? ? ? 0 0
+0 0 ? ? ? ? ? ? ? 0 0
+0 0 ? ? ? ? ? ? ? 0 0
+0 0 ? ? ? ? ? ? ? 0 0
+0 0 ? ? ? ? ? ? 0 0 0
+0 0 0 0 0 0 0 0 0 0 0
+""".strip()
+result = """
+0 0 0 0 0 0 0 0 0 0 0
+0 0 0 1 2 3 3 2 1 0 0
+0 0 1 3 x x x x 1 0 0
+0 0 2 x x 6 x 5 2 0 0
+0 0 3 x 4 4 x x 2 0 0
+0 0 3 x 5 5 x x 2 0 0
+0 0 2 x x x x 3 1 0 0
+0 0 1 2 3 3 2 1 0 0 0
+0 0 0 0 0 0 0 0 0 0 0
+""".strip()
+game1 = Game(gamemap, 17,  result)
+assert solve_mine(gamemap, 17, result) == result
 # #
 # gamemap = """
 # ? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
