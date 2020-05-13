@@ -1,20 +1,10 @@
-from itertools import product, combinations
+from itertools import product, permutations  # permutations is deprec
 import sys
 
 sys.setrecursionlimit(10 ** 6)
+
 DEBUG = True
 
-
-def relentless_exec(func):
-    def wrapper(self, *args):
-        before = True
-        after = False
-        while before != after:
-            before = str(self)
-            func(self, *args)
-            after = str(self)
-
-    return wrapper
 
 class Position:
     game = None
@@ -78,22 +68,25 @@ class Position:
 
             for n in self.neighb_inst:
                 if n.state == len(n.questionmarks):
-                    toopen = self.questionmarks.copy()
-                    if bool(toopen):
-                        self.bombastic(bombs=toopen)
+                    n.found_bomb()
 
         # default case, setting the received value
         else:
             self._state = value
             if self.state == len(self.questionmarks):
-                toopen = self.questionmarks.copy()
-                if bool(toopen):
-                    self.bombastic(bombs=toopen)
+                self.found_bomb()
+
+    def found_bomb(self):
+        toopen = self.questionmarks.copy()
+
+        # TODO: fix mistake where self.questionmark produces neighb with clue 'x'
+        if bool(toopen):
+            self.bombastic(bombs=toopen)
 
     @staticmethod
     def bombastic(bombs):
         for b in bombs:
-            if b._clue == '?':  # Fixme needed until deep copy problem in found_bomb is not solved
+            if b._clue == '?':  # needed until deep copy problem in found_bomb is not solved
                 b._clue = 'x'
                 b.game.remain_bomb -= 1
 
@@ -123,6 +116,7 @@ class Position:
 
         neighb.discard((r, c))
         return neighb, intermediate
+
 
 class Game:
     def __init__(self, map, n, result=None):
@@ -181,7 +175,6 @@ class Game:
 
             inst.clue = value
 
-    @relentless_exec
     def superset_solver(self):
         # first find the neighbours to remaining questionmarks
         inquestion = set(n for q in self.clues.values()
@@ -191,7 +184,7 @@ class Game:
         # most informative intersections start with:
         single = set(n for n in inquestion if n._state == 1)
         candidates = ([inst1, inst2] for inst1, inst2 in product(single, inquestion)
-                      if (inst1.isneighb(inst2) or inst1.isintermediate(inst2)) and inst2._state != 0)  # fixme: remove intermedieate potentially
+                      if (inst1.isneighb(inst2) or inst1.isintermediate(inst2)) and inst2._state != 0)
 
         for inst1, inst2 in candidates:
             a = inst1.questionmarks
@@ -243,8 +236,9 @@ class Game:
                 elif len(remain) == inst2._state - inst1._state - inst3._state:
                     Position.bombastic(bombs=remain)
 
-    @relentless_exec
     def endgame(self):
+        from itertools import combinations
+
         remain_q = set(q for q in self.clues.values() if q._clue == '?')
         anreiner = set(n for q in self.clues.values()
                        for n in q.neighb_inst
@@ -276,11 +270,21 @@ class Game:
             self.open(*zero)
 
         # (1) exacly one bomb in questionmarks logic
-        self.superset_solver()
+        before = True
+        after = False
+        while before != after:
+            before = str(self)
+            self.superset_solver()
+            after = str(self)
 
         # (2) Endgame logic based on number of bombs.
         if bool(self.remain_bomb):
-            self.endgame()
+            before = True
+            after = False
+            while before != after:
+                before = str(self)
+                self.endgame()
+                after = str(self)
 
         # ambiguity?
         if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
