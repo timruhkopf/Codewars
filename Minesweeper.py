@@ -247,27 +247,45 @@ class Game:
                     Position.bombastic(bombs=remain)
 
     def endgame(self):
-        inquestion = set(n for q in self.clues.values()
+        from itertools import combinations
+        
+        remain_q = set(q for q in self.clues.values() if q._clue == '?')
+        anreiner = set(n for q in self.clues.values()
                          for n in q.neighb_inst
                          if q.clue == '?' and n.clue not in ['?', 'x'])
 
-        single = set(n for n in inquestion if n._state == 1)
+        potential_bomb = set()
+        for bombcombi in combinations(remain_q, self.remain_bomb):
+            # update the states for this trial
+            for bomb in bombcombi:
+                for n in bomb.neighb_inst:
+                    n._state -= 1
 
-        # append all exactly ones coming from state 1 fields
-        for _ in single:
-            if _.questionmarks not in self.exacly_one:
-                self.exacly_one.append(_.questionmarks)
+            # check if this is a valid combinations (all anreiner are happy)
+            if set(a._state for a in anreiner) == {0}:
+                potential_bomb.update(set(bombcombi))
 
-        # append exactly ones coming from higher state fields that are cut by exactly ones and building exactly ones
-        # by their own
-        for _ in inquestion:
-            for i in self.exacly_one:
-                if _.questionmarks.issuperset(i) and _._state == 2 \
-                        and _.questionmarks.difference(i) not in self.exacly_one:
-                    self.exacly_one.append(_.questionmarks.difference(i))
+            # undo this trial
+            for bomb in bombcombi:
+                for n in bomb.neighb_inst:
+                    n._state += 1
 
-        # remaining questionmarks that are not in exactly._one
-        remain_q = [i for i in self.clues.values() if i.clue == '?' and all(i not in _ for _ in self.exacly_one)]
+        untouched = remain_q - potential_bomb
+        for Pos in untouched:
+            self.open(*Pos.position)
+
+
+        print()
+
+
+
+
+
+        
+        
+        
+        
+
 
 
     def solve(self):
@@ -312,45 +330,45 @@ def solve_mine(gamemap, n, resultmap=None):
     return str(Position.game.solve())
 
 # !!!!!!!!! ENDGAME ENDGAME ENDGAME !!!!!!
-gamemap = """
-0 0 0 0 ? ? ? ? ? ?
-0 0 0 ? ? ? ? ? ? ?
-0 ? ? ? ? ? ? ? ? ?
-? ? ? ? ? ? ? ? ? 0
-? ? ? ? 0 0 0 0 0 0
-? ? ? 0 0 0 0 0 0 0
-""".strip()
-result = """
-0 0 0 0 1 1 1 1 1 1
-0 0 0 1 2 x 2 2 x 1
-0 1 1 2 x 2 2 x 2 1
-1 2 x 2 1 1 1 1 1 0
-1 x 2 1 0 0 0 0 0 0
-1 1 1 0 0 0 0 0 0 0
-""".strip()
-game1 = Game(gamemap, 6,  result)
-assert solve_mine(gamemap, game1.count, result) == result
-#
-gamemap = """
-? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
-? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
-0 0 0 0 0 ? ? ? ? 0 0 0 0 0 ? ? ?
-0 0 0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ?
-0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
-? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
-? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
-""".strip()
-result = """
-1 x 1 0 0 2 x 2 1 x 1 0 0 1 x x 1
-1 1 1 0 0 2 x 3 2 1 1 0 0 1 3 4 3
-0 0 0 0 0 1 2 x 1 0 0 0 0 0 1 x x
-0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 2 2
-0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1
-1 1 1 0 0 0 0 0 0 0 0 0 0 1 2 x 1
-1 x 1 0 0 0 0 0 0 0 0 0 0 1 x 2 1
-""".strip()
-game1 = Game(gamemap, 12, result)
-assert solve_mine(gamemap, game1.count, result) == result
+# gamemap = """
+# 0 0 0 0 ? ? ? ? ? ?
+# 0 0 0 ? ? ? ? ? ? ?
+# 0 ? ? ? ? ? ? ? ? ?
+# ? ? ? ? ? ? ? ? ? 0
+# ? ? ? ? 0 0 0 0 0 0
+# ? ? ? 0 0 0 0 0 0 0
+# """.strip()
+# result = """
+# 0 0 0 0 1 1 1 1 1 1
+# 0 0 0 1 2 x 2 2 x 1
+# 0 1 1 2 x 2 2 x 2 1
+# 1 2 x 2 1 1 1 1 1 0
+# 1 x 2 1 0 0 0 0 0 0
+# 1 1 1 0 0 0 0 0 0 0
+# """.strip()
+# game1 = Game(gamemap, 6,  result)
+# assert solve_mine(gamemap, game1.count, result) == result
+# #
+# gamemap = """
+# ? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
+# ? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
+# 0 0 0 0 0 ? ? ? ? 0 0 0 0 0 ? ? ?
+# 0 0 0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ?
+# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+# ? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
+# ? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
+# """.strip()
+# result = """
+# 1 x 1 0 0 2 x 2 1 x 1 0 0 1 x x 1
+# 1 1 1 0 0 2 x 3 2 1 1 0 0 1 3 4 3
+# 0 0 0 0 0 1 2 x 1 0 0 0 0 0 1 x x
+# 0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 2 2
+# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1
+# 1 1 1 0 0 0 0 0 0 0 0 0 0 1 2 x 1
+# 1 x 1 0 0 0 0 0 0 0 0 0 0 1 x 2 1
+# """.strip()
+# game1 = Game(gamemap, 12, result)
+# assert solve_mine(gamemap, game1.count, result) == result
 
 gamemap = """
 0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
