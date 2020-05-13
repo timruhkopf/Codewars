@@ -118,6 +118,18 @@ class Position:
         return neighb, intermediate
 
 
+def relentless(func):
+    def wrapper(self, *args):
+        before = True
+        after = False
+        while before != after:
+            before = str(self)
+            func(self, *args)
+            after = str(self)
+
+    return wrapper
+
+
 class Game:
     def __init__(self, map, n, result=None):
         """
@@ -175,6 +187,7 @@ class Game:
 
             inst.clue = value
 
+    @relentless
     def superset_solver(self):
         # first find the neighbours to remaining questionmarks
         inquestion = set(n for q in self.clues.values()
@@ -236,6 +249,7 @@ class Game:
                 elif len(remain) == inst2._state - inst1._state - inst3._state:
                     Position.bombastic(bombs=remain)
 
+    @relentless
     def endgame(self):
         from itertools import combinations
 
@@ -270,21 +284,13 @@ class Game:
             self.open(*zero)
 
         # (1) exacly one bomb in questionmarks logic
-        before = True
-        after = False
-        while before != after:
-            before = str(self)
-            self.superset_solver()
-            after = str(self)
+        self.superset_solver()
+
 
         # (2) Endgame logic based on number of bombs.
         if bool(self.remain_bomb):
-            before = True
-            after = False
-            while before != after:
-                before = str(self)
-                self.endgame()
-                after = str(self)
+            self.endgame()
+
 
         # ambiguity?
         if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
@@ -310,45 +316,43 @@ def solve_mine(gamemap, n, resultmap=None):
 
 
 # !!!!!!!!! ENDGAME ENDGAME ENDGAME !!!!!!
-# gamemap = """
-# 0 0 0 0 ? ? ? ? ? ?
-# 0 0 0 ? ? ? ? ? ? ?
-# 0 ? ? ? ? ? ? ? ? ?
-# ? ? ? ? ? ? ? ? ? 0
-# ? ? ? ? 0 0 0 0 0 0
-# ? ? ? 0 0 0 0 0 0 0
-# """.strip()
-# result = """
-# 0 0 0 0 1 1 1 1 1 1
-# 0 0 0 1 2 x 2 2 x 1
-# 0 1 1 2 x 2 2 x 2 1
-# 1 2 x 2 1 1 1 1 1 0
-# 1 x 2 1 0 0 0 0 0 0
-# 1 1 1 0 0 0 0 0 0 0
-# """.strip()
-# game1 = Game(gamemap, 6,  result)
-# assert solve_mine(gamemap, game1.count, result) == result
-# #
-# gamemap = """
-# ? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
-# ? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
-# 0 0 0 0 0 ? ? ? ? 0 0 0 0 0 ? ? ?
-# 0 0 0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ?
-# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
-# ? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
-# ? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
-# """.strip()
-# result = """
-# 1 x 1 0 0 2 x 2 1 x 1 0 0 1 x x 1
-# 1 1 1 0 0 2 x 3 2 1 1 0 0 1 3 4 3
-# 0 0 0 0 0 1 2 x 1 0 0 0 0 0 1 x x
-# 0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 2 2
-# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1
-# 1 1 1 0 0 0 0 0 0 0 0 0 0 1 2 x 1
-# 1 x 1 0 0 0 0 0 0 0 0 0 0 1 x 2 1
-# """.strip()
-# game1 = Game(gamemap, 12, result)
-# assert solve_mine(gamemap, game1.count, result) == result
+gamemap = """
+0 0 0 0 ? ? ? ? ? ?
+0 0 0 ? ? ? ? ? ? ?
+0 ? ? ? ? ? ? ? ? ?
+? ? ? ? ? ? ? ? ? 0
+? ? ? ? 0 0 0 0 0 0
+? ? ? 0 0 0 0 0 0 0
+""".strip()
+result = """
+0 0 0 0 1 1 1 1 1 1
+0 0 0 1 2 x 2 2 x 1
+0 1 1 2 x 2 2 x 2 1
+1 2 x 2 1 1 1 1 1 0
+1 x 2 1 0 0 0 0 0 0
+1 1 1 0 0 0 0 0 0 0
+""".strip()
+assert solve_mine(gamemap, result.count('x'), result) == result
+#
+gamemap = """
+? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
+? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
+0 0 0 0 0 ? ? ? ? 0 0 0 0 0 ? ? ?
+0 0 0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ?
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
+? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
+""".strip()
+result = """
+1 x 1 0 0 2 x 2 1 x 1 0 0 1 x x 1
+1 1 1 0 0 2 x 3 2 1 1 0 0 1 3 4 3
+0 0 0 0 0 1 2 x 1 0 0 0 0 0 1 x x
+0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 2 2
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1
+1 1 1 0 0 0 0 0 0 0 0 0 0 1 2 x 1
+1 x 1 0 0 0 0 0 0 0 0 0 0 1 x 2 1
+""".strip()
+assert solve_mine(gamemap, result.count('x'), result) == result
 
 gamemap = """
 0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
@@ -412,9 +416,8 @@ x 2 3 x 2 0 0 1 2 2 2 x 1 0 1 x 2 x 2 1
 x 2 x 2 x 1 0 0 0 0 0 1 1 1 0 0 0 1 x 1
 1 2 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1
 """.strip()
-game1 = Game(gamemap, 58, result)
-assert solve_mine(gamemap, 58, result) == result
-# #
+assert solve_mine(gamemap, result.count('x'), result) == result
+
 
 gamemap = """
 0 0 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 ? ? ? ? ? ? ? ?
@@ -433,8 +436,7 @@ x 2 1 1 0 0 0 0 0 0 1 1 1 0 1 1 1 1 x 1 0 2 2 3 1 3 2
 0 1 1 1 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 1 2 3 x 2 1
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
 """.strip()
-game1 = Game(gamemap, result)
-assert solve_mine(gamemap, game1.count, result) == '?'
+assert solve_mine(gamemap, result.count('x'), result) == result
 
 # Ambivalent state
 gamemap = """
@@ -445,9 +447,7 @@ result = """
 0 1 x
 0 1 1
 """.strip()
-game = Game(gamemap, result)
-# game.open_result = open_result(result)
-assert solve_mine(gamemap, game.count, result) == "?"
+assert solve_mine(gamemap, result.count('x'), result) == "?"
 
 # Deterministic board
 gamemap = """
@@ -472,9 +472,7 @@ result = """
 0 0 0 0 0 1 x
 0 0 0 0 0 1 1
 """.strip()
-game = Game(gamemap, result)
-# game.open_result = open_result(result)
-assert solve_mine(gamemap, game.count, result) == result
+assert solve_mine(gamemap, result.count('x'), result) == result
 
 # Huge ambivalent state
 gamemap = """
@@ -527,9 +525,7 @@ x 1 0 1 x 1 0 0 2 x 2 0 0 0 0 1 x 2 1
 0 0 0 0 1 1 1 1 2 x 1 1 1 1 0 2 3 x 2
 0 0 0 0 1 x 1 1 x 2 1 1 x 1 0 1 x 3 x
 """.strip()
-game = Game(gamemap, result)
-# game.open_result = open_result(result)
-assert solve_mine(gamemap, game.count, result) == "?"
+assert solve_mine(gamemap, result.count('x'), result) == "?"
 
 # differently shaped ambivalent state
 gamemap = """
@@ -554,6 +550,4 @@ x 1 0 0 0 1 1 1 0 1 x 1 0 0 0 1 1 1 1 x 1
 1 x 1 0 0 0 0 0 0 0 1 2 2 1 0 0 1 1 1 0 0
 1 1 1 0 0 0 0 0 0 0 1 x x 1 0 0 1 x 1 0 0
 """.strip()
-game = Game(gamemap, result)
-# game.open_result = open_result(result)
-assert solve_mine(gamemap, game.count, result) == "?"
+assert solve_mine(gamemap, result.count('x'), result) == "?"
