@@ -86,16 +86,17 @@ class Position:
 
     @staticmethod
     def bombastic(bombs):
-         for b in bombs:
-             b._clue = 'x'
+        for b in bombs:
+            if b._clue == '?': # needed until deep copy problem in found_bomb is not solved
+                b._clue = 'x'
 
-             for n in b.neighb_inst:
-                 n._state -= 1
-                 if b in n.questionmarks:
-                     n.questionmarks.discard(b)
+                for n in b.neighb_inst:
+                    n._state -= 1
+                    if b in n.questionmarks:
+                         n.questionmarks.discard(b)
 
-             for n in b.neighb_inst:
-                 n.state = n._state
+                for n in b.neighb_inst:
+                    n.state = n._state
 
     @staticmethod
     def _find_neighbours(position):
@@ -249,10 +250,6 @@ class Game:
                 elif len(remain) == inst2._state - inst1._state - inst3._state:
                     Position.bombastic(bombs=remain)
 
-
-
-
-        print(self)
 
     def solve(self):
         # (0) causal (state) communication logic from initial zeros
