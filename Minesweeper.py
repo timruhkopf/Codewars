@@ -2,7 +2,6 @@ from itertools import product, combinations
 import sys
 
 sys.setrecursionlimit(10 ** 6)
-
 DEBUG = True
 
 
@@ -70,7 +69,7 @@ class Position:
                 self.found_bomb()
 
     def found_bomb(self):
-        toopen = self.questionmarks.copy() # TODO: fix mistake where self.questionmark produces neighb with clue 'x'
+        toopen = self.questionmarks.copy()  # TODO: fix mistake where self.questionmark produces neighb with clue 'x'
         if bool(toopen):
             self.bombastic(bombs=toopen)
 
@@ -115,20 +114,17 @@ def relentless(func):
 
 
 class Game:
-    def __init__(self, map, n, result=None):
-        """
-        Game class allows interactive debugging in Pycharm
-        :param map: true map
-        """
-        self.map = self.parse_map(map)
-        self.dim = len(self.map), len(self.map[0])  # no. of rows, columns of map
+    def __init__(self, board, n, result=None):
+        self.board = self.parse_board(board)
+        self.dim = len(self.board), len(self.board[0])  # no. of rows, columns of map
         Position.dim = self.dim  # preset for all positions
+        self.remain_bomb = n
 
-        zeroind = [i for i, val in enumerate(map.replace(' ', '').replace('\n', '')) if val == '0']
+        zeroind = [i for i, val in enumerate(board.replace(' ', '').replace('\n', '')) if val == '0']
         self.zerotup = [(ind // self.dim[1], ind % self.dim[1]) for ind in zeroind]
 
         if result is not None:
-            self.result = self.parse_map(result)
+            self.result = self.parse_board(result)
             self.count = result.count('x')  # no. of bombs
 
         tuples = [(i, j) for i in range(self.dim[0]) for j in range(self.dim[1])]
@@ -139,19 +135,13 @@ class Game:
             inst.neighb_inst = set(self.clues[k] for k in inst.neighbours)
             inst.questionmarks = inst.neighb_inst.copy()
 
-        self.remain_bomb = n
-
     def __repr__(self):
-        return self.encode_map_from_Position()
+        return '\n'.join([' '.join([str(self.clues[(r, c)])
+                                    for c in range(self.dim[1])]) for r in range(self.dim[0])])
 
     @staticmethod
-    def parse_map(map):
+    def parse_board(map):
         return [row.split() for row in map.split('\n')]
-
-    def encode_map_from_Position(self):
-        g = [' '.join([str(self.clues[(r, c)])
-                       for c in range(self.dim[1])]) for r in range(self.dim[0])]
-        return '\n'.join(g)
 
     def open(self, row, column):
 
@@ -283,16 +273,8 @@ class Game:
 
 
 def solve_mine(gamemap, n, resultmap=None):
-    """
-    surrogate solver to match this katas desired interface
-    https://www.codewars.com/kata/57ff9d3b8f7dda23130015fa
-
-    :param map: string map, containing the 'board' with all zeros uncovered &
-    ? as unknown values.
-    :param n: number of mines on that board.
-    :return: a solved string map, containing only integers & 'x'`s for bomb markers
-
-    """
+    """surrogate solver to match this katas desired interface
+    https://www.codewars.com/kata/57ff9d3b8f7dda23130015fa"""
     if n == 0: return '0'
     Position.game = Game(gamemap, n, resultmap)
     return str(Position.game.solve())
