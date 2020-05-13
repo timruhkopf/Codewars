@@ -287,15 +287,7 @@ class Game:
         
 
 
-
-    def solve(self):
-        # (0) causal (state) communication logic from initial zeros
-        for zero in self.zerotup:
-            self.open(*zero)
-
-        print('')
-
-        # (1) exacly one bomb in questionmarks logic
+    def set_solver(self):
         before = True
         after = False
         while before != after:
@@ -303,9 +295,19 @@ class Game:
             self.superset_solver()
             after = str(self)
 
+    def solve(self):
+        # (0) causal (state) communication logic from initial zeros
+        for zero in self.zerotup:
+            self.open(*zero)
+
+        # (1) exacly one bomb in questionmarks logic
+        self.set_solver()
+
         # (2) Endgame logic based on number of bombs.
-        if bool(self.remain_bomb):
-            self.endgame()
+        # if bool(self.remain_bomb):
+        #     for _ in range(2):
+        #         self.endgame()
+        #         self.set_solver()
 
         # ambiguity?
         if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
