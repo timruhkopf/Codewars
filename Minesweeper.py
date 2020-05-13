@@ -144,15 +144,13 @@ class Game:
         return [row.split() for row in map.split('\n')]
 
     def open(self, row, column):
-
         if self.clues[(row, column)].clue == '?':
             if DEBUG:
                 value = int(self.result[row][column])
+                if value == 'x':
+                    raise ValueError('What a bummer.')
             else:
                 value = open(row, column)
-
-            if value == 'x':
-                raise ValueError('What a bummer.')
 
             inst = self.clues[(row, column)]
             for n in inst.neighb_inst:
