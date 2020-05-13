@@ -1,4 +1,4 @@
-from itertools import product, permutations  # permutations is deprec
+from itertools import product, combinations
 import sys
 
 sys.setrecursionlimit(10 ** 6)
@@ -12,16 +12,12 @@ class Position:
 
     def __init__(self, position, clue='?'):
         self.position = position
-        neighbours, intermediate = self._find_neighbours(position)
-        self.neighbours = neighbours
-        self.intermediate = intermediate
-
-        self.neighb_inst = set()
-        self.intermediate_inst = set()
-
         self._clue = clue
         self._state = 0
 
+        neighbours = self._find_neighbours(position)
+        self.neighbours = neighbours
+        self.neighb_inst = set()
         self.questionmarks = set()
 
     def __repr__(self):  # for debugging only
@@ -39,9 +35,6 @@ class Position:
 
     def isneighb(self, other):
         return other in self.neighb_inst
-
-    def isintermediate(self, other):
-        return other in self.intermediate_inst
 
     @property
     def clue(self):
@@ -77,9 +70,7 @@ class Position:
                 self.found_bomb()
 
     def found_bomb(self):
-        toopen = self.questionmarks.copy()
-
-        # TODO: fix mistake where self.questionmark produces neighb with clue 'x'
+        toopen = self.questionmarks.copy() # TODO: fix mistake where self.questionmark produces neighb with clue 'x'
         if bool(toopen):
             self.bombastic(bombs=toopen)
 
@@ -104,18 +95,11 @@ class Position:
         all of them are bound checked"""
         r, c = position
         cond = lambda r, c: 0 <= r < Position.dim[0] and 0 <= c < Position.dim[1]
-        square = lambda kernel: set((r + i, c + j) for i in kernel for j in kernel
-                                    if cond(r + i, c + j) and cond(r + i, c + j))
-
-        # find the direct neighbours
-        neighb = square(kernel=(-1, 0, 1))
-
-        # finding the bounded intermediate neighbours
-        intermediate = square(kernel=(-2, -1, 0, 1, 2))
-        intermediate.difference_update(neighb)
-
+        kernel = (-1, 0, 1)
+        neighb = set((r + i, c + j) for i in kernel for j in kernel
+                     if cond(r + i, c + j) and cond(r + i, c + j))
         neighb.discard((r, c))
-        return neighb, intermediate
+        return neighb
 
 
 def relentless(func):
@@ -153,7 +137,6 @@ class Game:
         # setting up the neighbourhood structure
         for inst in self.clues.values():
             inst.neighb_inst = set(self.clues[k] for k in inst.neighbours)
-            inst.intermediate_inst = set(self.clues[k] for k in inst.intermediate)
             inst.questionmarks = inst.neighb_inst.copy()
 
         self.remain_bomb = n
@@ -197,7 +180,7 @@ class Game:
         # most informative intersections start with:
         single = set(n for n in inquestion if n._state == 1)
         candidates = ([inst1, inst2] for inst1, inst2 in product(single, inquestion)
-                      if (inst1.isneighb(inst2) or inst1.isintermediate(inst2)) and inst2._state != 0)
+                      if (inst1.isneighb(inst2)) and inst2._state != 0)
 
         for inst1, inst2 in candidates:
             a = inst1.questionmarks
@@ -251,8 +234,6 @@ class Game:
 
     @relentless
     def endgame(self):
-        from itertools import combinations
-
         remain_q = set(q for q in self.clues.values() if q._clue == '?')
         anreiner = set(n for q in self.clues.values()
                        for n in q.neighb_inst
@@ -286,11 +267,9 @@ class Game:
         # (1) exacly one bomb in questionmarks logic
         self.superset_solver()
 
-
         # (2) Endgame logic based on number of bombs.
-        if bool(self.remain_bomb):
+        if bool(self.remain_bomb) and self.remain_bomb <= 3:
             self.endgame()
-
 
         # ambiguity?
         if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
@@ -417,7 +396,6 @@ x 2 x 2 x 1 0 0 0 0 0 1 1 1 0 0 0 1 x 1
 1 2 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1
 """.strip()
 assert solve_mine(gamemap, result.count('x'), result) == result
-
 
 gamemap = """
 0 0 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 ? ? ? ? ? ? ? ?
