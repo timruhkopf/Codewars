@@ -253,14 +253,22 @@ class Game:
 
         single = set(n for n in inquestion if n._state == 1)
 
+        # append all exactly ones coming from state 1 fields
         for _ in single:
             if _.questionmarks not in self.exacly_one:
                 self.exacly_one.append(_.questionmarks)
 
+        # append exactly ones coming from higher state fields that are cut by exactly ones and building exactly ones
+        # by their own
         for _ in inquestion:
             for i in self.exacly_one:
-                if _.questionmarks.issuperset(i) and _._state == 2 and _.questionmarks.difference(i) not in self.exacly_one:
+                if _.questionmarks.issuperset(i) and _._state == 2 \
+                        and _.questionmarks.difference(i) not in self.exacly_one:
                     self.exacly_one.append(_.questionmarks.difference(i))
+
+        # remaining questionmarks that are not in exactly._one
+        remain_q = [i for i in self.clues.values() if i.clue == '?' and all(i not in _ for _ in self.exacly_one)]
+
 
     def solve(self):
         # (0) causal (state) communication logic from initial zeros
@@ -304,24 +312,24 @@ def solve_mine(gamemap, n, resultmap=None):
     return str(Position.game.solve())
 
 # !!!!!!!!! ENDGAME ENDGAME ENDGAME !!!!!!
-# gamemap = """
-# 0 0 0 0 ? ? ? ? ? ?
-# 0 0 0 ? ? ? ? ? ? ?
-# 0 ? ? ? ? ? ? ? ? ?
-# ? ? ? ? ? ? ? ? ? 0
-# ? ? ? ? 0 0 0 0 0 0
-# ? ? ? 0 0 0 0 0 0 0
-# """.strip()
-# result = """
-# 0 0 0 0 1 1 1 1 1 1
-# 0 0 0 1 2 x 2 2 x 1
-# 0 1 1 2 x 2 2 x 2 1
-# 1 2 x 2 1 1 1 1 1 0
-# 1 x 2 1 0 0 0 0 0 0
-# 1 1 1 0 0 0 0 0 0 0
-# """.strip()
-# game1 = Game(gamemap, result)
-# assert solve_mine(gamemap, game1.count, result) == result
+gamemap = """
+0 0 0 0 ? ? ? ? ? ?
+0 0 0 ? ? ? ? ? ? ?
+0 ? ? ? ? ? ? ? ? ?
+? ? ? ? ? ? ? ? ? 0
+? ? ? ? 0 0 0 0 0 0
+? ? ? 0 0 0 0 0 0 0
+""".strip()
+result = """
+0 0 0 0 1 1 1 1 1 1
+0 0 0 1 2 x 2 2 x 1
+0 1 1 2 x 2 2 x 2 1
+1 2 x 2 1 1 1 1 1 0
+1 x 2 1 0 0 0 0 0 0
+1 1 1 0 0 0 0 0 0 0
+""".strip()
+game1 = Game(gamemap, 6,  result)
+assert solve_mine(gamemap, game1.count, result) == result
 #
 gamemap = """
 ? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
@@ -345,35 +353,35 @@ game1 = Game(gamemap, 12, result)
 assert solve_mine(gamemap, game1.count, result) == result
 
 gamemap = """
-0 1 1 2 1 1 0 0 0 1 1 2 2 2 2 x 1 0 0 0
-0 1 x 2 x 1 0 0 0 1 x 3 x x 3 2 1 0 0 0
-0 1 1 2 1 1 0 0 0 1 2 x 3 3 x 1 0 0 1 1
-0 0 0 1 1 1 0 0 0 0 1 1 1 1 1 1 0 0 1 x
-0 0 0 1 x 1 0 0 0 0 0 0 0 0 0 0 0 1 2 2
-0 1 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 1
-0 1 x 1 0 1 1 1 0 0 0 0 0 1 1 1 0 1 1 1
-0 1 1 1 0 1 x 2 2 2 1 0 0 1 x 2 1 1 0 0
-0 1 1 1 0 1 1 2 x x 1 0 0 1 1 2 x 1 0 0
-0 1 x 1 0 0 0 1 2 2 1 0 0 0 0 2 2 2 0 0
-0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
-0 1 1 1 0 0 0 0 0 1 1 1 0 0 0 1 2 x 1 0
-0 1 x 1 0 0 0 0 0 1 x 2 1 1 0 1 3 3 2 0
-1 2 1 1 0 0 0 0 0 1 1 2 x 1 0 2 x x 1 0
-x 1 0 0 0 0 0 0 0 0 0 1 1 1 0 2 x 4 3 2
-1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 2 x x
-1 2 x 1 0 0 1 2 3 2 1 0 1 1 1 0 0 1 2 2
-1 x 3 3 1 1 1 x x x 1 0 2 x 2 0 0 0 0 0
-1 2 x 2 x 1 2 3 4 2 1 0 2 x 3 1 0 0 0 0
-0 1 1 2 2 2 2 x 1 0 0 0 1 2 x 1 0 0 0 0
-0 0 0 0 1 x 2 1 1 0 0 0 1 2 2 1 0 0 0 0
-0 0 0 0 1 1 1 0 0 0 0 0 1 x 2 1 0 0 0 0
-0 0 0 0 0 0 0 1 2 2 1 0 1 2 x 1 0 0 0 0
-1 1 1 1 1 0 0 1 x x 2 1 1 1 2 2 2 1 1 0
-x 2 3 x 2 0 0 1 2 2 2 x 1 0 1 x 2 x 2 1
-2 ? ? x 2 0 0 0 0 0 1 2 2 1 1 1 2 1 2 x
-? ? 3 3 2 1 0 0 0 0 0 1 x 1 0 0 0 1 2 2
-? ? ? 2 x 1 0 0 0 0 0 1 1 1 0 0 0 1 x 1
-? ? ? 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? 0 0 ? ?
+0 0 0 ? ? ? 0 0 0 0 ? ? ? ? ? ? 0 0 ? ?
+0 0 0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+0 ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+0 ? ? ? 0 ? ? ? 0 0 0 0 0 ? ? ? 0 ? ? ?
+0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
+0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
+0 ? ? ? 0 0 0 ? ? ? ? 0 0 0 0 ? ? ? 0 0
+0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0
+0 ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ? ? 0
+0 ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
+? ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
+? ? 0 0 0 0 0 0 0 0 0 ? ? ? 0 ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? ?
+? ? ? ? 0 0 ? ? ? ? ? 0 ? ? ? 0 0 ? ? ?
+? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? 0 0 0 0 0
+? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? ? 0 0 0 0
+0 ? ? ? ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 0 0 0 ? ? ? ? 0 ? ? ? ? 0 0 0 0
+? ? ? ? ? 0 0 ? ? ? ? ? ? ? ? ? ? ? ? 0
+? ? ? ? ? 0 0 ? ? ? ? ? ? 0 ? ? ? ? ? ?
+? ? ? ? ? 0 0 0 0 0 ? ? ? ? ? ? ? ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
 """.strip()
 result = """
 0 1 1 2 1 1 0 0 0 1 1 2 2 2 2 x 1 0 0 0
@@ -406,7 +414,7 @@ x 2 3 x 2 0 0 1 2 2 2 x 1 0 1 x 2 x 2 1
 x 2 x 2 x 1 0 0 0 0 0 1 1 1 0 0 0 1 x 1
 1 2 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1
 """.strip()
-game1 = Game(gamemap, result)
+game1 = Game(gamemap, 58, result)
 assert solve_mine(gamemap, game1.count, result) == result
 # #
 
