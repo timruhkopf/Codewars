@@ -269,15 +269,7 @@ class Game:
         # remaining questionmarks that are not in exactly._one
         remain_q = [i for i in self.clues.values() if i.clue == '?' and all(i not in _ for _ in self.exacly_one)]
 
-
-    def solve(self):
-        # (0) causal (state) communication logic from initial zeros
-        for zero in self.zerotup:
-            self.open(*zero)
-
-        print('')
-
-        # (1) exacly one bomb in questionmarks logic
+    def set_solver(self):
         before = True
         after = False
         while before != after:
@@ -285,9 +277,19 @@ class Game:
             self.superset_solver()
             after = str(self)
 
+    def solve(self):
+        # (0) causal (state) communication logic from initial zeros
+        for zero in self.zerotup:
+            self.open(*zero)
+
+        # (1) exacly one bomb in questionmarks logic
+        self.set_solver()
+
         # (2) Endgame logic based on number of bombs.
-        if bool(self.remain_bomb):
-            self.endgame()
+        # if bool(self.remain_bomb):
+        #     for _ in range(2):
+        #         self.endgame()
+        #         self.set_solver()
 
         # ambiguity?
         if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
@@ -312,45 +314,45 @@ def solve_mine(gamemap, n, resultmap=None):
     return str(Position.game.solve())
 
 # !!!!!!!!! ENDGAME ENDGAME ENDGAME !!!!!!
-gamemap = """
-0 0 0 0 ? ? ? ? ? ?
-0 0 0 ? ? ? ? ? ? ?
-0 ? ? ? ? ? ? ? ? ?
-? ? ? ? ? ? ? ? ? 0
-? ? ? ? 0 0 0 0 0 0
-? ? ? 0 0 0 0 0 0 0
-""".strip()
-result = """
-0 0 0 0 1 1 1 1 1 1
-0 0 0 1 2 x 2 2 x 1
-0 1 1 2 x 2 2 x 2 1
-1 2 x 2 1 1 1 1 1 0
-1 x 2 1 0 0 0 0 0 0
-1 1 1 0 0 0 0 0 0 0
-""".strip()
-game1 = Game(gamemap, 6,  result)
-assert solve_mine(gamemap, game1.count, result) == result
-#
-gamemap = """
-? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
-? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
-0 0 0 0 0 ? ? ? ? 0 0 0 0 0 ? ? ?
-0 0 0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ?
-0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
-? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
-? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
-""".strip()
-result = """
-1 x 1 0 0 2 x 2 1 x 1 0 0 1 x x 1
-1 1 1 0 0 2 x 3 2 1 1 0 0 1 3 4 3
-0 0 0 0 0 1 2 x 1 0 0 0 0 0 1 x x
-0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 2 2
-0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1
-1 1 1 0 0 0 0 0 0 0 0 0 0 1 2 x 1
-1 x 1 0 0 0 0 0 0 0 0 0 0 1 x 2 1
-""".strip()
-game1 = Game(gamemap, 12, result)
-assert solve_mine(gamemap, game1.count, result) == result
+# gamemap = """
+# 0 0 0 0 ? ? ? ? ? ?
+# 0 0 0 ? ? ? ? ? ? ?
+# 0 ? ? ? ? ? ? ? ? ?
+# ? ? ? ? ? ? ? ? ? 0
+# ? ? ? ? 0 0 0 0 0 0
+# ? ? ? 0 0 0 0 0 0 0
+# """.strip()
+# result = """
+# 0 0 0 0 1 1 1 1 1 1
+# 0 0 0 1 2 x 2 2 x 1
+# 0 1 1 2 x 2 2 x 2 1
+# 1 2 x 2 1 1 1 1 1 0
+# 1 x 2 1 0 0 0 0 0 0
+# 1 1 1 0 0 0 0 0 0 0
+# """.strip()
+# game1 = Game(gamemap, 6,  result)
+# assert solve_mine(gamemap, game1.count, result) == result
+# #
+# gamemap = """
+# ? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
+# ? ? ? 0 0 ? ? ? ? ? ? 0 0 ? ? ? ?
+# 0 0 0 0 0 ? ? ? ? 0 0 0 0 0 ? ? ?
+# 0 0 0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ?
+# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+# ? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
+# ? ? ? 0 0 0 0 0 0 0 0 0 0 ? ? ? ?
+# """.strip()
+# result = """
+# 1 x 1 0 0 2 x 2 1 x 1 0 0 1 x x 1
+# 1 1 1 0 0 2 x 3 2 1 1 0 0 1 3 4 3
+# 0 0 0 0 0 1 2 x 1 0 0 0 0 0 1 x x
+# 0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 2 2
+# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1
+# 1 1 1 0 0 0 0 0 0 0 0 0 0 1 2 x 1
+# 1 x 1 0 0 0 0 0 0 0 0 0 0 1 x 2 1
+# """.strip()
+# game1 = Game(gamemap, 12, result)
+# assert solve_mine(gamemap, game1.count, result) == result
 
 gamemap = """
 0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
