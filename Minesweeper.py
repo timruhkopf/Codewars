@@ -77,7 +77,6 @@ class Position:
                 self.found_bomb()
 
     def found_bomb(self):
-        self._state = 0
         toopen = self.questionmarks.copy()
 
         # TODO: fix mistake where self.questionmark produces neighb with clue 'x'
@@ -87,14 +86,14 @@ class Position:
     @staticmethod
     def bombastic(bombs):
         for b in bombs:
-            if b._clue == '?': # needed until deep copy problem in found_bomb is not solved
+            if b._clue == '?':  # needed until deep copy problem in found_bomb is not solved
                 b._clue = 'x'
                 b.game.remain_bomb -= 1
 
                 for n in b.neighb_inst:
                     n._state -= 1
                     if b in n.questionmarks:
-                         n.questionmarks.discard(b)
+                        n.questionmarks.discard(b)
 
                 for n in b.neighb_inst:
                     n.state = n._state
@@ -146,7 +145,6 @@ class Game:
             inst.questionmarks = inst.neighb_inst.copy()
 
         self.remain_bomb = n
-        self.exacly_one = list()
 
     def __repr__(self):
         return self.encode_map_from_Position()
@@ -183,11 +181,6 @@ class Game:
                          for n in q.neighb_inst
                          if q.clue == '?' and n.clue not in ['?', 'x'])  # TODO discard this simplification
 
-        # Deprec: too many combinations
-        # candidates = ([inst1, inst2] for inst1, inst2 in permutations(inquestion, 2)
-        #               if (inst1.isneighb(inst2) or inst1.isintermediate(inst2))
-        #               and (inst1._state == 1 or inst2._state == 1))  # TODO discard this simplification
-
         # most informative intersections start with:
         single = set(n for n in inquestion if n._state == 1)
         candidates = ([inst1, inst2] for inst1, inst2 in product(single, inquestion)
@@ -196,10 +189,7 @@ class Game:
         for inst1, inst2 in candidates:
             a = inst1.questionmarks
             b = inst2.questionmarks
-            # print(inst1.position, inst2.position)
-            #
-            # if (inst1.position, inst2.position) == ((26, 26), (28, 26)):
-            #     print()
+
             if b.issuperset(a) and bool(a):  # SUPERSET and a was not filled
                 # in the meantime whilest iterating over candidates
                 remain = (b - a)
@@ -248,11 +238,11 @@ class Game:
 
     def endgame(self):
         from itertools import combinations
-        
+
         remain_q = set(q for q in self.clues.values() if q._clue == '?')
         anreiner = set(n for q in self.clues.values()
-                         for n in q.neighb_inst
-                         if q.clue == '?' and n.clue not in ['?', 'x'])
+                       for n in q.neighb_inst
+                       if q.clue == '?' and n.clue not in ['?', 'x'])
 
         potential_bomb = set()
         for bombcombi in combinations(remain_q, self.remain_bomb):
@@ -274,15 +264,6 @@ class Game:
         for Pos in untouched:
             self.open(*Pos.position)
 
-
-    def set_solver(self):
-        before = True
-        after = False
-        while before != after:
-            before = str(self)
-            self.superset_solver()
-            after = str(self)
-
     def solve(self):
         # (0) causal (state) communication logic from initial zeros
         for zero in self.zerotup:
@@ -297,10 +278,13 @@ class Game:
             after = str(self)
 
         # (2) Endgame logic based on number of bombs.
-        # if bool(self.remain_bomb):
-        #     for _ in range(2):
-        #         self.endgame()
-        #         self.set_solver()
+        if bool(self.remain_bomb):
+            before = True
+            after = False
+            while before != after:
+                before = str(self)
+                self.endgame()
+                after = str(self)
 
         # ambiguity?
         if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
@@ -323,6 +307,7 @@ def solve_mine(gamemap, n, resultmap=None):
     if n == 0: return '0'
     Position.game = Game(gamemap, n, resultmap)
     return str(Position.game.solve())
+
 
 # !!!!!!!!! ENDGAME ENDGAME ENDGAME !!!!!!
 # gamemap = """
@@ -365,104 +350,104 @@ def solve_mine(gamemap, n, resultmap=None):
 # game1 = Game(gamemap, 12, result)
 # assert solve_mine(gamemap, game1.count, result) == result
 
-# gamemap = """
-# 0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
-# 0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
-# 0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? 0 0 ? ?
-# 0 0 0 ? ? ? 0 0 0 0 ? ? ? ? ? ? 0 0 ? ?
-# 0 0 0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
-# 0 ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
-# 0 ? ? ? 0 ? ? ? 0 0 0 0 0 ? ? ? 0 ? ? ?
-# 0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
-# 0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
-# 0 ? ? ? 0 0 0 ? ? ? ? 0 0 0 0 ? ? ? 0 0
-# 0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0
-# 0 ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ? ? 0
-# 0 ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
-# ? ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
-# ? ? 0 0 0 0 0 0 0 0 0 ? ? ? 0 ? ? ? ? ?
-# ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? ?
-# ? ? ? ? 0 0 ? ? ? ? ? 0 ? ? ? 0 0 ? ? ?
-# ? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? 0 0 0 0 0
-# ? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? ? 0 0 0 0
-# 0 ? ? ? ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
-# 0 0 0 0 ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
-# 0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ? ? 0 0 0 0
-# 0 0 0 0 0 0 0 ? ? ? ? 0 ? ? ? ? 0 0 0 0
-# ? ? ? ? ? 0 0 ? ? ? ? ? ? ? ? ? ? ? ? 0
-# ? ? ? ? ? 0 0 ? ? ? ? ? ? 0 ? ? ? ? ? ?
-# ? ? ? ? ? 0 0 0 0 0 ? ? ? ? ? ? ? ? ? ?
-# ? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
-# ? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
-# ? ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
-# """.strip()
-# result = """
-# 0 1 1 2 1 1 0 0 0 1 1 2 2 2 2 x 1 0 0 0
-# 0 1 x 2 x 1 0 0 0 1 x 3 x x 3 2 1 0 0 0
-# 0 1 1 2 1 1 0 0 0 1 2 x 3 3 x 1 0 0 1 1
-# 0 0 0 1 1 1 0 0 0 0 1 1 1 1 1 1 0 0 1 x
-# 0 0 0 1 x 1 0 0 0 0 0 0 0 0 0 0 0 1 2 2
-# 0 1 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 1
-# 0 1 x 1 0 1 1 1 0 0 0 0 0 1 1 1 0 1 1 1
-# 0 1 1 1 0 1 x 2 2 2 1 0 0 1 x 2 1 1 0 0
-# 0 1 1 1 0 1 1 2 x x 1 0 0 1 1 2 x 1 0 0
-# 0 1 x 1 0 0 0 1 2 2 1 0 0 0 0 2 2 2 0 0
-# 0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
-# 0 1 1 1 0 0 0 0 0 1 1 1 0 0 0 1 2 x 1 0
-# 0 1 x 1 0 0 0 0 0 1 x 2 1 1 0 1 3 3 2 0
-# 1 2 1 1 0 0 0 0 0 1 1 2 x 1 0 2 x x 1 0
-# x 1 0 0 0 0 0 0 0 0 0 1 1 1 0 2 x 4 3 2
-# 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 2 x x
-# 1 2 x 1 0 0 1 2 3 2 1 0 1 1 1 0 0 1 2 2
-# 1 x 3 3 1 1 1 x x x 1 0 2 x 2 0 0 0 0 0
-# 1 2 x 2 x 1 2 3 4 2 1 0 2 x 3 1 0 0 0 0
-# 0 1 1 2 2 2 2 x 1 0 0 0 1 2 x 1 0 0 0 0
-# 0 0 0 0 1 x 2 1 1 0 0 0 1 2 2 1 0 0 0 0
-# 0 0 0 0 1 1 1 0 0 0 0 0 1 x 2 1 0 0 0 0
-# 0 0 0 0 0 0 0 1 2 2 1 0 1 2 x 1 0 0 0 0
-# 1 1 1 1 1 0 0 1 x x 2 1 1 1 2 2 2 1 1 0
-# x 2 3 x 2 0 0 1 2 2 2 x 1 0 1 x 2 x 2 1
-# 2 x 3 x 2 0 0 0 0 0 1 2 2 1 1 1 2 1 2 x
-# 2 3 3 3 2 1 0 0 0 0 0 1 x 1 0 0 0 1 2 2
-# x 2 x 2 x 1 0 0 0 0 0 1 1 1 0 0 0 1 x 1
-# 1 2 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1
-# """.strip()
-# game1 = Game(gamemap, 58, result)
-# assert solve_mine(gamemap, game1.count, result) == result
-# # #
-#
-# gamemap = """
-# 0 0 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 ? ? ? ? ? ? ? ?
-# ? ? 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ? ? ? ? ? ? ? ? ? ? ?
-# ? ? ? ? 0 0 0 0 0 0 ? ? ? 0 ? ? ? ? ? ? 0 ? ? ? ? ? ?
-# ? ? ? ? 0 0 0 0 0 0 ? ? ? 0 0 0 0 ? ? ? 0 ? ? ? ? ? ?
-# 0 ? ? ? 0 0 0 0 0 0 ? ? ? 0 0 0 0 0 0 0 0 ? ? ? ? ? ?
-# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0
-# """.strip()
-#
-# result = """
-# 0 0 0 1 x 1 1 x 1 0 0 0 0 0 1 1 1 0 0 1 x 3 x 3 1 2 1
-# 1 1 0 1 1 1 1 1 1 0 0 0 0 0 1 x 1 1 1 2 1 3 x 3 x 2 x
-# x 2 1 1 0 0 0 0 0 0 1 1 1 0 1 1 1 1 x 1 0 2 2 3 1 3 2
-# 1 2 x 1 0 0 0 0 0 0 1 x 1 0 0 0 0 1 1 1 0 1 x 2 1 2 x
-# 0 1 1 1 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 1 2 3 x 2 1
-# 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
-# """.strip()
-# game1 = Game(gamemap, result)
-# assert solve_mine(gamemap, game1.count, result) == '?'
-#
-# # Ambivalent state
-# gamemap = """
-# 0 ? ?
-# 0 ? ?
-# """.strip()
-# result = """
-# 0 1 x
-# 0 1 1
-# """.strip()
-# game = Game(gamemap, result)
-# # game.open_result = open_result(result)
-# assert solve_mine(gamemap, game.count, result) == "?"
+gamemap = """
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? ? 0 0 0
+0 ? ? ? ? ? 0 0 0 ? ? ? ? ? ? ? 0 0 ? ?
+0 0 0 ? ? ? 0 0 0 0 ? ? ? ? ? ? 0 0 ? ?
+0 0 0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+0 ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+0 ? ? ? 0 ? ? ? 0 0 0 0 0 ? ? ? 0 ? ? ?
+0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
+0 ? ? ? 0 ? ? ? ? ? ? 0 0 ? ? ? ? ? 0 0
+0 ? ? ? 0 0 0 ? ? ? ? 0 0 0 0 ? ? ? 0 0
+0 ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0
+0 ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ? ? 0
+0 ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
+? ? ? ? 0 0 0 0 0 ? ? ? ? ? 0 ? ? ? ? 0
+? ? 0 0 0 0 0 0 0 0 0 ? ? ? 0 ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? ?
+? ? ? ? 0 0 ? ? ? ? ? 0 ? ? ? 0 0 ? ? ?
+? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? 0 0 0 0 0
+? ? ? ? ? ? ? ? ? ? ? 0 ? ? ? ? 0 0 0 0
+0 ? ? ? ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 ? ? ? ? ? 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 ? ? ? 0 0 0 0 0 ? ? ? ? 0 0 0 0
+0 0 0 0 0 0 0 ? ? ? ? 0 ? ? ? ? 0 0 0 0
+? ? ? ? ? 0 0 ? ? ? ? ? ? ? ? ? ? ? ? 0
+? ? ? ? ? 0 0 ? ? ? ? ? ? 0 ? ? ? ? ? ?
+? ? ? ? ? 0 0 0 0 0 ? ? ? ? ? ? ? ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 0 ? ? ?
+? ? ? ? ? ? 0 0 0 0 0 0 0 0 0 0 0 ? ? ?
+""".strip()
+result = """
+0 1 1 2 1 1 0 0 0 1 1 2 2 2 2 x 1 0 0 0
+0 1 x 2 x 1 0 0 0 1 x 3 x x 3 2 1 0 0 0
+0 1 1 2 1 1 0 0 0 1 2 x 3 3 x 1 0 0 1 1
+0 0 0 1 1 1 0 0 0 0 1 1 1 1 1 1 0 0 1 x
+0 0 0 1 x 1 0 0 0 0 0 0 0 0 0 0 0 1 2 2
+0 1 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 1
+0 1 x 1 0 1 1 1 0 0 0 0 0 1 1 1 0 1 1 1
+0 1 1 1 0 1 x 2 2 2 1 0 0 1 x 2 1 1 0 0
+0 1 1 1 0 1 1 2 x x 1 0 0 1 1 2 x 1 0 0
+0 1 x 1 0 0 0 1 2 2 1 0 0 0 0 2 2 2 0 0
+0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
+0 1 1 1 0 0 0 0 0 1 1 1 0 0 0 1 2 x 1 0
+0 1 x 1 0 0 0 0 0 1 x 2 1 1 0 1 3 3 2 0
+1 2 1 1 0 0 0 0 0 1 1 2 x 1 0 2 x x 1 0
+x 1 0 0 0 0 0 0 0 0 0 1 1 1 0 2 x 4 3 2
+1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 2 x x
+1 2 x 1 0 0 1 2 3 2 1 0 1 1 1 0 0 1 2 2
+1 x 3 3 1 1 1 x x x 1 0 2 x 2 0 0 0 0 0
+1 2 x 2 x 1 2 3 4 2 1 0 2 x 3 1 0 0 0 0
+0 1 1 2 2 2 2 x 1 0 0 0 1 2 x 1 0 0 0 0
+0 0 0 0 1 x 2 1 1 0 0 0 1 2 2 1 0 0 0 0
+0 0 0 0 1 1 1 0 0 0 0 0 1 x 2 1 0 0 0 0
+0 0 0 0 0 0 0 1 2 2 1 0 1 2 x 1 0 0 0 0
+1 1 1 1 1 0 0 1 x x 2 1 1 1 2 2 2 1 1 0
+x 2 3 x 2 0 0 1 2 2 2 x 1 0 1 x 2 x 2 1
+2 x 3 x 2 0 0 0 0 0 1 2 2 1 1 1 2 1 2 x
+2 3 3 3 2 1 0 0 0 0 0 1 x 1 0 0 0 1 2 2
+x 2 x 2 x 1 0 0 0 0 0 1 1 1 0 0 0 1 x 1
+1 2 1 2 1 1 0 0 0 0 0 0 0 0 0 0 0 1 1 1
+""".strip()
+game1 = Game(gamemap, 58, result)
+assert solve_mine(gamemap, 58, result) == result
+# #
+
+gamemap = """
+0 0 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ? 0 0 ? ? ? ? ? ? ? ?
+? ? 0 ? ? ? ? ? ? 0 0 0 0 0 ? ? ? ? ? ? ? ? ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0 ? ? ? 0 ? ? ? ? ? ? 0 ? ? ? ? ? ?
+? ? ? ? 0 0 0 0 0 0 ? ? ? 0 0 0 0 ? ? ? 0 ? ? ? ? ? ?
+0 ? ? ? 0 0 0 0 0 0 ? ? ? 0 0 0 0 0 0 0 0 ? ? ? ? ? ?
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ? ? ? ? 0
+""".strip()
+
+result = """
+0 0 0 1 x 1 1 x 1 0 0 0 0 0 1 1 1 0 0 1 x 3 x 3 1 2 1
+1 1 0 1 1 1 1 1 1 0 0 0 0 0 1 x 1 1 1 2 1 3 x 3 x 2 x
+x 2 1 1 0 0 0 0 0 0 1 1 1 0 1 1 1 1 x 1 0 2 2 3 1 3 2
+1 2 x 1 0 0 0 0 0 0 1 x 1 0 0 0 0 1 1 1 0 1 x 2 1 2 x
+0 1 1 1 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 1 2 3 x 2 1
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 x 2 1 0
+""".strip()
+game1 = Game(gamemap, result)
+assert solve_mine(gamemap, game1.count, result) == '?'
+
+# Ambivalent state
+gamemap = """
+0 ? ?
+0 ? ?
+""".strip()
+result = """
+0 1 x
+0 1 1
+""".strip()
+game = Game(gamemap, result)
+# game.open_result = open_result(result)
+assert solve_mine(gamemap, game.count, result) == "?"
 
 # Deterministic board
 gamemap = """
@@ -487,7 +472,7 @@ result = """
 0 0 0 0 0 1 x
 0 0 0 0 0 1 1
 """.strip()
-game = Game(gamemap,6, result)
+game = Game(gamemap, result)
 # game.open_result = open_result(result)
 assert solve_mine(gamemap, game.count, result) == result
 
