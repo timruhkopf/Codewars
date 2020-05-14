@@ -7,9 +7,6 @@ class Graph:
 
     def __init__(self, vertices_num):
         """
-        breadth first & depth first algorithms can be found here:
-        https://www.geeksforgeeks.org/find-if-there-is-a-path-between-two-vertices-in-a-given-graph/
-        https://www.geeksforgeeks.org/depth-first-search-or-dfs-for-a-graph/
         :param vertices_num: number of nodes (an integer)
         """
         self.v = vertices_num
@@ -44,22 +41,55 @@ class Graph:
 
     def find_all_paths(self, graph, start_vertex, end_vertex):
         """find all paths from node start_vertex to node end_vertex"""
-        pass
+        self.graph = graph
+        self.paths = list()
+        self.visited = [start_vertex]
+
+        self._recursion_util(start_vertex, start_vertex, end_vertex)
+        return sorted(sorted(self.paths, key=str), key=len)
+
+    def _recursion_util(self, current_vertex, start_vertex, end_vertex):
+        """helper method for self.find_all_paths"""
+        if current_vertex == end_vertex:
+            self.paths.append('-'.join(self.visited))
+        elif len(self.visited) <= len(self.graph.keys()):
+            for neighb, _ in self.graph[current_vertex]:
+                if neighb not in self.visited:
+                    self.visited.append(neighb)
+                    self._recursion_util(neighb, start_vertex, end_vertex)
+                    self.visited.remove(neighb)
+
 
 if __name__ == '__main__':
-    # dictionary
+    dct = {'A3': [('A0', 1), ('A2', 1)], 'A0': [('A3', 1), ('A2', 1)], 'A4': [('A2', 1)], 'A1': [('A2', 1)],
+           'A2': [('A1', 1), ('A2', 1), ('A3', 1), ('A4', 1)]}
+    g = Graph(5)
+    assert g.find_all_paths(dct, "A0", "A4") == ['A0-A2-A4', 'A0-A3-A2-A4']
+
     # A dictionary is not ordered but the list of linked nodes is sorted
-    graph = {'A0': [('A3', 1), ('A5', 4)], 'A1': [('A2', 2)], 'A2': [('A1', 1), ('A2', 2), ('A3', 1), ('A4', 1)],
-             'A3': [('A0', 1), ('A2', 1)], 'A4': [('A2', 1), ('A4', 1)], 'A5': [('A3', 3)]}
+    graph = {'A0': [('A3', 1), ('A5', 4)],
+             'A1': [('A2', 2)],
+             'A2': [('A1', 1), ('A2', 2), ('A3', 1), ('A4', 1)],
+             'A3': [('A0', 1), ('A2', 1)],
+             'A4': [('A2', 1), ('A4', 1)],
+             'A5': [('A3', 3)]}
 
     # adjacency matrix
-    M = [[0, 0, 0, 1, 0, 4], [0, 0, 2, 0, 0, 0], [0, 1, 2, 1, 1, 0], [1, 0, 1, 0, 0, 0], [0, 0, 1, 0, 1, 0],
+    M = [[0, 0, 0, 1, 0, 4],
+         [0, 0, 2, 0, 0, 0],
+         [0, 1, 2, 1, 1, 0],
+         [1, 0, 1, 0, 0, 0],
+         [0, 0, 1, 0, 1, 0],
          [0, 0, 0, 3, 0, 0]]
 
     # adjacency list
     # L is sorted in order A0 to A5 and each sublist is sorted as in a graph dictionary
-    L = [['A0', [('A3', 1), ('A5', 4)]], ['A1', [('A2', 2)]], ['A2', [('A1', 1), ('A2', 2), ('A3', 1), ('A4', 1)]],
-         ['A3', [('A0', 1), ('A2', 1)]], ['A4', [('A2', 1), ('A4', 1)]], ['A5', [('A3', 3)]]]
+    L = [['A0', [('A3', 1), ('A5', 4)]],
+         ['A1', [('A2', 2)]],
+         ['A2', [('A1', 1), ('A2', 2), ('A3', 1), ('A4', 1)]],
+         ['A3', [('A0', 1), ('A2', 1)]],
+         ['A4', [('A2', 1), ('A4', 1)]],
+         ['A5', [('A3', 3)]]]
 
     g = Graph(vertices_num=6)
     assert g.adjmat_2_graph(adjm=M) == graph
@@ -68,9 +98,3 @@ if __name__ == '__main__':
     assert g.list_2_graph(lst=L) == graph
     assert g.mat_2_list(mat=M) == L
     assert g.list_2_mat(lst=L) == M
-
-    dct = {'A3': [('A0', 1), ('A2', 1)], 'A0': [('A3', 1), ('A2', 1)], 'A4': [('A2', 1)], 'A1': [('A2', 1)],
-           'A2': [('A1', 1), ('A2', 1), ('A3', 1), ('A4', 1)]}
-    g = Graph(5)
-    g.find_all_paths(dct, "A0", "A4")
-    # returns l = ['A0-A2-A4', 'A0-A3-A2-A4']
