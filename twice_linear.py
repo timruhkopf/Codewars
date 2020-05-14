@@ -20,7 +20,6 @@ class Twice_linear:
 
     def _continue(self, n):
         while len(self.u) < n+1:
-            # CAREFULL: corner case: if both are equal
             x = self.dq[self.selector[self.dq['zs'][0] < self.dq['ys'][0]]].popleft()
             self.dq['ys'].append(self.y(x))
             self.dq['zs'].append(self.z(x))
