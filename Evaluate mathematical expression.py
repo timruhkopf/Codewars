@@ -4,7 +4,7 @@ def calc(expression):
 
     # find pairs of sorted brackets
     pairs = []
-    for i in left[::-1]:
+    for i in reversed(left):
         for j in right:
             if j > i:
                 pairs.append((i, j))
