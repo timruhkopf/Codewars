@@ -80,6 +80,7 @@ class Sudoku:
                 self.memo[position] = s
                 return s
             else:  # go further down on path with current s
+                self.memo[position] = s  # DEPREC: REMOVE ME this is only for debug
                 self.candrow[r].difference_update({s})
                 self.candcol[c].difference_update({s})
                 self.candblock[b].difference_update({s})
@@ -125,6 +126,7 @@ class Sudoku:
         return self.solution
 
 
+
 if __name__ == '__main__':
     # (BRUTAL) -----------------------------------------------------------------
     #  fixme killing my time
@@ -136,7 +138,8 @@ if __name__ == '__main__':
                [0, 0, 0, 7, 0, 0, 2, 0, 0],
                [0, 0, 0, 0, 3, 0, 0, 0, 9],
                [7, 0, 0, 0, 0, 0, 0, 0, 0],
-               [5, 0, 0, 0, 0, 0, 0, 8, 0]]
+               [5, 0, 0, 0, 0, 0, 0, 8, 0]]  # THIS CASE seems to be incapable to place any values and incapable of stopping
+
     solution = [[9, 4, 6, 1, 8, 2, 7, 5, 3],
                 [3, 1, 8, 5, 9, 7, 4, 2, 6],
                 [2, 7, 5, 6, 4, 3, 8, 9, 1],
