@@ -14,6 +14,7 @@ def calc(expression):
                 pairs.append((i, j))
                 left.remove(i)
                 right.remove(j)
+                break
 
     # figure out nesting structure of parenthesis
     nested = lambda y, x: x[0] > y[0] and x[1] < y[1]  # x nested in y
@@ -40,7 +41,7 @@ def calc(expression):
 
 
 if __name__ == '__main__':
-    calc('(2+2) + (3-3) * (2 / (2 + 3.33) * 4) - -6 * (3-(3/1))')
+    calc('(-64) * (94 / -13 / -(3)) - (62 * -((((-45 + 46)))) + -6)')
     calc('-7 * -(6 / 3)') == 14
     calc('(2 / (2 + 3.33) * 4) - -6') == 7.50093808630394
     calc('(2+2) + (3-3)')
@@ -55,3 +56,7 @@ if __name__ == '__main__':
     calc('(-64) * (94 / -13 / -(3)) - (62 * -((((-45 + 46)))) + -6)')  # carefull *-
     calc('-(22) * (-14 / 32 + (52)) - (-12 + (((-(23 / 74)))) + 50)')
 
+s = '(2+2) + (3-3) * (2 / (2 + 3.33) * 4) - -6 * (3-(3/1))'
+s.split('(\+)')
+
+re.split(r'[\/ | \+ | \* |\$]\s*', s)
