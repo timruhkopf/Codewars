@@ -27,20 +27,15 @@ def calc(expression):
 
     # figure out nesting structure of parenthesis
     nested = lambda y, x: x[0] > y[0] and x[1] < y[1]  # x nested in y
-    brackets = {k: set(v for v in pairs if nested(k, v)) for k in pairs}
+    brackets = {k: list(v for v in pairs if nested(k, v)) for k in pairs}
     bracket_order = {k: len(brackets[k]) for k in pairs}
 
-    # # filter brackets such, that only the directly next nested level is avail.
-    # for k in [k for k in brackets.keys() if bracket_order[k]!= 0]:
-    #     brackets[k].difference_update(set.union(*(brackets[key] for key in brackets[k] if bracket_order[key]!= 0)))
-    #
-    # for k in brackets.keys():
-    #     for tupy in brackets[k]:
-    #         for tupx in brackets[k]:
-    #             if nested(tupy,tupx):
-    #                 brackets[k].remove(tupx)
-
-    # start with 0 len and evaluate.
+    # keep only first inner brackets
+    for k in brackets.keys():
+        for tup in sorted(brackets[k]):
+            for nest in sorted(brackets[k]):
+                if nested(tup, nest):
+                    brackets[k].remove(nest)
 
     # continue with level one and replace
 
