@@ -27,8 +27,15 @@ def calc(expression):
 
     # figure out nesting structure of parenthesis
     nested = lambda y, x: x[0] > y[0] and x[1] < y[1]  # x nested in y
-    brackets = {k: set(v for v in pairs if nested(k, v)) for k in pairs}
+    brackets = {k: list(v for v in pairs if nested(k, v)) for k in pairs}
     bracket_order = {k: len(brackets[k]) for k in pairs}
+
+    # keep only first inner brackets
+    for k in brackets.keys():
+        for tup in sorted(brackets[k]):
+            for nest in sorted(brackets[k]):
+                if nested(tup, nest):
+                    brackets[k].remove(nest)
 
     # start with 0 len and evaluate.
     regex = re.compile(r'([\/\*])?([\-]?\d*\.\d+|[\-]?\d+)')

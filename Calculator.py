@@ -26,4 +26,4 @@ class Calculator(object):
         return new_list
 
 if __name__ == '__main__':
-    Calculator().evaluate("2 / 2 + 3 * 4 - 6") == 7
+    Calculator().evaluate("2 / -2 * 3 * 4 - 6") == 7
