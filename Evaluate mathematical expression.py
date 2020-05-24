@@ -21,10 +21,6 @@ def calc(expression):
                 right.remove(j)
                 break
 
-    # # validate braket pairs:
-    # for tup in pairs:
-    #     print(expression[tup[0] + 1:tup[1]])
-
     # figure out nesting structure of parenthesis
     nested = lambda y, x: x[0] > y[0] and x[1] < y[1]  # x nested in y
     brackets = {k: list(v for v in pairs if nested(k, v)) for k in pairs}
@@ -43,22 +39,31 @@ def calc(expression):
         brackets[sl] = str(eval_flat_expression(regex.findall(expression[sl[0] + 1:sl[1]])))
 
     # reverse ensures, that replacements do not change the indicies!
-    for eins in sorted([k for k, v in bracket_order.items() if v == 1], reverse=True):
-        expr = expression[eins[0]+1:eins[1]]
-        for nuller in sorted(brackets[eins], reverse=True):
-            expr = '{}{}{}'.format(expr[:nuller[0]-eins[0]-1], brackets[nuller],  expr[nuller[1]-eins[1]+1:])
+    for i in sorted(set(bracket_order.values())- {0}):
+        for eins in sorted([k for k, v in bracket_order.items() if v == i], reverse=True):
+            expr = expression[eins[0]+1:eins[1]]
+            for nuller in sorted(brackets[eins], reverse=True):
+                expr = '{}{}{}'.format(expr[:nuller[0]-eins[0]-1], brackets[nuller],  expr[nuller[1]-eins[1]+1:])
+                brackets.pop(nuller)
 
-        brackets[eins] = str(eval_flat_expression(regex.findall(expr)))
+            brackets[eins] = str(eval_flat_expression(regex.findall(expr)))
 
-    print()
+    for br in sorted(brackets.keys(), reverse=True):
+        expression = '{}{}{}'.format(expression[:br[0] - 1], brackets[br], expression[br[1] + 1:])
+
+    return eval_flat_expression(regex.findall(expression))
+
+
+    # brackets[eins] = str(eval_flat_expression(regex.findall(expr)))
+    # print()
 
     # re.split('\+|\-|\*|\/', '1.2+2-3/6*4')  # separating numbers by operator delimiter
     # re.findall('[+\-\*\/]+', '1.2+2-3/-6*4')  # find all operations (including '/-')
 
-    for sl in sorted(brackets, key=lambda k: len(brackets[k])):
-        if len(brackets[sl]) == 0:
-            str(eval_flat_expression(regex.findall(expression[sl[0] + 1:sl[1]])))
-
+    # for sl in sorted(brackets, key=lambda k: len(brackets[k])):
+    #     if len(brackets[sl]) == 0:
+    #         str(eval_flat_expression(regex.findall(expression[sl[0] + 1:sl[1]])))
+    #
 
 
 def eval_flat_expression(expression):
