@@ -20,10 +20,20 @@ def calc(expression):
     brackets = {k: [v for v in pairs if nested(k, v)] for k in pairs}
 
     # execution order by length of brackets !
-    regex = re.compile(r'([+\-/*]?)(\d*)')
+    regex = re.compile(r'([\/\*])?([\-]?\d*\.\d+|[\-]?\d+)') # almost correct
+
+    # re.split('\+|\-|\*|\/', '1.2+2-3/6*4')  # separating numbers by operator delimiter
+    # re.findall('[+\-\*\/]+', '1.2+2-3/-6*4')  # find all operations (including '/-')
+
+
     for sl in sorted(brackets, key=lambda k: len(brackets[k])):
         if len(brackets[sl]) == 0:
-            regex.findall(expression[sl[0]:sl[1]])
+            regex.findall(expression[sl[0]+1:sl[1]])
+
+    # TODO carefull evaluate if no brackets exist!
+    # evaluate the entire expression with all repalaced brackets!
+    regex.findall(expression)
+
 
         # at execution pull the slice and replace the nested brackets by their literal value
         # carefull to replace starting from behind to not mess up the indicies
@@ -34,10 +44,13 @@ def calc(expression):
 
         # do addition
 
+
+
     print()
 
 
 if __name__ == '__main__':
+    calc('13 * 36 / 5 / -76 * 71 - 70 * -21 - -80')
     calc('(2+2) + (3-3) * (2 / (2 + 3.33) * 4) - -6 * (3-(3/1))')
     calc('-7 * -(6 / 3)') == 14
     calc('(2 / (2 + 3.33) * 4) - -6') == 7.50093808630394
@@ -48,7 +61,7 @@ if __name__ == '__main__':
 
     calc('-(-(-(-1)))')
     calc('(((((-1)))))')
-    calc('13 * 36 / 5 / -76 * 71 - 70 * -21 - -80')  # carefull --
+
 
     calc('(-64) * (94 / -13 / -(3)) - (62 * -((((-45 + 46)))) + -6)')  # carefull *-
     calc('-(22) * (-14 / 32 + (52)) - (-12 + (((-(23 / 74)))) + 50)')
