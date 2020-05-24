@@ -43,7 +43,7 @@ def calc(expression):
         for eins in sorted([k for k, v in bracket_order.items() if v == i], reverse=True):
             expr = expression[eins[0]+1:eins[1]]
             for nuller in sorted(brackets[eins], reverse=True):
-                expr = '{}{}{}'.format(expr[:nuller[0]-eins[0]-1], brackets[nuller],  expr[nuller[1]-eins[1]+1:])
+                expr = '{}{}{}'.format(expr[:nuller[0]-eins[0]-1], brackets[nuller],  expr[nuller[1]-eins[0]:])
                 brackets.pop(nuller)
 
             brackets[eins] = str(eval_flat_expression(regex.findall(expr)))
