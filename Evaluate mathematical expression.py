@@ -30,22 +30,20 @@ def calc(expression):
     brackets = {k: set(v for v in pairs if nested(k, v)) for k in pairs}
     bracket_order = {k: len(brackets[k]) for k in pairs}
 
-    # # filter brackets such, that only the directly next nested level is avail.
-    # for k in [k for k in brackets.keys() if bracket_order[k]!= 0]:
-    #     brackets[k].difference_update(set.union(*(brackets[key] for key in brackets[k] if bracket_order[key]!= 0)))
-    #
-    # for k in brackets.keys():
-    #     for tupy in brackets[k]:
-    #         for tupx in brackets[k]:
-    #             if nested(tupy,tupx):
-    #                 brackets[k].remove(tupx)
-
     # start with 0 len and evaluate.
+    regex = re.compile(r'([\/\*])?([\-]?\d*\.\d+|[\-]?\d+)')
+    for sl in [k for k, v in bracket_order.items() if v == 0]:
+        brackets[sl] = str(eval_flat_expression(regex.findall(expression[sl[0] + 1:sl[1]])))
 
-    # continue with level one and replace
+    # reverse ensures, that replacements do not change the indicies!
+    for eins in sorted([k for k, v in bracket_order.items() if v == 1], reverse=True):
+        expr = expression[eins[0]+1:eins[1]]
+        for nuller in sorted(brackets[eins], reverse=True):
+            expr = '{}{}{}'.format(expr[:nuller[0]-eins[0]-1], brackets[nuller],  expr[nuller[1]-eins[1]+1:])
 
-    # execution order by length of brackets !
-    regex = re.compile(r'([\/\*])?([\-]?\d*\.\d+|[\-]?\d+)')  # almost correct
+        brackets[eins] = str(eval_flat_expression(regex.findall(expr)))
+
+    print()
 
     # re.split('\+|\-|\*|\/', '1.2+2-3/6*4')  # separating numbers by operator delimiter
     # re.findall('[+\-\*\/]+', '1.2+2-3/-6*4')  # find all operations (including '/-')
@@ -54,10 +52,6 @@ def calc(expression):
         if len(brackets[sl]) == 0:
             str(eval_flat_expression(regex.findall(expression[sl[0] + 1:sl[1]])))
 
-
-
-
-    print()
 
 
 def eval_flat_expression(expression):
@@ -77,8 +71,9 @@ def eval_flat_expression(expression):
 
 
 if __name__ == '__main__':
-    calc('(-64) * (94 / -13 / -(3)) - (62 * -((((-45 + 46)))) + -6)')  # carefull *-
+
     calc('(2+2) + (3-3) * (2 / (2 + 3.33) * 4) - -6 * (3-(3/1))')
+    calc('(-64) * (94 / -13 / -(3)) - (62 * -((((-45 + 46)))) + -6)')  # carefull *-
     calc('13 * 36 / 5 / -76 * 71 - 70 * -21 - -80')
     calc('-7 * -(6 / 3)') == 14
     calc('(2 / (2 + 3.33) * 4) - -6') == 7.50093808630394
