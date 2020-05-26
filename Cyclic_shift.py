@@ -56,6 +56,8 @@ class Cyclic_shift:
         (including rectangular grids like 4x5)
         """
 
+        self.shape = len(solved_board), len(solved_board[0])
+
         # Consider: translating latters to numbers (as modulo devision allows immediate
         # calculation of the target position. also this allows to ).
         # Make the Node aware of (/allow to inquire) where the target of the currently occupying value is.
@@ -63,13 +65,12 @@ class Cyclic_shift:
         Node.target = {val: (r, c) for r, row in enumerate(solved_board) for c, val in enumerate(row)}
 
         # Create a playable board
-        self.rows = [Row([Node((i, j), val) for j, val in enumerate(row)]) for i, row in enumerate(mixed_up_board)]
+        self.rows = [Row([Node((r, c), val) for c, val in enumerate(row)]) for r, row in enumerate(mixed_up_board)]
         self.cols = [Row(col) for col in zip(*self.rows)]
         self.board = {'rows': self.rows, 'cols': self.cols}
 
-        print(self)
-
         # DEPREC: FOR DEBUG ONLY: CHECK METHOD
+        print(self)
         self.nodes = {node.position: node for node in chain(*self.rows)}
         self.solved_board = solved_board
 
@@ -79,7 +80,8 @@ class Cyclic_shift:
     def shift(self, direction):
         """Primary method to play the game (change the state of board)
         :param direction: string such as L0, R1, D1, U2
-        where L & R refer to rowshifts and D & U to column shifts"""
+        where L & R refer to rowshifts and D & U to column shifts.
+        Integer refers to the respective row / column to be shifted"""
         direct, pos = tuple(direction)
         board = self.board[self.perspective[direct]]
         board[int(pos)].rowshift(direction=self.direct[direct])
@@ -90,10 +92,12 @@ class Cyclic_shift:
         """Your task: return a List of moves that will transform the unsolved
         grid into the solved one. All values of the scrambled and unscrambled
         grids will be unique! Moves will be 2 character long Strings"""
+        solution = list()
         unsolvable = False
         if unsolvable:
             return None
-        pass
+        else:
+            return solution
 
     # DEPREC: DEBUG METHODS: REMOVE WHEN SUBMITTING ----------------------------
     def debug_col_repr(self):  # DEPREC to print the columns (primarily debug method)
@@ -162,6 +166,8 @@ if __name__ == '__main__':
              'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
     # @test.it('Test 5x5 (unsolvable)')
+    # set('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY') -set('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI') == set()
+    # same for vice versa, so the configuration is the problem!
     run_test('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI',
              'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', True)
 
