@@ -2,7 +2,14 @@ from collections import deque
 from itertools import chain
 
 
+def loopover(mixed_up_board, solved_board):
+    return Cyclic_shift(mixed_up_board, solved_board).solve()
+
+
 class Node:
+    current = dict()
+    target = dict()  # target coordinates value: (row, col)
+
     def __init__(self, position, value):
         self.position = position
         self.value = value
@@ -28,6 +35,8 @@ class Row(list):
 
         for node, v in zip(self, self.queue):
             node.value = v
+            Node.current[v] = node.position  # still efficient as merely pointer
+            # to immutable tuple is shared (no new tuple is created)
 
         self.queue.clear()  # necessary! to ensure the state is always correct!
 
@@ -47,27 +56,29 @@ class Cyclic_shift:
         (including rectangular grids like 4x5)
         """
 
-        self.rows = [Row([Node((i, j), val) for j, val in enumerate(row)]) for i, row in enumerate(mixed_up_board)]
-        self.cols = [Row(col) for col in zip(*self.rows)]  # carefull potentially reversed
-        self.nodes = {node.position: node for node in chain(*self.rows)}
+        # Consider: translating latters to numbers (as modulo devision allows immediate
+        # calculation of the target position. also this allows to ).
+        # Make the Node aware of (/allow to inquire) where the target of the currently occupying value is.
+        Node.current = {val: (r, c) for r, row in enumerate(mixed_up_board) for c, val in enumerate(row)}
+        Node.target = {val: (r, c) for r, row in enumerate(solved_board) for c, val in enumerate(row)}
 
+        # Create a playable board
+        self.rows = [Row([Node((i, j), val) for j, val in enumerate(row)]) for i, row in enumerate(mixed_up_board)]
+        self.cols = [Row(col) for col in zip(*self.rows)]
         self.board = {'rows': self.rows, 'cols': self.cols}
-        self.solved_board = solved_board
 
         print(self)
 
-    def __repr__(self):
-        return ''.join([' '.join([str(self.nodes[(r, c)])
-                                  for c in range(len(self.rows[0]))]) + '\n'
-                        for r in range(len(self.rows))])
+        # DEPREC: FOR DEBUG ONLY: CHECK METHOD
+        self.nodes = {node.position: node for node in chain(*self.rows)}
+        self.solved_board = solved_board
 
-    def repr(self): # to print the columns
-        print(''.join([' '.join([str(self.nodes[(c, r)])
-                           for c in range(len(self.cols[0]))]) + '\n'
-                 for r in range(len(self.cols))]))
+    def __repr__(self):
+        return '\n'.join([' '.join([str(val) for val in row]) for row in self.rows])
 
     def shift(self, direction):
-        """:param direction: string such as L0, R1, D1, U2
+        """Primary method to play the game (change the state of board)
+        :param direction: string such as L0, R1, D1, U2
         where L & R refer to rowshifts and D & U to column shifts"""
         direct, pos = tuple(direction)
         board = self.board[self.perspective[direct]]
@@ -84,7 +95,11 @@ class Cyclic_shift:
             return None
         pass
 
-    def check(self, moves):
+    # DEPREC: DEBUG METHODS: REMOVE WHEN SUBMITTING ----------------------------
+    def debug_col_repr(self):  # DEPREC to print the columns (primarily debug method)
+        print('\n'.join([' '.join([str(val) for val in row]) for row in self.cols]))
+
+    def debug_check(self, moves):  # Deprec: Debug only
         for move in moves:
             self.shift(move)
 
@@ -93,25 +108,18 @@ class Cyclic_shift:
 
         return board == self.solved_board
 
-    def shuffle(self, number):
+    def debug_shuffle(self, number):  # Deprec: Debug only
+        """method to create random tests"""
         from random import randint
         pass
-
-
-
-
-def loopover(mixed_up_board, solved_board):
-    Cyclic_shift(mixed_up_board, solved_board)
-
-    return None
 
 
 if __name__ == '__main__':
     def board(str):
         return [list(row) for row in str.split('\n')]
 
-    def run_test(start, end, unsolvable):
 
+    def run_test(start, end, unsolvable):
 
         # print_info(board(start), board(end))
         moves = loopover(board(start), board(end))
@@ -119,17 +127,16 @@ if __name__ == '__main__':
             assert moves is None  # 'Unsolvable configuration
 
         else:
-            assert Cyclic_shift(start, end).check(moves) == True
+            assert Cyclic_shift(start, end).debug_check(moves) == True
             # TODO write check function!
 
 
     c = Cyclic_shift(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'),
-    board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
+                     board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
 
     c.shift('L0')
     c.shift('U0')
     print()
-
 
     # @test.it('Test 2x2 (1)')
     run_test('12\n34', '12\n34', False)
