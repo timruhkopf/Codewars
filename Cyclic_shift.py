@@ -78,11 +78,12 @@ class Cyclic_shift:
         self.cols = [Row(col, c, False) for c, col in enumerate(zip(*self.rows))]
         self.board = {'rows': self.rows, 'cols': self.cols}
 
+        self.solved_board = solved_board
+
         # DEPREC: FOR DEBUG ONLY: CHECK METHOD
         self.shape = len(solved_board), len(solved_board[0])
         print(self)
         self.nodes = {node.position: node for node in chain(*self.rows)}
-        self.solved_board = solved_board
 
     def __repr__(self):
         return '\n'.join([' '.join([str(val) for val in row]) for row in self.rows])
@@ -108,19 +109,25 @@ class Cyclic_shift:
         # (2) correct column
         elif i != r and j == c:
             self.rows[i].rowshift(-1)
-            self.cols[c].rowshift(i-r)  # lift up
+            self.cols[c].rowshift(i - r)  # lift up
             self.rows[i].rowshift(1)
-            self.cols[c].rowshift(-(i-r))  # lift down
+            self.cols[c].rowshift(-(i - r))  # lift down
 
         # (3) neither
         else:
             self.cols[c].rowshift(i - r)
-            self.rows[i].rowshift(min([j + len(self.rows[0]) +1 - c, c - j], key=abs))
+            self.rows[i].rowshift(min([j + len(self.rows[0]) + 1 - c, c - j], key=abs))
             self.cols[c].rowshift(-(i - r))
 
-    def _restore_order(self, start):
+    def _restore_order(self, ref, val):
         """second stage solving algorithm"""
-        pass
+        _, c = Node.current[ref]  # note: c+1 is target column!
+        _, j = Node.current[val]
+
+        self.rows[0].rowshift(min([j - len(self.rows[0]) - j], key=abs)) # shift to first position
+        self.cols[0].rowshift(-1)
+        self.rows[0].rowshift(min([c - len(self.rows[0]) - c], key=abs)-1) # shift reference to last
+        self.cols[0].rowshift(1)
 
     def solve(self):
         """Your task: return a List of moves that will transform the unsolved
@@ -135,10 +142,14 @@ class Cyclic_shift:
             # FIXME: if no shift or single shift is requred, extend is falty!
 
         # 2nd stage (solving the first row, starting at value 2)
-        self._restore_order(2)  # fixme actually self.solved_board[0][1]
+        for ref, val in zip(self.solved_board[0], self.solved_board[0][0 + 1:]):
+            self._restore_order(ref, val)
+
+        if self.solved_board[:2] == self.rows[:2]:
+            print()
 
         # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
-        self._restore_order(2)  # fixme actually self.solved_board[0][0]
+        self._restore_order(2)
 
         if self != self.solved_board:  # unsolvable  # FIXME: self must be joined to nested list format of solved_board
             return None
