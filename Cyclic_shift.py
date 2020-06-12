@@ -19,10 +19,19 @@ class Node:
 
 
 class Row(list):
-    def __init__(self, iterable):
-        """:param iterable: an ordered collection of Node instances"""
+    Solution = list()
+    direct = {True: ('L', 'R'), False: ('D', 'U')}
+
+    def __init__(self, iterable, ind, row=True):
+        """:param iterable: an ordered collection of Node instances
+        :param ind: row index of this row
+        :param row: boolean: if i am row or column"""
         super(Row, self).__init__(iterable)
         self.queue = deque(maxlen=len(iterable))
+
+        # Identifyer of row object!
+        self.row = row  # am i a row?
+        self.ind = str(ind)  # row / column index
 
     def rowshift(self, direction):
         """:param direction: integer. value of integer indicates the number of
@@ -30,10 +39,16 @@ class Row(list):
         self.queue.extend([node.value for node in self])  # overwrites at each step the queue
         self.queue.rotate(direction)
 
+        self.Solution.extend(self.direction_parser(direction))
+
         for node, v in zip(self, self.queue):
             node.value = v
             Node.current[v] = node.position  # still efficient as merely pointer
             # to immutable tuple is shared (no new tuple is created)
+
+    def direction_parser(self, direction):
+        """:param direction: integer: number of shifts, left shift is negative, right positive"""
+        return [self.direct[self.row][direction < 0] + self.ind] * abs(direction)
 
 
 class Cyclic_shift:
@@ -58,8 +73,9 @@ class Cyclic_shift:
         Node.target = {val: (r, c) for r, row in enumerate(solved_board) for c, val in enumerate(row)}
 
         # Create a playable board
-        self.rows = [Row([Node((r, c), val) for c, val in enumerate(row)]) for r, row in enumerate(mixed_up_board)]
-        self.cols = [Row(col) for col in zip(*self.rows)]
+        self.rows = [Row([Node((r, c), r, val) for c, val in enumerate(row)], True) for r, row in
+                     enumerate(mixed_up_board)]
+        self.cols = [Row(col, c, False) for c, col in enumerate(zip(*self.rows))]
         self.board = {'rows': self.rows, 'cols': self.cols}
 
         # DEPREC: FOR DEBUG ONLY: CHECK METHOD
@@ -73,8 +89,35 @@ class Cyclic_shift:
 
     def _liftshift(self, value):
         """first stage solving algorithm"""
-        subsolution = list()
-        return subsolution
+        i, j = Node.current[value]
+        r, c = Node.target[value]
+
+        # (0) correct row & column
+        if (i, j) == (r, c):
+            return None
+
+        # (1) correct row
+        elif i == r and j != c:
+            self.cols[j].rowshift(1)
+            self.cols[c].rowshift(1)
+            self.rows[c + 1].rowshift(
+                min([j + len(self.rows[0]) - c, c - j], key=abs))  # potentially just set default shift right
+            self.cols[j].rowshift(-1)
+            self.cols[c].rowshift(-1)
+
+        # (2) correct column
+        elif i != r and j == c:
+            self.rows[j].rowshift(-1)
+            self.cols[c].rowshift(r - i)  # lift up
+            self.rows[j].rowshift(1)
+            self.cols[c].rowshift(i - r)  # lift down
+
+        # (3) neither
+        else:
+            self.cols[c].rowshift(r - i)
+            self.rows[c + 1].rowshift(
+                min([j + len(self.rows[0]) - c, c - j], key=abs))
+            self.cols[c].rowshift(i - r)
 
     def _restore_order(self, start):
         """second stage solving algorithm"""
@@ -88,9 +131,10 @@ class Cyclic_shift:
 
         # 1st stage (solving all but the first row)
         # ordered valued from low right until first row
-        for value in [val for row in reversed(self.solved_board[1:]) for val in
-                      row]:  # CONSIDER sorting first to penultimate
+        # CONSIDER sorting first to penultimate
+        for value in [val for row in reversed(self.solved_board[1:]) for val in row]:
             solution.extend(self._liftshift(value))  # value = 'Z'
+            # FIXME: if no shift or single shift is requred, extend is falty!
 
         # 2nd stage (solving the first row, starting at value 2)
         self._restore_order(2)  # fixme actually self.solved_board[0][1]
