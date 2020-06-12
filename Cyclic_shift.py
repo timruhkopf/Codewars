@@ -73,7 +73,7 @@ class Cyclic_shift:
         Node.target = {val: (r, c) for r, row in enumerate(solved_board) for c, val in enumerate(row)}
 
         # Create a playable board
-        self.rows = [Row([Node((r, c), r, val) for c, val in enumerate(row)], True) for r, row in
+        self.rows = [Row([Node((r, c), val) for c, val in enumerate(row)], r, True) for r, row in
                      enumerate(mixed_up_board)]
         self.cols = [Row(col, c, False) for c, col in enumerate(zip(*self.rows))]
         self.board = {'rows': self.rows, 'cols': self.cols}
@@ -100,7 +100,7 @@ class Cyclic_shift:
         elif i == r and j != c:
             self.cols[j].rowshift(1)
             self.cols[c].rowshift(1)
-            self.rows[c + 1].rowshift(
+            self.rows[r - 1].rowshift(
                 min([j + len(self.rows[0]) - c, c - j], key=abs))  # potentially just set default shift right
             self.cols[j].rowshift(-1)
             self.cols[c].rowshift(-1)
@@ -114,10 +114,10 @@ class Cyclic_shift:
 
         # (3) neither
         else:
-            self.cols[c].rowshift(r - i)
-            self.rows[c + 1].rowshift(
-                min([j + len(self.rows[0]) - c, c - j], key=abs))
             self.cols[c].rowshift(i - r)
+            self.rows[i].rowshift(
+                min([j + len(self.rows[0]) - c, c - j], key=abs))
+            self.cols[c].rowshift(r-i)
 
     def _restore_order(self, start):
         """second stage solving algorithm"""
@@ -127,13 +127,12 @@ class Cyclic_shift:
         """Your task: return a List of moves that will transform the unsolved
         grid into the solved one. All values of the scrambled and unscrambled
         grids will be unique! Moves will be 2 character long Strings"""
-        solution = list()
 
         # 1st stage (solving all but the first row)
         # ordered valued from low right until first row
         # CONSIDER sorting first to penultimate
         for value in [val for row in reversed(self.solved_board[1:]) for val in row]:
-            solution.extend(self._liftshift(value))  # value = 'Z'
+            self._liftshift(value)  # value = 'Z'
             # FIXME: if no shift or single shift is requred, extend is falty!
 
         # 2nd stage (solving the first row, starting at value 2)
@@ -145,7 +144,7 @@ class Cyclic_shift:
         if self != self.solved_board:  # unsolvable  # FIXME: self must be joined to nested list format of solved_board
             return None
         else:
-            return solution
+            return Row.Solution
 
     # DEPREC: DEBUG METHODS: REMOVE WHEN SUBMITTING ----------------------------
     def shift(self, direction):
@@ -197,12 +196,12 @@ if __name__ == '__main__':
     c = Cyclic_shift(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'),
                      board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
 
-    c.shift('L0')
-    c.shift('U0')
+    # c.shift('L0')
+    # c.shift('U0')
     print()
 
-    # @test.it('Test 2x2 (1)')
-    run_test('12\n34', '12\n34', False)
+    # # @test.it('Test 2x2 (1)')
+    # run_test('12\n34', '12\n34', False)
 
     # @test.it('Test 2x2 (2)')
     run_test('42\n31', '12\n34', False)
