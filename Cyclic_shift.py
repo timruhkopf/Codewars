@@ -98,26 +98,25 @@ class Cyclic_shift:
 
         # (1) correct row
         elif i == r and j != c:
-            self.cols[j].rowshift(1)
-            self.cols[c].rowshift(1)
-            self.rows[r - 1].rowshift(
-                min([j + len(self.rows[0]) - c, c - j], key=abs))  # potentially just set default shift right
             self.cols[j].rowshift(-1)
             self.cols[c].rowshift(-1)
+            # Consider: potentially just set default shift right
+            self.rows[r - 1].rowshift(min([j + len(self.rows[0]) - c, c - j], key=abs))
+            self.cols[j].rowshift(1)
+            self.cols[c].rowshift(1)
 
         # (2) correct column
         elif i != r and j == c:
-            self.rows[j].rowshift(-1)
-            self.cols[c].rowshift(r - i)  # lift up
-            self.rows[j].rowshift(1)
-            self.cols[c].rowshift(i - r)  # lift down
+            self.rows[i].rowshift(-1)
+            self.cols[c].rowshift(i-r)  # lift up
+            self.rows[i].rowshift(1)
+            self.cols[c].rowshift(-(i-r))  # lift down
 
         # (3) neither
         else:
             self.cols[c].rowshift(i - r)
-            self.rows[i].rowshift(
-                min([j + len(self.rows[0]) - c, c - j], key=abs))
-            self.cols[c].rowshift(r-i)
+            self.rows[i].rowshift(min([j + len(self.rows[0]) +1 - c, c - j], key=abs))
+            self.cols[c].rowshift(-(i - r))
 
     def _restore_order(self, start):
         """second stage solving algorithm"""
@@ -193,8 +192,8 @@ if __name__ == '__main__':
             # TODO write check function!
 
 
-    c = Cyclic_shift(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'),
-                     board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
+    # c = Cyclic_shift(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'),
+    #                  board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
 
     # c.shift('L0')
     # c.shift('U0')
@@ -204,20 +203,20 @@ if __name__ == '__main__':
     # run_test('12\n34', '12\n34', False)
 
     # @test.it('Test 2x2 (2)')
-    run_test('42\n31', '12\n34', False)
+    # run_test('42\n31', '12\n34', False)
 
     # @test.it('Test 4x5')
-    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
+    # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
+    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
 
     # @test.it('Test 5x5 (1)')
-    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+    # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
+    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
     # @test.it('Test 5x5 (2)')
 
-    run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+    # run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
+    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
     # @test.it('Test 5x5 (3)')
     run_test('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI',
