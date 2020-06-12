@@ -27,15 +27,13 @@ class Row(list):
     def rowshift(self, direction):
         """:param direction: integer. value of integer indicates the number of
         repeated shifts. the sign indicates a left(-) or right(+) shift"""
-        self.queue.extend([node.value for node in self]) # overwrites at each step the queue
+        self.queue.extend([node.value for node in self])  # overwrites at each step the queue
         self.queue.rotate(direction)
 
         for node, v in zip(self, self.queue):
             node.value = v
             Node.current[v] = node.position  # still efficient as merely pointer
             # to immutable tuple is shared (no new tuple is created)
-
-        self.queue.clear()  # necessary! to ensure the state is always correct!
 
 
 class Cyclic_shift:
@@ -52,7 +50,6 @@ class Cyclic_shift:
         Different grid sizes are tested: from 2x2 to 9x9 grids
         (including rectangular grids like 4x5)
         """
-
 
         # Consider: translating latters to numbers (as modulo devision allows immediate
         # calculation of the target position. also this allows to ).
@@ -91,17 +88,17 @@ class Cyclic_shift:
 
         # 1st stage (solving all but the first row)
         # ordered valued from low right until first row
-        for value in [val for row in reversed(self.solved_board[1:]) for val in row]:  # CONSIDER sorting first to penultimate
-            solution.extend(self._liftshift(value)) # value = 'Z'
+        for value in [val for row in reversed(self.solved_board[1:]) for val in
+                      row]:  # CONSIDER sorting first to penultimate
+            solution.extend(self._liftshift(value))  # value = 'Z'
 
         # 2nd stage (solving the first row, starting at value 2)
-        self._restore_order(2) # fixme actually self.solved_board[0][1]
+        self._restore_order(2)  # fixme actually self.solved_board[0][1]
 
         # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
         self._restore_order(2)  # fixme actually self.solved_board[0][0]
 
-
-        if self != self.solved_board: # unsolvable  # FIXME: self must be joined to nested list format of solved_board
+        if self != self.solved_board:  # unsolvable  # FIXME: self must be joined to nested list format of solved_board
             return None
         else:
             return solution
