@@ -25,13 +25,10 @@ class Row(list):
         self.queue = deque(maxlen=len(iterable))
 
     def rowshift(self, direction):
-        """:param direction: integer, either 0 (left) or 1 (right)"""
-        self.queue.extend([node.value for node in self])
-
-        if direction == 0:
-            self.queue.append(self.queue[0])
-        else:
-            self.queue.appendleft(self.queue[-1])
+        """:param direction: integer. value of integer indicates the number of
+        repeated shifts. the sign indicates a left(-) or right(+) shift"""
+        self.queue.extend([node.value for node in self]) # overwrites at each step the queue
+        self.queue.rotate(direction)
 
         for node, v in zip(self, self.queue):
             node.value = v
@@ -42,7 +39,7 @@ class Row(list):
 
 
 class Cyclic_shift:
-    direct = {'L': 0, 'R': 1, 'D': 1, 'U': 0}
+    direct = {'L': -1, 'R': 1, 'D': 1, 'U': -1}
     perspective = {'L': 'rows', 'R': 'rows', 'D': 'cols', 'U': 'cols'}
 
     def __init__(self, mixed_up_board, solved_board):
@@ -56,7 +53,6 @@ class Cyclic_shift:
         (including rectangular grids like 4x5)
         """
 
-        self.shape = len(solved_board), len(solved_board[0])
 
         # Consider: translating latters to numbers (as modulo devision allows immediate
         # calculation of the target position. also this allows to ).
@@ -70,6 +66,7 @@ class Cyclic_shift:
         self.board = {'rows': self.rows, 'cols': self.cols}
 
         # DEPREC: FOR DEBUG ONLY: CHECK METHOD
+        self.shape = len(solved_board), len(solved_board[0])
         print(self)
         self.nodes = {node.position: node for node in chain(*self.rows)}
         self.solved_board = solved_board
@@ -77,6 +74,39 @@ class Cyclic_shift:
     def __repr__(self):
         return '\n'.join([' '.join([str(val) for val in row]) for row in self.rows])
 
+    def _liftshift(self, value):
+        """first stage solving algorithm"""
+        subsolution = list()
+        return subsolution
+
+    def _restore_order(self, start):
+        """second stage solving algorithm"""
+        pass
+
+    def solve(self):
+        """Your task: return a List of moves that will transform the unsolved
+        grid into the solved one. All values of the scrambled and unscrambled
+        grids will be unique! Moves will be 2 character long Strings"""
+        solution = list()
+
+        # 1st stage (solving all but the first row)
+        # ordered valued from low right until first row
+        for value in [val for row in reversed(self.solved_board[1:]) for val in row]:  # CONSIDER sorting first to penultimate
+            solution.extend(self._liftshift(value)) # value = 'Z'
+
+        # 2nd stage (solving the first row, starting at value 2)
+        self._restore_order(2) # fixme actually self.solved_board[0][1]
+
+        # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
+        self._restore_order(2)  # fixme actually self.solved_board[0][0]
+
+
+        if self != self.solved_board: # unsolvable  # FIXME: self must be joined to nested list format of solved_board
+            return None
+        else:
+            return solution
+
+    # DEPREC: DEBUG METHODS: REMOVE WHEN SUBMITTING ----------------------------
     def shift(self, direction):
         """Primary method to play the game (change the state of board)
         :param direction: string such as L0, R1, D1, U2
@@ -88,18 +118,6 @@ class Cyclic_shift:
 
         print(self)
 
-    def solve(self):
-        """Your task: return a List of moves that will transform the unsolved
-        grid into the solved one. All values of the scrambled and unscrambled
-        grids will be unique! Moves will be 2 character long Strings"""
-        solution = list()
-        unsolvable = False
-        if unsolvable:
-            return None
-        else:
-            return solution
-
-    # DEPREC: DEBUG METHODS: REMOVE WHEN SUBMITTING ----------------------------
     def debug_col_repr(self):  # DEPREC to print the columns (primarily debug method)
         print('\n'.join([' '.join([str(val) for val in row]) for row in self.cols]))
 
