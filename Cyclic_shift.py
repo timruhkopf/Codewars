@@ -1,5 +1,5 @@
 from collections import deque
-from itertools import chain
+from itertools import chain, cycle
 
 
 def loopover(mixed_up_board, solved_board):
@@ -33,7 +33,7 @@ class Row(list):
         self.row = row  # am i a row?
         self.ind = str(ind)  # row / column index
 
-    def rowshift(self, direction):
+    def shift(self, direction):
         """:param direction: integer. value of integer indicates the number of
         repeated shifts. the sign indicates a left(-) or right(+) shift"""
         self.queue.extend([node.value for node in self])  # overwrites at each step the queue
@@ -54,6 +54,7 @@ class Row(list):
 class Cyclic_shift:
     direct = {'L': -1, 'R': 1, 'D': 1, 'U': -1}
     perspective = {'L': 'rows', 'R': 'rows', 'D': 'cols', 'U': 'cols'}
+    rdim, cdim = 0, 0
 
     def __init__(self, mixed_up_board, solved_board):
         """
@@ -78,6 +79,7 @@ class Cyclic_shift:
         self.cols = [Row(col, c, False) for c, col in enumerate(zip(*self.rows))]
         self.board = {'rows': self.rows, 'cols': self.cols}
 
+        self.rdim, self.cdim = len(self.rows[0]), len(self.rows[0])
         self.solved_board = solved_board
 
         # DEPREC: FOR DEBUG ONLY: CHECK METHOD
@@ -99,35 +101,66 @@ class Cyclic_shift:
 
         # (1) correct row
         elif i == r and j != c:
-            self.cols[j].rowshift(-1)
-            self.cols[c].rowshift(-1)
-            # Consider: potentially just set default shift right
-            self.rows[r - 1].rowshift(min([j + len(self.rows[0]) - c, c - j], key=abs))
-            self.cols[j].rowshift(1)
-            self.cols[c].rowshift(1)
+            self.cols[j].shift(-1)
+            self.cols[c].shift(-1)
+            self.rows[r - 1].shift(min([j + self.rdim - c, c - j], key=abs))
+            self.cols[j].shift(1)
+            self.cols[c].shift(1)
 
         # (2) correct column
         elif i != r and j == c:
-            self.rows[i].rowshift(-1)
-            self.cols[c].rowshift(i - r)  # lift up
-            self.rows[i].rowshift(1)
-            self.cols[c].rowshift(-(i - r))  # lift down
+            self.rows[i].shift(-1)
+            self.cols[c].shift(i - r)  # lift up
+            self.rows[i].shift(1)
+            self.cols[c].shift(-(i - r))  # lift down
 
         # (3) neither
         else:
-            self.cols[c].rowshift(i - r)
-            self.rows[i].rowshift(min([j + len(self.rows[0]) + 1 - c, c - j], key=abs))
-            self.cols[c].rowshift(-(i - r))
+            self.cols[c].shift(i - r)
+            self.rows[i].shift(min([j + self.rdim + 1 - c, c - j], key=abs))
+            self.cols[c].shift(-(i - r))
 
-    def _restore_order(self, ref, val):
+    def _restore_order(self, ref, start=1):
         """second stage solving algorithm"""
-        _, c = Node.current[ref]  # note: c+1 is target column!
-        _, j = Node.current[val]
+        # generate all cyclic permutations of the target row for stopping criterion
+        x = cycle(self.solved_board[0])
+        cycs = list()
+        for i in range(self.rdim):
+            cycs.append([next(x) for i in self.solved_board[0]])
+            next(x)
 
-        self.rows[0].rowshift(min([j - len(self.rows[0]) - j], key=abs)) # shift to first position
-        self.cols[0].rowshift(-1)
-        self.rows[0].rowshift(min([c - len(self.rows[0]) - c], key=abs)-1) # shift reference to last
-        self.cols[0].rowshift(1)
+        # init of algo
+        i, j = Node.current[self.solved_board[0][start]]  # starting value
+        r, c = Node.target[self.solved_board[0][start]]  # target value
+        self.rows[0].shift(-j)
+        self.cols[0].shift(-1)
+
+        counter = 0
+        # while not any cyclic permutation of true state found
+        while [str(val) for val in self.rows[0]] not in cycs:  # FIXME: this might go indefinet if not solvable!!!!
+            print('\n')
+            print(self)
+            _, cc = Node.current[ref]
+            c = cc + c % self.rdim - 1  # new target position, relative to reference:
+            self.rows[0].shift(min([-c, self.rdim - c], key=abs))
+
+            # next value we are looking for
+            _, c = Node.target[self.rows[0][0].value]
+            self.cols[0].shift([1, -1][counter % 2])  # alternating up and down
+            counter += 1
+
+        _, c = Node.current[self.solved_board[0][0]]
+        self.rows[0].shift(min([-c, self.rdim - c], key=abs))
+        print('\n')
+        print(self)
+
+    def second_order(self):
+        """optional third stage solving algorithm"""
+        for i in range(self.cdim):
+            self.cols[0].shift(-1)
+            self.rows[0].shift(-1)
+            self.cols[0].shift(1)
+            self.rows[0].shift(-1)
 
     def solve(self):
         """Your task: return a List of moves that will transform the unsolved
@@ -142,16 +175,13 @@ class Cyclic_shift:
             # FIXME: if no shift or single shift is requred, extend is falty!
 
         # 2nd stage (solving the first row, starting at value 2)
-        for ref, val in zip(self.solved_board[0], self.solved_board[0][0 + 1:]):
-            self._restore_order(ref, val)
-
-        if self.solved_board[:2] == self.rows[:2]:
-            print()
+        self._restore_order(ref=self.solved_board[0][0])
 
         # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
-        self._restore_order(2)
+        if self.solved_board[:2] != [[str(val) for val in row] for row in self.rows[:2]]:
+            self.second_order()
 
-        if self != self.solved_board:  # unsolvable  # FIXME: self must be joined to nested list format of solved_board
+        if self.solved_board != [[str(val) for val in row] for row in self.rows]:  # unsolvable
             return None
         else:
             return Row.Solution
@@ -164,7 +194,7 @@ class Cyclic_shift:
         Integer refers to the respective row / column to be shifted"""
         direct, pos = tuple(direction)
         board = self.board[self.perspective[direct]]
-        board[int(pos)].rowshift(direction=self.direct[direct])
+        board[int(pos)].shift(direction=self.direct[direct])
 
         print(self)
 
