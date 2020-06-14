@@ -1,6 +1,8 @@
 from collections import deque
 from itertools import chain, cycle
 
+DEBUG = True
+
 
 def loopover(mixed_up_board, solved_board):
     return Cyclic_shift(mixed_up_board, solved_board).solve()
@@ -37,6 +39,8 @@ class Row(list):
         """:param direction: integer. value of integer indicates the number of
         repeated shifts. the sign indicates a left(-) or right(+) shift"""
         self.queue.extend([node.value for node in self])  # overwrites at each step the queue
+
+        print(self)
         self.queue.rotate(direction)
 
         self.Solution.extend(self.direction_parser(direction))
@@ -45,6 +49,8 @@ class Row(list):
             node.value = v
             Node.current[v] = node.position  # still efficient as merely pointer
             # to immutable tuple is shared (no new tuple is created)
+
+        print(self, self.direction_parser(direction))
 
     def direction_parser(self, direction):
         """:param direction: integer: number of shifts, left shift is negative, right positive"""
@@ -82,18 +88,26 @@ class Cyclic_shift:
         self.rdim, self.cdim = len(self.rows[0]), len(self.rows[0])
         self.solved_board = solved_board
 
-        # DEPREC: FOR DEBUG ONLY: CHECK METHOD
-        self.shape = len(solved_board), len(solved_board[0])
-        print(self)
-        self.nodes = {node.position: node for node in chain(*self.rows)}
+        # DEPREC: required for CHECK METHOD!
+        if DEBUG:
+            self.board = {'rows': self.rows, 'cols': self.cols}
+            self.shape = len(solved_board), len(solved_board[0])
+            print(self)
+            print()
+            self.nodes = {node.position: node for node in chain(*self.rows)}
 
     def __repr__(self):
         return '\n'.join([' '.join([str(val) for val in row]) for row in self.rows])
 
     def _liftshift(self, value):
         """first stage solving algorithm"""
+
         i, j = Node.current[value]
         r, c = Node.target[value]
+
+        if DEBUG:
+            print('Intent:', value, '--->', self.nodes[Node.target[value]].value)
+            prev_sol = len(Row.Solution)
 
         # (0) correct row & column
         if (i, j) == (r, c):
@@ -197,9 +211,6 @@ class Cyclic_shift:
         board[int(pos)].shift(direction=self.direct[direct])
 
         print(self)
-
-    def debug_col_repr(self):  # DEPREC to print the columns (primarily debug method)
-        print('\n'.join([' '.join([str(val) for val in row]) for row in self.cols]))
 
     def debug_check(self, moves):  # Deprec: Debug only
         for move in moves:
