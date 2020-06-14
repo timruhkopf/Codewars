@@ -54,7 +54,7 @@ class Row(list):
 
     def direction_parser(self, direction):
         """:param direction: integer: number of shifts, left shift is negative, right positive"""
-        return [self.direct[self.row][direction < 0] + self.ind] * abs(direction)
+        return [self.direct[self.row][direction > 0] + self.ind] * abs(direction)
 
 
 class Cyclic_shift:
@@ -82,8 +82,7 @@ class Cyclic_shift:
         # Create a playable board
         self.rows = [Row([Node((r, c), val) for c, val in enumerate(row)], r, True) for r, row in
                      enumerate(mixed_up_board)]
-        self.cols = [Row(col, c, False) for c, col in enumerate(zip(*self.rows))]
-        self.board = {'rows': self.rows, 'cols': self.cols}
+        self.cols = [Row(col, c, False) for c, col in enumerate(zip(*reversed(self.rows)))]
 
         self.rdim, self.cdim = len(self.rows[0]), len(self.rows[0])
         self.solved_board = solved_board
@@ -115,24 +114,29 @@ class Cyclic_shift:
 
         # (1) correct row
         elif i == r and j != c:
-            self.cols[j].shift(-1)
-            self.cols[c].shift(-1)
-            self.rows[r - 1].shift(min([j + self.rdim - c, c - j], key=abs))
             self.cols[j].shift(1)
             self.cols[c].shift(1)
+            self.rows[r - 1].shift(min([j + self.rdim - c, c - j], key=abs))
+            self.cols[j].shift(-1)
+            self.cols[c].shift(-1)
 
         # (2) correct column
         elif i != r and j == c:
             self.rows[i].shift(-1)
-            self.cols[c].shift(i - r)  # lift up
+            self.cols[c].shift(-(i - r))  # lift up
             self.rows[i].shift(1)
-            self.cols[c].shift(-(i - r))  # lift down
+            self.cols[c].shift(i - r)  # lift down
 
         # (3) neither
         else:
-            self.cols[c].shift(i - r)
-            self.rows[i].shift(min([j + self.rdim + 1 - c, c - j], key=abs))
             self.cols[c].shift(-(i - r))
+            self.rows[i].shift(min([j + self.rdim + 1 - c, c - j], key=abs))
+            self.cols[c].shift(i - r)
+
+        if DEBUG:
+            print('Suggested Path:', Row.Solution[prev_sol:])
+            print(self)
+            print('\n')
 
     def _restore_order(self, ref, start=1):
         """second stage solving algorithm"""
