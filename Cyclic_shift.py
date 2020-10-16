@@ -21,7 +21,8 @@ class Node:
 
 
 class Row(list):
-    Solution = list()
+    Solution = list() # allows both row and column instances to comunicate
+    #  but is a sensitive area in parallel computing!
     direct = {True: ('L', 'R'), False: ('D', 'U')}
 
     def __init__(self, iterable, ind, row=True):
@@ -80,11 +81,12 @@ class Cyclic_shift:
         Node.target = {val: (r, c) for r, row in enumerate(solved_board) for c, val in enumerate(row)}
 
         # Create a playable board
+        Row.Solution = list() # overwrite last cyclic_shift instance's solution
         self.rows = [Row([Node((r, c), val) for c, val in enumerate(row)], r, True) for r, row in
                      enumerate(mixed_up_board)]
         self.cols = [Row(col, c, False) for c, col in enumerate(zip(*reversed(self.rows)))]
 
-        self.rdim, self.cdim = len(self.rows[0]), len(self.rows[0])
+        self.rdim, self.cdim = len(self.rows[0]), len(self.cols[0])
         self.solved_board = solved_board
 
         # DEPREC: required for CHECK METHOD!
@@ -120,7 +122,7 @@ class Cyclic_shift:
             self.cols[c].shift(-1)
 
         # (2) correct column
-        elif i != r and j == c:
+        elif j == c and i != r:
             self.rows[i].shift(-1)
             self.cols[c].shift(-(i - r))  # lift up
             self.rows[i].shift(1)
@@ -152,9 +154,10 @@ class Cyclic_shift:
         self.rows[0].shift(-j)
         self.cols[0].shift(-1)
 
-        counter = 0
         # while not any cyclic permutation of true state found
-        while [str(val) for val in self.rows[0]] not in cycs:  # FIXME: this might go indefinet if not solvable!!!!
+        counter = 0
+        while [str(val) for val in self.rows[0]] not in cycs and counter < 20 :  # FIXME: this might go indefinet
+            # not solvable!!!!
             print('\n')
             print(self)
             _, cc = Node.current[ref]
@@ -164,6 +167,7 @@ class Cyclic_shift:
             # next value we are looking for
             _, c = Node.target[self.rows[0][0].value]
             self.cols[0].shift([1, -1][counter % 2])  # alternating up and down
+            # FIXME: this shift fails  (pushes reference up with the value that should be placed next to it)
             counter += 1
 
         _, c = Node.current[self.solved_board[0][0]]
@@ -187,12 +191,15 @@ class Cyclic_shift:
         # 1st stage (solving all but the first row)
         # ordered values from low left until first row
         # CONSIDER sorting first to penultimate
-        for value in [val for row in reversed(self.solved_board[1:]) for val in row]:
-            self._liftshift(value)  # value = 'Z'
+        for value in [val for row in reversed(self.solved_board[1:]) for val in reversed(row)]:
+            self._liftshift(value)
             # FIXME: if no shift or single shift is requred, extend is falty!
 
         # 2nd stage (solving the first row, starting at value 2)
-        self._restore_order(ref=self.solved_board[0][0])
+        if self.solved_board[0] != [str(val) for val in self.rows[0]]:
+            self._restore_order(ref=self.solved_board[0][0])
+        else: # already solved board
+            return Row.Solution
 
         # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
         if self.solved_board[:2] != [[str(val) for val in row] for row in self.rows[:2]]:
@@ -215,14 +222,11 @@ class Cyclic_shift:
 
         print(self)
 
-    def debug_check(self, moves):  # Deprec: Debug only
+    def debug_check(self, moves):
         for move in moves:
             self.shift(move)
 
-        board = [[self.nodes[(r, c)].value for c in range(len(self.rows[0]))]
-                 for r in range(len(self.rows))]
-
-        return board == self.solved_board
+        return all([self.solved_board[r] == [str(val) for val in self.rows[r]]  for r in range(self.cdim)])
 
     def debug_shuffle(self, number):  # Deprec: Debug only
         """method to create random tests"""
@@ -243,35 +247,32 @@ if __name__ == '__main__':
             assert moves is None  # 'Unsolvable configuration
 
         else:
-            assert Cyclic_shift(start, end).debug_check(moves) == True
-            # TODO write check function!
+            moves = tuple(moves)
+            assert Cyclic_shift(board(start), board(end)).debug_check(moves) == True
 
 
     # c = Cyclic_shift(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'),
     #                  board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
-
     # c.shift('L0')
     # c.shift('U0')
-    print()
 
     # # @test.it('Test 2x2 (1)')
-    # run_test('12\n34', '12\n34', False)
+    run_test('12\n34', '12\n34', False)
 
     # @test.it('Test 2x2 (2)')
-    # run_test('42\n31', '12\n34', False)
+    run_test('42\n31', '12\n34', False)
 
     # @test.it('Test 4x5')
-    # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
-    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
+    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
+             'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
 
     # @test.it('Test 5x5 (1)')
     # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
     #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
     # @test.it('Test 5x5 (2)')
-
-    # run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
-    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+    run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
+             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
     # @test.it('Test 5x5 (3)')
     run_test('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI',
