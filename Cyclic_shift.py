@@ -23,7 +23,7 @@ class Node:
 class Row(list):
     Solution = list() # allows both row and column instances to comunicate
     #  but is a sensitive area in parallel computing!
-    direct = {True: ('L', 'R'), False: ('D', 'U')}
+    direct = {True: ('L', 'R'), False: ('U', 'D')}
 
     def __init__(self, iterable, ind, row=True):
         """:param iterable: an ordered collection of Node instances
@@ -105,19 +105,19 @@ class Cyclic_shift:
         i, j = Node.current[value]
         r, c = Node.target[value]
 
-        if DEBUG:
-            print('Intent:', value, '--->', self.nodes[Node.target[value]].value)
-            prev_sol = len(Row.Solution)
-
         # (0) correct row & column
         if (i, j) == (r, c):
             return None
 
+        if DEBUG:
+            print('Intent:', value, '--->', self.nodes[Node.target[value]].value)
+            prev_sol = len(Row.Solution)
+
         # (1) correct row
-        elif i == r and j != c:
+        if i == r and j != c:
             self.cols[j].shift(1)
             self.cols[c].shift(1)
-            self.rows[r - 1].shift(min([j + self.rdim - c, c - j], key=abs))
+            self.rows[r - 1].shift(min([-(j + self.rdim - c), c - j], key=abs))  # FIXME: this one is faulty!!
             self.cols[j].shift(-1)
             self.cols[c].shift(-1)
 
@@ -131,7 +131,7 @@ class Cyclic_shift:
         # (3) neither
         else:
             self.cols[c].shift(-(i - r))
-            self.rows[i].shift(min([j + self.rdim + 1 - c, c - j], key=abs))
+            self.rows[i].shift(min([-(j + self.rdim + 1 - c), c - j], key=abs))
             self.cols[c].shift(i - r)
 
         if DEBUG:
@@ -225,6 +225,8 @@ class Cyclic_shift:
     def debug_check(self, moves):
         for move in moves:
             self.shift(move)
+            print(self)
+            print('\n')
 
         return all([self.solved_board[r] == [str(val) for val in self.rows[r]]  for r in range(self.cdim)])
 
@@ -257,22 +259,23 @@ if __name__ == '__main__':
     # c.shift('U0')
 
     # # @test.it('Test 2x2 (1)')
-    run_test('12\n34', '12\n34', False)
-
-    # @test.it('Test 2x2 (2)')
-    run_test('42\n31', '12\n34', False)
-
-    # @test.it('Test 4x5')
-    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
-
-    # @test.it('Test 5x5 (1)')
+    # run_test('12\n34', '12\n34', False)
+    #
+    # # @test.it('Test 2x2 (2)')
+    # run_test('42\n31', '12\n34', False)
+    #
+    # # @test.it('Test 4x5')
+    # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
+    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
+    #
+    # # @test.it('Test 5x5 (1)')
     # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
     #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+    #
+    # # @test.it('Test 5x5 (2)')
+    # run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
+    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
-    # @test.it('Test 5x5 (2)')
-    run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
     # @test.it('Test 5x5 (3)')
     run_test('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI',
