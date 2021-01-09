@@ -12,7 +12,7 @@ class Graph:
         self.rdim = len(m[0])
         self.cdim = len(m)
 
-        tupler = lambda i: (i % self.rdim, i // self.rdim)
+        tupler = lambda i: (i // self.rdim, i % self.rdim)
         self.nodes = {tupler(i): Node(tupler(i), symb)
                       for i, symb in enumerate(map.replace('\n', ''))}
 
@@ -20,11 +20,12 @@ class Graph:
             node.neighbours = [pos for pos in self._find_neighbours(node.position)
                                if self.nodes[pos].symb != 'W']
 
+        # [(node.position, node.neighbours) for node in self.nodes.values()]
+
         self.end = (self.rdim - 1, self.cdim - 1)
 
     def connect_path(self, start=(0, 0), path=[]):
         """In a backtracking manner find weather or not their is a path beween start and end"""
-        # Finding non cyclic paths: https://www.python.org/doc/essays/graphs/
         path = path + [start]
         if start == self.end:
             return path
