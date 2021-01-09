@@ -23,8 +23,7 @@ class Graph:
         pass
 
     def _find_neighbours(self, position):
-        """returns the set of all neighbours (excluding self's position).
-        all of them are bound checked"""
+        """returns the set of horizontal an vertical neighbours"""
         r, c = position
         cond = lambda r, c: 0 <= r < self.rdim and 0 <= c < self.cdim
         kernel = (-1, 0, 1)
