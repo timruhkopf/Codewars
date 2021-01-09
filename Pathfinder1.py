@@ -15,8 +15,6 @@ class Graph:
         self.nodes = {(i, i // self.rdim): Node((i, i // self.rdim), symb)
                       for i, symb in enumerate(map.replace('\n', ''))}
 
-        self._find_neighbours((1,1))
-
 
     def connect_path(self, start=(0, 0), end=None):
         # Finding non cyclic paths: https://www.python.org/doc/essays/graphs/
