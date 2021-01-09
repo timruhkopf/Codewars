@@ -28,7 +28,7 @@ class Graph:
     def connect_path(self, start=(0, 0), path=[], end=None):
         """In a backtracking manner find weather or not their is a path beween start and end"""
         path = path + [start]
-        if start == self.end:
+        if start == end:
             return path
         for neighb in sorted(self.nodes[start].neighbours, key= lambda x: x[0], reverse=True):
             if neighb not in path:
@@ -38,19 +38,8 @@ class Graph:
         return None
 
     def find_path(self):
-        self.connect_path(start=self.end, end=self.start)
+        return self.connect_path(start=self.end, end=self.start)
 
-        # def find_path(graph, start, end, path=[]):
-        #     path = path + [start]
-        #     if start == end:
-        #         return path
-        #     if not graph.has_key(start):
-        #         return None
-        #     for node in graph[start]:
-        #         if node not in path:
-        #             newpath = find_path(graph, node, end, path)
-        #             if newpath: return newpath
-        #     return None
 
     def _find_neighbours(self, position):
         """returns the set of horizontal an vertical neighbours"""
@@ -67,17 +56,17 @@ def path_finder(map):
 
 
 if __name__ == '__main__':
-    # a = "\n".join([
-    #     ".W.",
-    #     ".W.",
-    #     "..."
-    # ])
-    #
-    # b = "\n".join([
-    #     ".W.",
-    #     ".W.",
-    #     "W.."
-    # ])
+    a = "\n".join([
+        ".W.",
+        ".W.",
+        "..."
+    ])
+
+    b = "\n".join([
+        ".W.",
+        ".W.",
+        "W.."
+    ])
 
     c = "\n".join([
         "......",
@@ -97,7 +86,7 @@ if __name__ == '__main__':
         "....W."
     ])
 
-    # assert (path_finder(a) == True)
-    # assert (path_finder(b) == False)
+    assert (path_finder(a) == True)
+    assert (path_finder(b) == False)
     assert (path_finder(c) == True)
     assert (path_finder(d) == False)
