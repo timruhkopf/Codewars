@@ -4,6 +4,7 @@ class Node:
         self.symb = symb
         self.neighbours = []
 
+
 class Graph:
     def __init__(self, map):
         # parsing
@@ -19,18 +20,17 @@ class Graph:
             node.neighbours = [pos for pos in self._find_neighbours(node.position)
                                if self.nodes[pos].symb != 'W']
 
-    def connect_path(self, start=(0, 0), end=None, path = []):
+        self.end = (self.rdim - 1, self.cdim - 1)
+
+    def connect_path(self, start=(0, 0), path=[]):
         """In a backtracking manner find weather or not their is a path beween start and end"""
         # Finding non cyclic paths: https://www.python.org/doc/essays/graphs/
-        if end is None:
-            end = (self.rdim - 1, self.cdim - 1)
-
         path = path + [start]
-        if start == end:
+        if start == self.end:
             return path
         for neighb in self.nodes[start].neighbours:
             if neighb not in path:
-                newpath = self.connect_path(start=neighb , end=None, path=path)
+                newpath = self.connect_path(start=neighb, path=path)
                 if newpath:
                     return newpath
             return None
@@ -52,7 +52,7 @@ class Graph:
         r, c = position
         cond = lambda r, c: 0 <= r < self.rdim and 0 <= c < self.cdim
         kernel = [(-1, 0), (0, -1), (0, 1), (1, 0)]
-        neighb = set((r + i, c + j) for i,j in kernel
+        neighb = set((r + i, c + j) for i, j in kernel
                      if cond(r + i, c + j) and cond(r + i, c + j))
         return neighb
 
