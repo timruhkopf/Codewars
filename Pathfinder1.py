@@ -4,8 +4,6 @@ class Node:
         self.symb = symb
         self.neighbours = []
 
-
-
 class Graph:
     def __init__(self, map):
         # parsing
@@ -29,14 +27,13 @@ class Graph:
 
         path = path + [start]
         if start == end:
-            return True
+            return path
         for neighb in self.nodes[start].neighbours:
             if neighb not in path:
-                newpath = self.connect_path(neighb)
+                newpath = self.connect_path(start=neighb , end=None, path=path)
                 if newpath:
                     return newpath
             return None
-
 
         # def find_path(graph, start, end, path=[]):
         #     path = path + [start]
