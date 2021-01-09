@@ -17,6 +17,16 @@ class Graph:
             pass
         pass
 
+    def _find_neighbours(self, position):
+        """returns the set of all neighbours (excluding self's position).
+        all of them are bound checked"""
+        r, c = position
+        cond = lambda r, c: 0 <= r < self.rdim and 0 <= c < self.cdim
+        kernel = (-1, 0, 1)
+        neighb = set((r + i, c + j) for i in kernel for j in kernel
+                     if cond(r + i, c + j) and cond(r + i, c + j) and i != j)
+        return neighb
+
 def path_finder(map):
     Graph(map).connect_path(start=(0,0))
 
