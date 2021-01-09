@@ -23,18 +23,22 @@ class Graph:
         # [(node.position, node.neighbours) for node in self.nodes.values()]
 
         self.end = (self.rdim - 1, self.cdim - 1)
+        self.start = (0, 0)
 
-    def connect_path(self, start=(0, 0), path=[]):
+    def connect_path(self, start=(0, 0), path=[], end=None):
         """In a backtracking manner find weather or not their is a path beween start and end"""
         path = path + [start]
         if start == self.end:
             return path
-        for neighb in self.nodes[start].neighbours:
+        for neighb in sorted(self.nodes[start].neighbours, key= lambda x: x[0], reverse=True):
             if neighb not in path:
-                newpath = self.connect_path(start=neighb, path=path)
+                newpath = self.connect_path(start=neighb, path=path, end=end)
                 if newpath:
                     return newpath
-            return None
+        return None
+
+    def find_path(self):
+        self.connect_path(start=self.end, end=self.start)
 
         # def find_path(graph, start, end, path=[]):
         #     path = path + [start]
@@ -59,21 +63,21 @@ class Graph:
 
 
 def path_finder(map):
-    return bool(Graph(map).connect_path(start=(0, 0)))
+    return bool(Graph(map).find_path())
 
 
 if __name__ == '__main__':
-    a = "\n".join([
-        ".W.",
-        ".W.",
-        "..."
-    ])
-
-    b = "\n".join([
-        ".W.",
-        ".W.",
-        "W.."
-    ])
+    # a = "\n".join([
+    #     ".W.",
+    #     ".W.",
+    #     "..."
+    # ])
+    #
+    # b = "\n".join([
+    #     ".W.",
+    #     ".W.",
+    #     "W.."
+    # ])
 
     c = "\n".join([
         "......",
@@ -93,7 +97,7 @@ if __name__ == '__main__':
         "....W."
     ])
 
-    assert (path_finder(a) == True)
-    assert (path_finder(b) == False)
+    # assert (path_finder(a) == True)
+    # assert (path_finder(b) == False)
     assert (path_finder(c) == True)
     assert (path_finder(d) == False)
