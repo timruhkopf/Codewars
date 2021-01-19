@@ -249,8 +249,6 @@ class Go:
 
 
 if __name__ == '__main__':
-    # TODO : debug capturing, particularly look at liberties of all neighbours of
-    #  the members of the group. (they should have the member as new liberty
 
     # color of current turn
     game = Go(9)

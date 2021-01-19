@@ -45,28 +45,6 @@ class Multilinear_polynomials:
         string = ''.join([str(term) for term in self.terms if '0' not in term])  # carefull with '+'
         return string.lstrip('+')
 
-# (EVEN SHORTER VERSION OF IT) -------------------------------------------------
-# import re
-#
-# def simplify(poly):
-#     return M().simplify(poly)
-#
-# class M:
-#     regex = re.compile(r'([+\-]?)(\d*)([a-z]+)')
-#     default = ('+', '1', '_')
-#
-#     def simplify(self, poly):
-#         terms = self.regex.findall(poly)
-#         terms = [[self.default[i] if val == '' else val for i, val in enumerate(tup)] for tup in terms]
-#
-#         abbrev = {''.join(sorted(k)): sum([int(''.join([sign, val])) for sign, val, lit in terms if lit == k])
-#                   for k in set(t[2] for t in terms)}
-#         abbrev = {k:v for k, v in abbrev.items() if v != 0}
-#
-#         terms = sorted([(v, k) for k, v in abbrev.items()],  key=lambda tup: (len(tup[1]) , tup[1]))
-#         return ''.join([''.join([['', '+'][val >= 0], ['', str(val)][abs(val)!=1], k]) for val, k in terms]).lstrip('+')  # FIXME: this line fails!
-#
-#
 
 
 
