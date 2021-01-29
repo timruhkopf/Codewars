@@ -23,7 +23,7 @@ class Node:
 class Row(list):
     Solution = list() # allows both row and column instances to comunicate
     #  but is a sensitive area in parallel computing!
-    direct = {True: ('L', 'R'), False: ('U', 'D')}
+    direct = {True: ('L', 'R'), False: ('U', 'D')}   # fixme potentially U D are in wrong order!
 
     def __init__(self, iterable, ind, row=True):
         """:param iterable: an ordered collection of Node instances
@@ -139,49 +139,98 @@ class Cyclic_shift:
             print(self)
             print('\n')
 
-    def _restore_order(self, ref, start=1):
-        """second stage solving algorithm"""
-        # generate all cyclic permutations of the target row for stopping criterion
-        x = cycle(self.solved_board[0])
-        cycs = list()
-        for i in range(self.rdim):
-            cycs.append([next(x) for i in self.solved_board[0]])
-            next(x)
+    def find_misplaced(self):
+        """:return dict: key, value indicates key ---> value: the value indicates
+         the current occupant of the position, where key must be placed."""
+        # original variant
+        # _, current = Node.current[ref]
+        # self.rows[0].shift(-current)
+        # misplaced = {x: y for x, y in
+        #              zip(self.solved_board[0], [v.value for v in self.rows[0]]) if x != y}
 
-        # init of algo
-        i, j = Node.current[self.solved_board[0][start]]  # starting value
-        r, c = Node.target[self.solved_board[0][start]]  # target value
-        self.rows[0].shift(-j)
-        self.cols[0].shift(-1)
+        # new variant
+        # TODO IDEA HERE: make the ref value match the position of the solved board
+        # THEN check which are not aligned. (the number of changes required likely changes, if any values are
+        # consecutively soreted!)
+        for ref in self.solved_board[0]:
 
-        # while not any cyclic permutation of true state found
-        counter = 0
-        while [str(val) for val in self.rows[0]] not in cycs and counter < 20 :  # FIXME: this might go indefinet
-            # not solvable!!!!
-            print('\n')
-            print(self)
-            _, cc = Node.current[ref]
-            c = cc + c % self.rdim - 1  # new target position, relative to reference:
-            self.rows[0].shift(min([-c, self.rdim - c], key=abs))
+            # ref = 'E'  # CONSIDER: with rowlen = 5, only those ref that cause uneven no. (here exacly 3) solve
+            #  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            # next value we are looking for
-            _, c = Node.target[self.rows[0][0].value]
-            self.cols[0].shift([1, -1][counter % 2])  # alternating up and down
-            # FIXME: this shift fails  (pushes reference up with the value that should be placed next to it)
-            counter += 1
+            _, c = Node.current[ref]
+            _, t = Node.target[ref]
 
-        _, c = Node.current[self.solved_board[0][0]]
-        self.rows[0].shift(min([-c, self.rdim - c], key=abs))
-        print('\n')
-        print(self)
+            self.rows[0].shift(min(-(c - t), self.rdim - c + t))
+            # d = deque(maxlen=len(self.solved_board[0]))
+            # d.extend([n.value for n in self.rows[0]])
+            #
+            # _, c = d.(ref)
+            # _, t = Node.target[ref]
+            #
+            # d.rotate(min(-(c - t), self.rdim - c + t))
 
-    def second_order(self):
-        """optional third stage solving algorithm"""
-        for i in range(self.cdim):
+            print('\n', [n.value for n in self.rows[0]],
+                  '\n', self.solved_board[0])
+            misplaced = {x: y for x, y in
+                         zip(self.solved_board[0], [v.value for v in self.rows[0]]) if x != y}
+
+            print(ref, ':', len(misplaced), '\n\n')
+
+            if len(misplaced) % 2 != 0:
+                return misplaced, ref
+
+        # NO solution with uneven number of steps was found
+        return {}, self.solved_board[0][0]
+
+    def _sort_toprow(self):  # , direct=-1):
+        """second stage solving algorithm, a directed graph approach"""
+        misplaced, ref = self.find_misplaced()
+        if not bool(misplaced):
+            return None  # _sort_toprow not needed
+        start, target = misplaced.popitem()
+
+        # direct = -1
+
+        def initalisation(start):
+            # align with reference - to find correct wild_occupies
+            _, r = Node.current[ref]
+            _, t = Node.target[ref]
+            self.rows[0].shift(t - r)
+
+            _, s = Node.current[start]
+            wild_occupies = self.solved_board[0][s]  # FIXME: must depend on the reference!
+            self.rows[0].shift(min(-s, self.rdim - s, key=abs))
             self.cols[0].shift(-1)
-            self.rows[0].shift(-1)
-            self.cols[0].shift(1)
-            self.rows[0].shift(-1)
+            wildcard = self.rows[0][0].value
+            misplaced[wild_occupies] = wildcard  # FIXME: can add a path if
+            i = 0  # {-1: 0, 1: 1}[direct]
+            return wildcard, i
+
+        wildcard, i = initalisation(start)
+
+        while start != target:
+            print(self, '\n', start, '-->', target)
+            _, t = Node.current[target]
+            self.rows[0].shift(min(-t, self.rdim - t, key=abs))
+            self.cols[0].shift([1, -1][i % 2])
+
+            start = target
+            i += 1
+
+            if target == wildcard:
+                if bool(misplaced):
+                    start, target = misplaced.popitem()
+                    # direct = -1
+                    wildcard, i = initalisation(start)  # fixme: if twice in a row a wild card is hit, this fails
+
+            elif len(misplaced) > 0:
+                target = misplaced.pop(start)
+
+        _, t = Node.current[self.solved_board[0][0]]
+        self.rows[0].shift(-t)
+        print(self, '\n')
 
     def solve(self):
         """Your task: return a List of moves that will transform the unsolved
@@ -193,17 +242,16 @@ class Cyclic_shift:
         # CONSIDER sorting first to penultimate
         for value in [val for row in reversed(self.solved_board[1:]) for val in reversed(row)]:
             self._liftshift(value)
-            # FIXME: if no shift or single shift is requred, extend is falty!
 
-        # 2nd stage (solving the first row, starting at value 2)
-        if self.solved_board[0] != [str(val) for val in self.rows[0]]:
-            self._restore_order(ref=self.solved_board[0][0])
-        else: # already solved board
-            return Row.Solution
-
-        # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
-        if self.solved_board[:2] != [[str(val) for val in row] for row in self.rows[:2]]:
-            self.second_order()
+        # # 2nd stage (solving the first row, starting at value 2)
+        # if self.solved_board[0] != [str(val) for val in self.rows[0]]:
+        #     self._restore_order(ref=self.solved_board[0][0])
+        # else: # already solved board
+        #     return Row.Solution
+        #
+        # # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
+        # if self.solved_board[:2] != [[str(val) for val in row] for row in self.rows[:2]]:
+        #     self.second_order()
 
         if self.solved_board != [[str(val) for val in row] for row in self.rows]:  # unsolvable
             return None
@@ -230,10 +278,21 @@ class Cyclic_shift:
 
         return all([self.solved_board[r] == [str(val) for val in self.rows[r]]  for r in range(self.cdim)])
 
-    def debug_shuffle(self, number):  # Deprec: Debug only
+    def debug_shuffle(self, steps):  # Deprec: Debug only
         """method to create random tests"""
-        from random import randint
-        pass
+        from random import sample
+
+        rows = [self.rows, self.cols]
+        direction = [1, -1]
+
+        for i in range(steps):
+            row = sample(rows)  # row or column
+            r = sample(row)  # which particular?
+            r.shift(sample(direction))
+
+        scrambled = ""
+
+        return scrambled
 
 
 if __name__ == '__main__':
@@ -253,28 +312,37 @@ if __name__ == '__main__':
             assert Cyclic_shift(board(start), board(end)).debug_check(moves) == True
 
 
-    # c = Cyclic_shift(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'),
-    #                  board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
-    # c.shift('L0')
-    # c.shift('U0')
+    # calibration test
+    c = Cyclic_shift(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'),
+                     board('ABCDE\nFGHIJ\nKLMNO\nPQRST'))
+    c.shift('L0')
+    assert(Row.Solution[-1] == 'L0')
+    c.shift('R0')
+    assert(Row.Solution[-1] == 'R0')
+    c.shift('D0')
+    assert(Row.Solution[-1] == 'D0')
+    c.shift('U0')
+    assert(Row.Solution[-1] == 'U0')
 
-    # # @test.it('Test 2x2 (1)')
-    # run_test('12\n34', '12\n34', False)
-    #
-    # # @test.it('Test 2x2 (2)')
-    # run_test('42\n31', '12\n34', False)
-    #
-    # # @test.it('Test 4x5')
-    # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
-    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
-    #
-    # # @test.it('Test 5x5 (1)')
-    # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
-    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
-    #
-    # # @test.it('Test 5x5 (2)')
-    # run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
-    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+    # TODO FIND MORE TESTS also of now working ones!!
+
+    # @test.it('Test 2x2 (1)')
+    run_test('12\n34', '12\n34', False)
+
+    # @test.it('Test 2x2 (2)')
+    run_test('42\n31', '12\n34', False)
+
+    # @test.it('Test 4x5')
+    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
+             'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
+
+    # @test.it('Test 5x5 (1)')
+    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
+             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+
+    # @test.it('Test 5x5 (2)')
+    run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
+             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
 
     # @test.it('Test 5x5 (3)')
@@ -282,8 +350,6 @@ if __name__ == '__main__':
              'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
     # @test.it('Test 5x5 (unsolvable)')
-    # set('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY') -set('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI') == set()
-    # same for vice versa, so the configuration is the problem!
     run_test('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI',
              'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', True)
 
