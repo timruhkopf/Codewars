@@ -46,7 +46,9 @@ class Cyclic_shift_board(Debugbehaviour):
         for value in [val for row in reversed(self.solved_board[1:]) for val in reversed(row)]:
             Algorithms.liftshift(self, value)
 
-        Algorithms._find_misplaced(self)
+
+
+        # Algorithms._find_misplaced(self)
         # # 2nd stage (solving the first row, starting at value 2)
         # if self.solved_board[0] != [str(val) for val in self.rows[0]]:
         #     self._restore_order(ref=self.solved_board[0][0])
@@ -56,6 +58,8 @@ class Cyclic_shift_board(Debugbehaviour):
         # # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
         # if self.solved_board[:2] != [[str(val) for val in row] for row in self.rows[:2]]:
         #     self.second_order()
+
+        Algorithms.sort_toprow(self)
 
         if self.solved_board != [[str(val) for val in row] for row in self.rows]:  # unsolvable
             return None
@@ -99,10 +103,13 @@ if __name__ == '__main__':
     # c.shift('U0')
     # assert (c.solution[-1] == 'U0')
 
-    # shuffle to random, but valid configuration
+    # RANDOM TESTS for Valid configurations
     # c = Cyclic_shift_board(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY'))
     # c.__repr__()
-    # c.shuffle(100)
+    # scrambled = c.shuffle(100)
+    # c.solve(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY'))
+
+
 
     # # @test.it('Test 2x2 (1)')
     # run_test('12\n34', '12\n34', False)
@@ -110,17 +117,17 @@ if __name__ == '__main__':
     # # @test.it('Test 2x2 (2)')
     # run_test('42\n31', '12\n34', False)
 
-    # @test.it('Test 4x5')
-    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
-
-    # @test.it('Test 5x5 (1)')
-    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
-
-    # @test.it('Test 5x5 (2)')
-    run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+    # # @test.it('Test 4x5')
+    # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
+    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
+    #
+    # # @test.it('Test 5x5 (1)')
+    # run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
+    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+    #
+    # # @test.it('Test 5x5 (2)')
+    # run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
+    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
 
     # @test.it('Test 5x5 (3)')
     run_test('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI',

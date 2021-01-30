@@ -11,7 +11,7 @@ class Debugbehaviour:
         board = {'L': self.rows, 'R': self.rows, 'D': self.cols, 'U': self.cols}[direct]
         board[int(pos)].shift(direction=self.direct[direct])
 
-        print(self)
+        # print(self)
 
     def debug_check(self, moves, solved_board):
         # self.shape = len(self.mixed_up_board), len(self.mixed_up_board[0])
@@ -37,8 +37,6 @@ class Debugbehaviour:
 
             self.shift(direction+stepsize)
 
+        return '\n'.join([''.join([node.value for node in row]) for row in self.rows])
 
-        scrambled = ""
-
-        return scrambled
 

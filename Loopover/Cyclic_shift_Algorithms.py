@@ -75,6 +75,7 @@ class Algorithms:
             if Algorithms._is_connected_graph(g):
                 break
         else:
+            print(graphs)
             raise ValueError('No single, odd numbered, connected graph was found')
         return g
 
@@ -107,11 +108,34 @@ class Algorithms:
         # return {}, board.solved_board[0][0]
 
     def sort_toprow(board):
-        graph = Algorithms._find_misplaced(board.rows[0], board.solved_board[0])
 
-        start, target = graph.popitem()
-        while start != target:
-            target = graph.pop(target)
+        # corner case: sorted toprow
+        _, t = Node.current[board.solved_board[0][0]]
+        board.rows[0].shift(min(-t, board.rdim - t, key=abs))
+
+        if [n.value for n in board.rows[0]] != board.solved_board[0]:
+
+            # assuming there is a single, connected, odd numbered sorting graph:
+            graph = Algorithms._find_misplaced(board.rows[0], board.solved_board[0])
+
+            start, target = graph.popitem()
+            r, c = Node.current[start]
+            board.rows[0].shift(min(-c, board.rdim - c, key=abs))
+            board.cols[0].shift(1)
+
+            i = 0
+            while start != target:
+                if len(graph) >= 0:
+                    _, t = Node.current[target]
+
+                    board.rows[0].shift(min(-t, board.rdim - t, key=abs))
+                    board.cols[0].shift([-1, 1][i % 2])
+
+                    start = target
+                    target = graph.pop(target)
+                    i += 1
+
+
 
 
 
