@@ -1,11 +1,12 @@
 from Loopover.Row import Node
-
 from itertools import cycle
 
 
 class Algorithms:
     def liftshift(board, value):
-        """first stage solving algorithm"""
+        """first stage solving algorithm, solves all but the first row, with three
+        minor algorithms, depending on the respective position to the target
+        :param value: str. letter, that is to be moved to its target position."""
         i, j = Node.current[value]
         r, c = Node.target[value]
 
@@ -17,21 +18,21 @@ class Algorithms:
         if i == r and j != c:
             board.cols[j].shift(1)
             board.cols[c].shift(1)
-            board.rows[r - 1].shift(min([-(j + board.rdim - c), c - j], key=abs))  # FIXME: this one is faulty!!
+            board.rows[r - 1].shift(board.rows[r - 1].shortest_shiftLR(j, c))
             board.cols[j].shift(-1)
             board.cols[c].shift(-1)
 
         # (2) correct column
         elif j == c and i != r:
             board.rows[i].shift(-1)
-            board.cols[c].shift(-(i - r))  # lift up
+            board.cols[c].shift(-(i - r))  # lift up # CONSIDER: Room for improvment: cols[c].shortest_shiftLR(i, r)
             board.rows[i].shift(1)
-            board.cols[c].shift(i - r)  # lift down
+            board.cols[c].shift(i - r)  # lift down  # CONSIDER: Room for improvment: cols[c].shortest_shiftLR(r, i)
 
         # (3) neither
         else:
             board.cols[c].shift(-(i - r))
-            board.rows[i].shift(min([-(j + board.rdim + 1 - c), c - j], key=abs))
+            board.rows[i].shift(board.rows[i].shortest_shiftLR(j, c))
             board.cols[c].shift(i - r)
 
     @staticmethod
@@ -108,10 +109,15 @@ class Algorithms:
         # return {}, board.solved_board[0][0]
 
     def sort_toprow(board):
-
+        """
+        EASY CASE
+        Given only the first row is not sorted, find a single conneced & odd numbered
+        graph and shift accoring to that graph.
+        """
         # corner case: sorted toprow: shift toprow such that it is aligned with solution
         _, t = Node.current[board.solved_board[0][0]]
-        board.rows[0].shift(min(-t, board.rdim - t, key=abs))
+        # board.rows[0].shift(min(-t, board.rdim - t, key=abs))
+        board.rows[0].shift(board.rows[0].shortest_shiftLR(t, 0))
 
         if [n.value for n in board.rows[0]] != board.solved_board[0]:
 
@@ -123,7 +129,8 @@ class Algorithms:
 
             # ensure, that graph is updated with wildcard
             wild_occupies = board.solved_board[0][s]
-            board.rows[0].shift(min(-s, board.rdim - s, key=abs))
+            # board.rows[0].shift(min(-s, board.rdim - s, key=abs))
+            board.rows[0].shift(board.rows[0].shortest_shiftLR(s, 0))
             board.cols[0].shift(1)
             wildcard = board.rows[0][0].value
             graph[wild_occupies] = wildcard
@@ -132,7 +139,8 @@ class Algorithms:
             while start != target:
 
                 _, t = Node.current[target]
-                board.rows[0].shift(min(-t, board.rdim - t, key=abs))
+                # board.rows[0].shift(min(-t, board.rdim - t, key=abs))
+                board.rows[0].shift(board.rows[0].shortest_shiftLR(t, 0))
                 board.cols[0].shift([-1, 1][i % 2])
 
                 start = target
@@ -142,55 +150,8 @@ class Algorithms:
 
             # shift toprow such, that it is aligned with solution
             _, t = Node.current[board.solved_board[0][0]]
-            board.rows[0].shift(min(-t, board.rdim - t, key=abs))
-
-    # def _sort_toprow(board):  # , direct=-1):
-    #     """second stage solving algorithm, a directed graph approach"""
-    #     misplaced, ref = board._find_misplaced()
-    #     if not bool(misplaced):
-    #         return None  # _sort_toprow not needed
-    #     start, target = misplaced.popitem()
-    #
-    #     # direct = -1
-    #
-    #     def initalisation(start):
-    #         # align with reference - to find correct wild_occupies
-    #         _, r = Node.current[ref]
-    #         _, t = Node.target[ref]
-    #         board.rows[0].shift(t - r)
-    #
-    #         _, s = Node.current[start]
-    #         wild_occupies = board.solved_board[0][s]  # FIXME: must depend on the reference!
-    #         board.rows[0].shift(min(-s, board.rdim - s, key=abs))
-    #         board.cols[0].shift(-1)
-    #         wildcard = board.rows[0][0].value
-    #         misplaced[wild_occupies] = wildcard  # FIXME: can add a path if
-    #         i = 0  # {-1: 0, 1: 1}[direct]
-    #         return wildcard, i
-    #
-    #     wildcard, i = initalisation(start)
-    #
-    #     while start != target:
-    #         print(board, '\n', start, '-->', target)
-    #         _, t = Node.current[target]
-    #         board.rows[0].shift(min(-t, board.rdim - t, key=abs))
-    #         board.cols[0].shift([1, -1][i % 2])
-    #
-    #         start = target
-    #         i += 1
-    #
-    #         if target == wildcard:
-    #             if bool(misplaced):
-    #                 start, target = misplaced.popitem()
-    #                 # direct = -1
-    #                 wildcard, i = initalisation(start)  # fixme: if twice in a row a wild card is hit, this fails
-    #
-    #         elif len(misplaced) > 0:
-    #             target = misplaced.pop(start)
-    #
-    #     _, t = Node.current[board.solved_board[0][0]]
-    #     board.rows[0].shift(-t)
-    #     print(board, '\n')
+            # board.rows[0].shift(min(-t, board.rdim - t, key=abs))
+            board.rows[0].shift(board.rows[0].shortest_shiftLR(t, 0))
 
 
 if __name__ == '__main__':

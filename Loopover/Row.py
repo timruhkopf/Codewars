@@ -48,8 +48,31 @@ class Row(list):
         """:param direction: integer: number of shifts, left shift is negative, right positive"""
         return [self.direct[self.row][direction > 0] + self.ind] * abs(direction)
 
+    def shortest_shiftLR(self, j, c):
+        """
+        :param j: current position in Row
+        :param c: target position in Row
+        :param rowdim: len(Row)
+        :returns minimal shifting length given this rows length: negative values
+        indicate a "left", positive indicate "right" shift.
+        """
+        # [leftdistance, rightdistance]
+        return min([-((len(self) -(c-j)) % len(self)),  (len(self) + c-j) % len(self)], key=abs)
+
+
+
 if __name__ == '__main__':
-    row = Row([Node(position=(1, c), value=c) for c, node in enumerate(range(5)) ], ind=0, row=True)
+    rowlen = 10
+    row = Row([Node(position=(1, c), value=c) for c, node in enumerate(range(rowlen))], ind=0, row=True)
+    assert row.shortest_shiftLR(0, 1) == 1 # L: -9, R:1
+    assert row.shortest_shiftLR(1, 0) == -1  # L: -1, R: 9
+    assert row.shortest_shiftLR(9, 0) == 1  # L: -9, R: 1
+    assert row.shortest_shiftLR(0, 9) == -1  # L: -1, R: 9
+    assert row.shortest_shiftLR(5, 3) == -2
+    assert row.shortest_shiftLR(7, 2) == -5 # since left is first in min function
+
+
+    row = Row([Node(position=(1, c), value=c) for c, node in enumerate(range(5))], ind=0, row=True)
     print(row)
     row.shift(-1)
     print(row)
@@ -64,7 +87,7 @@ if __name__ == '__main__':
     len(col)
 
     cols = [Row([Node(position=(r, c), value=r) for r, node in enumerate(range(5))], ind=c, row=False)
-            for c in range(4) ]
+            for c in range(4)]
     print(cols)
     cols[0].shift(1)
     print(cols)

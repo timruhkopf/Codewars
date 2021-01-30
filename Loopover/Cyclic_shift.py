@@ -45,22 +45,10 @@ class Cyclic_shift_board(Debugbehaviour):
         # ordered values from low left until first row
         for value in [val for row in reversed(self.solved_board[1:]) for val in reversed(row)]:
             Algorithms.liftshift(self, value)
-        print(self)
-
-
-
-        # Algorithms._find_misplaced(self)
-        # # 2nd stage (solving the first row, starting at value 2)
-        # if self.solved_board[0] != [str(val) for val in self.rows[0]]:
-        #     self._restore_order(ref=self.solved_board[0][0])
-        # else: # already solved board
-        #     return Row.Solution
-        #
-        # # optional 3rd stage (a complete repeat of 2nd stage, starting at value 1)
-        # if self.solved_board[:2] != [[str(val) for val in row] for row in self.rows[:2]]:
-        #     self.second_order()
+        print(self, '\n')
 
         Algorithms.sort_toprow(self)
+        print(self, '\n')
 
         if self.solved_board != [[str(val) for val in row] for row in self.rows]:  # unsolvable
             return None
