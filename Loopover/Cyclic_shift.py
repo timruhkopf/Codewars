@@ -45,6 +45,7 @@ class Cyclic_shift_board(Debugbehaviour):
         # ordered values from low left until first row
         for value in [val for row in reversed(self.solved_board[1:]) for val in reversed(row)]:
             Algorithms.liftshift(self, value)
+        print(self)
 
 
 

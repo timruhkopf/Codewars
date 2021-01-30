@@ -109,7 +109,7 @@ class Algorithms:
 
     def sort_toprow(board):
 
-        # corner case: sorted toprow
+        # corner case: sorted toprow: shift toprow such that it is aligned with solution
         _, t = Node.current[board.solved_board[0][0]]
         board.rows[0].shift(min(-t, board.rdim - t, key=abs))
 
@@ -119,27 +119,30 @@ class Algorithms:
             graph = Algorithms._find_misplaced(board.rows[0], board.solved_board[0])
 
             start, target = graph.popitem()
-            r, c = Node.current[start]
-            board.rows[0].shift(min(-c, board.rdim - c, key=abs))
+            _, s = Node.current[start]
+
+            # ensure, that graph is updated with wildcard
+            wild_occupies = board.solved_board[0][s]
+            board.rows[0].shift(min(-s, board.rdim - s, key=abs))
             board.cols[0].shift(1)
+            wildcard = board.rows[0][0].value
+            graph[wild_occupies] = wildcard
 
             i = 0
             while start != target:
-                if len(graph) >= 0:
-                    _, t = Node.current[target]
 
-                    board.rows[0].shift(min(-t, board.rdim - t, key=abs))
-                    board.cols[0].shift([-1, 1][i % 2])
+                _, t = Node.current[target]
+                board.rows[0].shift(min(-t, board.rdim - t, key=abs))
+                board.cols[0].shift([-1, 1][i % 2])
 
-                    start = target
+                start = target
+                i += 1
+                if len(graph) > 0:
                     target = graph.pop(target)
-                    i += 1
 
-
-
-
-
-
+            # shift toprow such, that it is aligned with solution
+            _, t = Node.current[board.solved_board[0][0]]
+            board.rows[0].shift(min(-t, board.rdim - t, key=abs))
 
     # def _sort_toprow(board):  # , direct=-1):
     #     """second stage solving algorithm, a directed graph approach"""
