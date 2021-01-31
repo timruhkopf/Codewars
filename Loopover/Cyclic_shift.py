@@ -1,9 +1,11 @@
-from Loopover.Cyclic_shift_Algorithms import Algorithms
-from Loopover.Cyclic_shift_debug import Debugbehaviour
+from Loopover.StrategyLiftshift import StrategyLiftshift
+from Loopover.StrategyToprow import StrategyToprow
 from Loopover.Row import Row, Node
+from Loopover.Deprec.Cyclic_shift_debug import Debugbehaviour
 
-DEBUG = True
 
+# FIXME: multiple consecutive tests fail for an unidentified reason. eventhough
+#  on their own, the solution is valid
 
 class Cyclic_shift_board(Debugbehaviour):
     direct = {'L': -1, 'R': 1, 'D': 1, 'U': -1}
@@ -13,7 +15,6 @@ class Cyclic_shift_board(Debugbehaviour):
         kata: https://www.codewars.com/kata/5c1d796370fee68b1e000611/train/python
         :param mixedUpBoard: two-dim arrays (or lists of lists) of symbols
         representing the initial (unsolved) grid
-        :param solvedBoard:  same as mixedUpBoard but final (solved) grid.
 
         Different grid sizes are tested: from 2x2 to 9x9 grids
         (including rectangular grids like 4x5)
@@ -34,24 +35,19 @@ class Cyclic_shift_board(Debugbehaviour):
 
     def solve(self, solved_board):
         """Your task: return a List of moves that will transform the unsolved
-        grid into the solved one. All values of the scrambled and unscrambled
-        grids will be unique! Moves will be 2 character long Strings"""
-        Row.Solution = list()  # overwrite last cyclic_shift instance's solution
+           grid into the solved one. All values of the scrambled and unscrambled
+           grids will be unique! Moves will be 2 character long Strings"""
 
         self.solved_board = solved_board
         Node.target = {val: (r, c) for r, row in enumerate(solved_board) for c, val in enumerate(row)}
 
-        # 1st stage (solving all but the first row)
-        # ordered values from low left until first row
-        for value in [val for row in reversed(self.solved_board[1:]) for val in reversed(row)]:
-            Algorithms.liftshift(self, value)
+        StrategyLiftshift.executeStrategy(self)
 
         # corner case: simple shift suffices & nothing else needs to be done
         _, t = Node.current[self.solved_board[0][0]]
         self.rows[0].shift(self.rows[0].shortest_shiftLR(t, 0))
         if self.solved_board[0] != self.rows[0].toList():
-            Algorithms.sort_toprow(self)
-            print(self, '\n')
+            StrategyToprow.executeStrategy(self)
 
         if self.solved_board != [row.toList() for row in self.rows]:  # unsolvable
             return None
@@ -109,13 +105,13 @@ if __name__ == '__main__':
     # c.solve(board(('ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789')))
 
     # # (SOLVABLE TESTS) -------------------------------------------------------
-    # @test.it('Test 2x2 (1)')
-    run_test('12\n34', '12\n34', False)
+    # # @test.it('Test 2x2 (1)')
+    # run_test('12\n34', '12\n34', False)
+    #
+    # # @test.it('Test 2x2 (2)')
+    # run_test('42\n31', '12\n34', False)
 
-    # @test.it('Test 2x2 (2)')
-    run_test('42\n31', '12\n34', False)
-
-    # @test.it('Test 4x5')
+    # # @test.it('Test 4x5')
     run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
              'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
 
@@ -136,25 +132,25 @@ if __name__ == '__main__':
              'ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789', False)
 
     # (UNSOLVABLE TESTS) -------------------------------------------------------
-    # # @test.it('Test 5x5 (unsolvable)')
-    # run_test('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI',
-    #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', True)
-    #
-    # run_test("""AQYEH BUXKF WVTLP JCDMR IONGS""".replace(' ', '\n'),
-    #          """ABCDE FGHIJ KLMNO PQRST UVWXY""".replace(' ', '\n'), True)
-    #
-    # # 5x9
-    # run_test("""PBMnj ZVToq JCpLH UeFDR imIfG WKEON csAgr laYhX dQkSb""".replace(' ', '\n'),
-    #          """ABCDE FGHIJ KLMNO PQRST UVWXY Zabcd efghi jklmn opqrs""".replace(' ', '\n'), True)
-    #
-    # # 9x9
-    # run_test(
-    #     """enwξfxWχλ Zh1cv4qωR ρ3TEFψπMJ KmDiεHCγG η7IXA2Uzk 0NβpVB8Yb αuθ6tφdδσ 5LμaOjζsS lyPg9rQνo""".replace(' ',
-    #                                                                                                             '\n'),
-    #     """ABCDEFGHI JKLMNOPQR STUVWXYZa bcdefghij klmnopqrs tuvwxyz01 23456789α βγδεζηθλμ νξπρσφχψω""".replace(' ',
-    #                                                                                                             '\n'),
-    #     True)
-    #
-    # # 7x7
-    # run_test("""dMeuTgG ncfiVZo FJRNbLH OPDEKvj ltXpUhq AWSIQmr kwaYBCs""".replace(' ', '\n'),
-    #          """ABCDEFG HIJKLMN OPQRSTU VWXYZab cdefghi jklmnop qrstuvw""".replace(' ', '\n'), True)
+    # @test.it('Test 5x5 (unsolvable)')
+    run_test('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI',
+             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', True)
+
+    run_test("""AQYEH BUXKF WVTLP JCDMR IONGS""".replace(' ', '\n'),
+             """ABCDE FGHIJ KLMNO PQRST UVWXY""".replace(' ', '\n'), True)
+
+    # 5x9
+    run_test("""PBMnj ZVToq JCpLH UeFDR imIfG WKEON csAgr laYhX dQkSb""".replace(' ', '\n'),
+             """ABCDE FGHIJ KLMNO PQRST UVWXY Zabcd efghi jklmn opqrs""".replace(' ', '\n'), True)
+
+    # 9x9
+    run_test(
+        """enwξfxWχλ Zh1cv4qωR ρ3TEFψπMJ KmDiεHCγG η7IXA2Uzk 0NβpVB8Yb αuθ6tφdδσ 5LμaOjζsS lyPg9rQνo""".replace(' ',
+                                                                                                                '\n'),
+        """ABCDEFGHI JKLMNOPQR STUVWXYZa bcdefghij klmnopqrs tuvwxyz01 23456789α βγδεζηθλμ νξπρσφχψω""".replace(' ',
+                                                                                                                '\n'),
+        True)
+
+    # 7x7
+    run_test("""dMeuTgG ncfiVZo FJRNbLH OPDEKvj ltXpUhq AWSIQmr kwaYBCs""".replace(' ', '\n'),
+             """ABCDEFG HIJKLMN OPQRSTU VWXYZab cdefghi jklmnop qrstuvw""".replace(' ', '\n'), True)

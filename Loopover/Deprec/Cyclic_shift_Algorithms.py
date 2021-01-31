@@ -3,6 +3,10 @@ from itertools import cycle
 
 
 class Algorithms:
+    """THIS CLASS IS DEPREC, as it contains the less general (but original idea) of
+    Loopover.StrategyToprow.py and is not split into the separate Strategies"""
+
+
     # (First Strategy) ---------------------------------------------------------
     def liftshift(board, value):
         """first stage solving algorithm, solves all but the first row, with three
