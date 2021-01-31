@@ -10,9 +10,7 @@ class StrategyToprow:
         #  this is slightly more computiational efficient, but the solution added
         #  by StrategyToprow is not necessarily the shortest.
 
-        # Consider shortening the added solution by a) whether the resulting
-        #  graph is even to begin withb) the number b) of steps required in strategy
-        #  sorted(sortgraphs, key=(lambda g: sum(, sum([len(s) + 1 for s in subgraphs])))
+
         graphs = StrategyToprow.find_sort_graphs(
             row=board.rows[0],
             target_row=board.solved_board[0])
@@ -22,6 +20,10 @@ class StrategyToprow:
         #     # No strategy can be successful, this board is unsolvable
         #     return None
 
+        # Consider: shortest available addition to solution:
+        # if StrategyToprow.choose_sort_strategy returned the list of valid
+        # strategies (remove invalid & add turnovers where necessary)
+        # min(sortgraphs, key=lambda g: sum(sum([len(subgraph) + 1 for subgraph in g])
         for g in sortgraphs:
             StrategyToprow.sort_by_subgraph(board, subgraph=g)
 
