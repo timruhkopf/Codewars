@@ -51,8 +51,6 @@ class Multilinear_polynomials:
 
 if __name__ == '__main__':
     # ("Test reduction by equivalence")
-
-    M().simplify("-a+5ab+3a-c-2a")
     assert (simplify("-a+5ab+3a-c-2a") == "-c+5ab")
 
     assert (simplify("dc+dcba") == "cd+abcd")
