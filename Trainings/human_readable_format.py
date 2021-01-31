@@ -27,13 +27,13 @@ def format_duration(seconds):
     second = (seconds - (year * _ydhm[0] + day * _ydhm[1] + hour * _ydhm[2] + minute * _ydhm[3]))
     _amount = [year, day, hour, minute, second]
 
-    os = [smhdy(x,y) for x,y in zip(_amount, _names)]
+    os = [smhdy(x, y) for x, y in zip(_amount, _names)]
     os = [i for i in os if i != None]
 
     return dictionary[len(os)].format(*os)
 
 
-def format_duration (seconds):
+def format_duration(seconds):
     """Tim Solution"""
     if seconds == 0: return 'now'
     numbers = [seconds // (60 ** 2 * 24 * 365),
@@ -50,12 +50,3 @@ def format_duration (seconds):
     sentence[1] = '{} {}'
 
     return sentence[len(numbers)].format(*sum(zip(numbers, names), ()))
-
-
-
-
-
-
-
-
-
