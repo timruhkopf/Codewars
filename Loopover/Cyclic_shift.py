@@ -47,13 +47,17 @@ class Cyclic_shift_board(Debugbehaviour):
             Algorithms.liftshift(self, value)
         print(self, '\n')
 
-        Algorithms.sort_toprow(self)
-        print(self, '\n')
+        # corner case: simple shift suffices & nothing else needs to be done
+        _, t = Node.current[self.solved_board[0][0]]
+        self.rows[0].shift(self.rows[0].shortest_shiftLR(t, 0))
+        if self.solved_board[0] != self.rows[0].toList():
+            Algorithms.sort_toprow(self)
+            print(self, '\n')
 
-        if self.solved_board != [[str(val) for val in row] for row in self.rows]:  # unsolvable
+        if self.solved_board != [row.toList() for row in self.rows]:  # unsolvable
             return None
         else:
-            return Row.Solution
+            return self.solution
 
     @property
     def solution(self):

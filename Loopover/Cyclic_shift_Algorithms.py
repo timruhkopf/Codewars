@@ -3,6 +3,7 @@ from itertools import cycle
 
 
 class Algorithms:
+    # (First Strategy) ---------------------------------------------------------
     def liftshift(board, value):
         """first stage solving algorithm, solves all but the first row, with three
         minor algorithms, depending on the respective position to the target
@@ -35,6 +36,7 @@ class Algorithms:
             board.rows[i].shift(board.rows[i].shortest_shiftLR(j, c))
             board.cols[c].shift(i - r)
 
+    # (Second Strategy) --------------------------------------------------------
     @staticmethod
     def _is_connected_graph(graph):
         graph = graph.copy()
@@ -65,9 +67,10 @@ class Algorithms:
             rotations.append([next(cycs) for i in range(len(row))])
             next(cycs)
 
+        # find the graph of sortings
         graphs = list()
         for rot in rotations:
-            # finding the misplaced leters and their target position's current occupant
+            # finding the misplaced letters and their target position's current occupant
             graphs.append({x: y for x, y in zip(target_row, rot) if x != y})
 
         # check if there is any "single connected graph" with an odd number of steps.
@@ -110,36 +113,33 @@ class Algorithms:
 
     def sort_toprow(board):
         """
-        EASY CASE
+        A GRAPH APPROACH (EASY CASE)
         Given only the first row is not sorted, find a single conneced & odd numbered
-        graph and shift accoring to that graph.
+        graph and shift according to that graph. Be careful with the wildcard
+        ("card" that is not part of the toprow) introduced at the begining of this algo
         """
-        # corner case: sorted toprow: shift toprow such that it is aligned with solution
-        _, t = Node.current[board.solved_board[0][0]]
-        # board.rows[0].shift(min(-t, board.rdim - t, key=abs))
-        board.rows[0].shift(board.rows[0].shortest_shiftLR(t, 0))
-
-        if [n.value for n in board.rows[0]] != board.solved_board[0]:
-
+        if board.rows[0].toList() != board.solved_board[0]:
             # assuming there is a single, connected, odd numbered sorting graph:
             graph = Algorithms._find_misplaced(board.rows[0], board.solved_board[0])
 
+            # initalisation step: first position in graph
             start, target = graph.popitem()
             _, s = Node.current[start]
-
-            # ensure, that graph is updated with wildcard
-            wild_occupies = board.solved_board[0][s]
-            # board.rows[0].shift(min(-s, board.rdim - s, key=abs))
             board.rows[0].shift(board.rows[0].shortest_shiftLR(s, 0))
-            board.cols[0].shift(1)
-            wildcard = board.rows[0][0].value
-            graph[wild_occupies] = wildcard
+            board.cols[0].shift(1)  # by convention
 
+            # update graph: (with wildcard, it is no longer a circle)
+            wild_occupies = start
+            wildcard = board.rows[0][0].value
+            for k, v in graph.items():
+                if v == wild_occupies:
+                    graph[k] = wildcard
+                    break
+
+            # walk down the graph and sort the row
             i = 0
             while start != target:
-
                 _, t = Node.current[target]
-                # board.rows[0].shift(min(-t, board.rdim - t, key=abs))
                 board.rows[0].shift(board.rows[0].shortest_shiftLR(t, 0))
                 board.cols[0].shift([-1, 1][i % 2])
 
@@ -150,7 +150,6 @@ class Algorithms:
 
             # shift toprow such, that it is aligned with solution
             _, t = Node.current[board.solved_board[0][0]]
-            # board.rows[0].shift(min(-t, board.rdim - t, key=abs))
             board.rows[0].shift(board.rows[0].shortest_shiftLR(t, 0))
 
 

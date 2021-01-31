@@ -59,7 +59,9 @@ class Row(list):
         # [leftdistance, rightdistance]
         return min([-((len(self) -(c-j)) % len(self)),  (len(self) + c-j) % len(self)], key=abs)
 
-
+    def toList(self):
+        """:return the list of the nodes' values rather then the list of nodes """
+        return [node.value for node in self]
 
 if __name__ == '__main__':
     rowlen = 10
@@ -86,10 +88,14 @@ if __name__ == '__main__':
 
     len(col)
 
-    cols = [Row([Node(position=(r, c), value=r) for r, node in enumerate(range(5))], ind=c, row=False)
+    cols = [Row([Node(position=(r, c), value=v) for r, v in enumerate(range(5))], ind=c, row=False)
             for c in range(4)]
     print(cols)
     cols[0].shift(1)
     print(cols)
 
     len(cols)
+
+    # check toList
+    row = Row([Node(position=(1, c), value=v) for c, v in enumerate('ABCDE')], ind=0, row=True)
+    assert row.toList() == ['A', 'B', 'C', 'D', 'E']
