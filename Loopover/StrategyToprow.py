@@ -126,20 +126,3 @@ class StrategyToprow:
             if len(subgraph) > 0:
                 target = subgraph.pop(target)
 
-
-if __name__ == '__main__':
-    # (find_sort_graphs) -------------------------------------------------------
-    target_row = ['A', 'B', 'C', 'D', 'E']
-    row = ['B', 'C', 'D', 'E', 'A']  # single shift right suffices
-
-    row = ['B', 'E', 'A', 'C', 'D']
-
-    # (split_subgraphs) ------------------------------------------------
-    # single graph
-    assert StrategyToprow.split_subgraphs({'A': 'C', 'B': 'D', 'C': 'B', 'D': 'E', 'E': 'A'}) == \
-           [{'A': 'C', 'B': 'D', 'C': 'B', 'D': 'E', 'E': 'A'}]
-
-    # two closed subgraphs
-    assert StrategyToprow.split_subgraphs({'A': 'D', 'C': 'E', 'D': 'A', 'E': 'C'}) in \
-           ([{'A': 'D', 'D': 'A', }, {'C': 'E', 'E': 'C'}],
-            [{'C': 'E', 'E': 'C'}, {'A': 'D', 'D': 'A', }])

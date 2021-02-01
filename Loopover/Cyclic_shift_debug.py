@@ -1,8 +1,11 @@
-
 class Debugbehaviour:
-    # DEPREC: DEBUG METHODS: REMOVE WHEN SUBMITTING ----------------------------
+    # TODO Remove: this for submitting, but add to cyclic shift as playable
+    #  methods for the board
+
     def shift(self, direction):
-        """Primary method to play the game (change the state of board)
+        """Primary method to play the game & checking the solution.
+        It is not used in solving)
+
         :param direction: string such as L0, R1, D1, U2
         where L & R refer to rowshifts and D & U to column shifts.
         Integer refers to the respective row / column to be shifted"""
@@ -12,6 +15,21 @@ class Debugbehaviour:
         board[int(pos)].shift(direction=self.direct[direct])
 
         # print(self)
+
+    def shuffle(self, steps):
+        """method to create random tests"""
+        from random import sample
+
+        for s in range(steps):
+            direction = sample('LRUD', 1)[0]
+            if direction in 'LR':
+                stepsize = str(sample(range(self.cdim), 1)[0])
+            else:
+                stepsize = str(sample(range(self.rdim), 1)[0])
+
+            self.shift(direction + stepsize)
+
+        return '\n'.join([''.join([node.value for node in row]) for row in self.rows])
 
     def debug_check(self, moves, solved_board):
         # self.shape = len(self.mixed_up_board), len(self.mixed_up_board[0])
@@ -23,20 +41,3 @@ class Debugbehaviour:
             print('\n')
 
         return all([solved_board[r] == [str(val) for val in self.rows[r]] for r in range(self.cdim)])
-
-    def shuffle(self, steps):
-        """method to create random tests"""
-        from random import sample
-
-        for s in range(steps):
-            direction = sample('LRUD', 1)[0]
-            if direction in 'LR':
-                stepsize = str(sample(range(self.cdim), 1)[0]) # TODO fix self.rdim & self.cdim
-            else:
-                stepsize = str(sample(range(self.rdim), 1)[0])
-
-            self.shift(direction+stepsize)
-
-        return '\n'.join([''.join([node.value for node in row]) for row in self.rows])
-
-

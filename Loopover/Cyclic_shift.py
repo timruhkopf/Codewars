@@ -1,7 +1,7 @@
 from Loopover.StrategyLiftshift import StrategyLiftshift
 from Loopover.StrategyToprow import StrategyToprow
 from Loopover.Row import Row, Node
-from Loopover.Deprec.Cyclic_shift_debug import Debugbehaviour
+from Loopover.Cyclic_shift_debug import Debugbehaviour
 
 
 # FIXME: multiple consecutive tests fail for an unidentified reason. eventhough
@@ -65,9 +65,11 @@ if __name__ == '__main__':
         return Cyclic_shift_board(mixed_up_board).solve(solved_board)
 
 
-    def board(str):
-        return [list(row) for row in str.split('\n')]
-
+    # deprec: run_test & board these function was copied and adjusted from the
+    #  kata's tests to emulate the behaviour. With unittests, this is obsolete
+    #  and unnecessary tedious.
+    def board(strboard):
+        return [list(row) for row in strboard.split('\n')]
 
     def run_test(start, end, unsolvable):
 
@@ -79,78 +81,3 @@ if __name__ == '__main__':
         else:
             moves = tuple(moves)
             assert Cyclic_shift_board(board(start)).debug_check(moves, board(end)) == True
-
-
-    # # (CALIBRATION TEST) -----------------------------------------------------
-    # c = Cyclic_shift_board(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'))
-    # c.shift('L0')
-    # assert (c.solution[-1] == 'L0')
-    # c.shift('R0')
-    # assert (c.solution[-1] == 'R0')
-    # c.shift('D0')
-    # assert (c.solution[-1] == 'D0')
-    # c.shift('U0')
-    # assert (c.solution[-1] == 'U0')
-
-    # # (RANDOM TESTS) ---------------------------------------------------------
-    # # 5x5
-    # c = Cyclic_shift_board(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY'))
-    # c.__repr__()
-    # scrambled = c.shuffle(100)
-    # c.solve(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY'))
-
-    # # 6x6
-    # c = Cyclic_shift_board(board('ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789'))
-    # c.shuffle(100)
-    # c.solve(board(('ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789')))
-
-    # # (SOLVABLE TESTS) -------------------------------------------------------
-    # # @test.it('Test 2x2 (1)')
-    # run_test('12\n34', '12\n34', False)
-    #
-    # # @test.it('Test 2x2 (2)')
-    # run_test('42\n31', '12\n34', False)
-
-    # # @test.it('Test 4x5')
-    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST', False)
-
-    # @test.it('Test 5x5 (1)')
-    run_test('ACDBE\nFGHIJ\nKLMNO\nPQRST\nUVWXY',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
-
-    # @test.it('Test 5x5 (2)')
-    run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
-
-    # @test.it('Test 5x5 (3)')
-    run_test('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
-
-    # @test.it('Test 6x6')
-    run_test('WCMDJ0\nORFBA1\nKNGLY2\nPHVSE3\nTXQUI4\nZ56789',
-             'ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789', False)
-
-    # (UNSOLVABLE TESTS) -------------------------------------------------------
-    # @test.it('Test 5x5 (unsolvable)')
-    run_test('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI',
-             'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', True)
-
-    run_test("""AQYEH BUXKF WVTLP JCDMR IONGS""".replace(' ', '\n'),
-             """ABCDE FGHIJ KLMNO PQRST UVWXY""".replace(' ', '\n'), True)
-
-    # 5x9
-    run_test("""PBMnj ZVToq JCpLH UeFDR imIfG WKEON csAgr laYhX dQkSb""".replace(' ', '\n'),
-             """ABCDE FGHIJ KLMNO PQRST UVWXY Zabcd efghi jklmn opqrs""".replace(' ', '\n'), True)
-
-    # 9x9
-    run_test(
-        """enwξfxWχλ Zh1cv4qωR ρ3TEFψπMJ KmDiεHCγG η7IXA2Uzk 0NβpVB8Yb αuθ6tφdδσ 5LμaOjζsS lyPg9rQνo""".replace(' ',
-                                                                                                                '\n'),
-        """ABCDEFGHI JKLMNOPQR STUVWXYZa bcdefghij klmnopqrs tuvwxyz01 23456789α βγδεζηθλμ νξπρσφχψω""".replace(' ',
-                                                                                                                '\n'),
-        True)
-
-    # 7x7
-    run_test("""dMeuTgG ncfiVZo FJRNbLH OPDEKvj ltXpUhq AWSIQmr kwaYBCs""".replace(' ', '\n'),
-             """ABCDEFG HIJKLMN OPQRSTU VWXYZab cdefghi jklmnop qrstuvw""".replace(' ', '\n'), True)

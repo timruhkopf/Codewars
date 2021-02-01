@@ -64,38 +64,4 @@ class Row(list):
         return [node.value for node in self]
 
 if __name__ == '__main__':
-    rowlen = 10
-    row = Row([Node(position=(1, c), value=c) for c, node in enumerate(range(rowlen))], ind=0, row=True)
-    assert row.shortest_shiftLR(0, 1) == 1 # L: -9, R:1
-    assert row.shortest_shiftLR(1, 0) == -1  # L: -1, R: 9
-    assert row.shortest_shiftLR(9, 0) == 1  # L: -9, R: 1
-    assert row.shortest_shiftLR(0, 9) == -1  # L: -1, R: 9
-    assert row.shortest_shiftLR(5, 3) == -2
-    assert row.shortest_shiftLR(7, 2) == -5 # since left is first in min function
-
-
-    row = Row([Node(position=(1, c), value=c) for c, node in enumerate(range(5))], ind=0, row=True)
-    print(row)
-    row.shift(-1)
-    print(row)
-
-    len(row)
-
-    col = Row([Node(position=(r, 1), value=r) for r, node in enumerate(range(5))], ind=0, row=False)
-    print(col)
-    col.shift(-1)
-    print(col)
-
-    len(col)
-
-    cols = [Row([Node(position=(r, c), value=v) for r, v in enumerate(range(5))], ind=c, row=False)
-            for c in range(4)]
-    print(cols)
-    cols[0].shift(1)
-    print(cols)
-
-    len(cols)
-
-    # check toList
-    row = Row([Node(position=(1, c), value=v) for c, v in enumerate('ABCDE')], ind=0, row=True)
-    assert row.toList() == ['A', 'B', 'C', 'D', 'E']
+   pass
