@@ -77,6 +77,8 @@ class TestCyclic_shift(unittest.TestCase):
         pass
 
     # (DEBUGBEHAVIOUR) ---------------------------------------------------------
+
+
     def test_shift(self):
         pass
 
@@ -86,6 +88,30 @@ class TestCyclic_shift(unittest.TestCase):
     def test_debug_check(self):
         pass
 
+    def test_kata_interface(self):
+        # DEBUG INTERFACE: The kata requires a loopover function
+        # def loopover(mixed_up_board, solved_board):
+        #     return Cyclic_shift_board(mixed_up_board).solve(solved_board)
+        #
+        # # deprec: run_test & board these function was copied and adjusted from the
+        # #  kata's tests to emulate the behaviour. With unittests, this is obsolete
+        # #  and unnecessary tedious.
+        # def board(strboard):
+        #     return [list(row) for row in strboard.split('\n')]
+        #
+        # def run_test(start, end, unsolvable):
+        #
+        #     # print_info(board(start), board(end))
+        #     moves = loopover(board(start), board(end))
+        #     if unsolvable:
+        #         assert moves is None  # 'Unsolvable configuration
+        #
+        #     else:
+        #         moves = tuple(moves)
+        #         assert Cyclic_shift_board(board(start)).debug_check(moves, board(end)) == True
+        #
+        pass
+
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(exit=False)

@@ -2,7 +2,6 @@ import unittest
 from Loopover.StrategyToprow import StrategyToprow
 from Loopover.StrategyLiftshift import StrategyLiftshift
 from Loopover.Cyclic_shift import Cyclic_shift_board
-# TODO: as input to the test_cases
 
 
 class TestStrategies(unittest.TestCase):
@@ -46,4 +45,4 @@ class TestStrategies(unittest.TestCase):
         pass
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(exit=False)
