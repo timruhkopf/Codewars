@@ -1,6 +1,6 @@
 import unittest
 
-from Lift import Lift
+from TheLift.Lift import Lift
 from TheLift.Kata_translation import Dinglemouse
 
 
@@ -34,7 +34,10 @@ class TestTheLift(unittest.TestCase):
         lift._exit_lift()
         self.assertEqual(lift.load, [6, 5])
 
-    def test_next_floor(self):
+    def test_up_next_floor(self):
+        pass
+
+    def test_down_next_floor(self):
         pass
 
     def test_move_up(self):
@@ -46,20 +49,19 @@ class TestTheLift(unittest.TestCase):
     def test_move_switch_directions(self):
         pass
 
-    def test_Dinglemouse_interface(self):
-        pass
 
     def test_kata_examples(self):
+        """using the kata's interface: Dinglemouse"""
         tests = [[((), (), (5, 5, 5), (), (), (), ()), [0, 2, 5, 0]],
                  [((), (), (1, 1), (), (), (), ()), [0, 2, 1, 0]],
                  [((), (3,), (4,), (), (5,), (), ()), [0, 1, 2, 3, 4, 5, 0]],
                  [((), (0,), (), (), (2,), (3,), ()), [0, 5, 4, 3, 2, 1, 0]]]
 
         for queues, answer in tests:
-            lift = Dinglemouse(queues, capacity=5)
-            self.assertEqual(lift.theLift(), answer)
+            dingle = Dinglemouse(queues, capacity=5)
+            self.assertEqual(dingle.theLift(), answer)
 
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(exit=False)
