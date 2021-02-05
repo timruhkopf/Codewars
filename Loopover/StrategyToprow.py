@@ -126,7 +126,7 @@ class StrategyToprow:
         # sorted(graphs, key=lambda x: (len(x) % 2 == 0, len(x))) # not applicable
         for g in sorted(graphs, key=len):
             subgraphs = StrategyToprow.split_subgraphs(g)
-
+            print(subgraphs, sum([len(s) + 1 for s in subgraphs]))
             # simple solution even number of steps across subgraph(s)
             if sum([len(s) + 1 for s in subgraphs]) % 2 == 0:
                 # even number of total steps, immediate solution; execute all subgraphs

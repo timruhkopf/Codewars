@@ -112,7 +112,7 @@ class Test_Cyclic_shift(unittest.TestCase):
             c.solution = []
             solution = c.solve(base_board)
 
-            d =  Cyclic_shift_board(board(scrambled))
+            d = Cyclic_shift_board(board(scrambled))
             for direction in solution:
                 d.shift(direction)
 
@@ -142,6 +142,108 @@ class Test_Cyclic_shift(unittest.TestCase):
         run_test('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI',
                  'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', True)
 
+    def test_failing_cases(self):
+
+        # 1)
+        p1 = """AXUCWYH
+        RLSOMbB
+        JIGTNFP
+        ZQVEaDK"""
+
+        s1 = """ABCDEFG
+        HIJKLMN
+        OPQRSTU
+        VWXYZab"""
+
+        # 2)
+        p2 = """JZNGeMFaD
+        cPQfYTViK
+        gEBbhjRUd
+        LISOHXCAW"""
+
+        s2 = """ABCDEFGHI
+        JKLMNOPQR
+        STUVWXYZa
+        bcdefghij"""
+
+        # 3)
+        p3 = """VFYEHWG
+        BTKAUJS
+        IaOLRCZ
+        bPDNQMX"""
+
+        s3 = """ABCDEFG
+        HIJKLMN
+        OPQRSTU
+        VWXYZab"""
+
+        # 4)
+        p4 = """JqQxXeN
+        ErLId2p
+        olWcig3
+        tTUMnRs
+        ZVGyawk
+        j0AzbF1
+        DBYSCPm
+        fvHKOuh"""
+
+        s4 = """ABCDEFG
+        HIJKLMN
+        OPQRSTU
+        VWXYZab
+        cdefghi
+        jklmnop
+        qrstuvw
+        xyz0123"""
+
+        # 5)
+        p5 = """EFA
+        IBC
+        GDK
+        HLJ"""
+
+        s5 = """ABC
+        DEF
+        GHI
+        JKL"""
+
+        # 6)
+        p6 = """jSWkCbY
+        hwOzpiL
+        dvF3Jgr
+        qltBcm1
+        MRZsEHa
+        eInAfKQ
+        XoPTxGU
+        DVyuN20"""
+
+        s6 = """ABCDEFG
+        HIJKLMN
+        OPQRSTU
+        VWXYZab
+        cdefghi
+        jklmnop
+        qrstuvw
+        xyz0123"""
+
+        # 7)
+        p7 = """CNHLSYT
+        AUJEXBa
+        WODRbPK
+        QIVFGMZ"""
+
+        s7 = """ABCDEFG
+        HIJKLMN
+        OPQRSTU
+        VWXYZab"""
+
+        for p, s in zip([p1, p2, p3, p4, p5, p6, p7],
+                        [s1, s2, s3, s4, s5, s6, s7]):
+            p = board(p.replace(' ', ''))
+            s = board(s.replace(' ', ''))
+            c = Cyclic_shift_board(p)
+            c.solve(s)
+            self.assertEqual([row.toList() for row in c.rows], s)
 
 
 if __name__ == '__main__':
