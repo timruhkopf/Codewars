@@ -50,10 +50,15 @@ class Cyclic_shift_board(Debugbehaviour):
         if self.solved_board[0] != self.rows[0].toList():
             StrategyToprow.executeStrategy(self)
 
-        if self.solved_board != [row.toList() for row in self.rows]:  # unsolvable
-            return None
+        if self.solved_board != self.toList():  # not solved yet
+            return None  # unsolvable
+
         else:
             return self.solution
+
+    def toList(self):
+        return [[letter for letter in row] for row in str(self).replace(' ', '').split('\n')]
+
 
 def loopover(mixed_up_board, solved_board):
     return Cyclic_shift_board(mixed_up_board).solve(solved_board)
