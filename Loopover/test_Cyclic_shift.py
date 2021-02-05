@@ -73,33 +73,33 @@ class Test_Cyclic_shift(unittest.TestCase):
         solved_board_True = board('ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789')
         check_solved(self, base_board, solved_board_True)
 
-    # def test_unsolvables(self):
-    #     # @test.it('Test 5x5 (unsolvable)')
-    #     c = Cyclic_shift_board(board('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI'))
-    #     self.assertIsNone(c.solve(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY')))
-    #
-    #     # 5 x 5
-    #     c = Cyclic_shift_board(board("""AQYEH BUXKF WVTLP JCDMR IONGS""".replace(' ', '\n')))
-    #     self.assertIsNone(c.solve(board("""ABCDE FGHIJ KLMNO PQRST UVWXY""".replace(' ', '\n'))))
-    #
-    #     # 5 x 9
-    #     c = Cyclic_shift_board(board("""PBMnj ZVToq JCpLH UeFDR imIfG WKEON csAgr laYhX dQkSb""".replace(' ', '\n')))
-    #     self.assertIsNone(
-    #         c.solve(board("""ABCDE FGHIJ KLMNO PQRST UVWXY Zabcd efghi jklmn opqrs""".replace(' ', '\n'))))
-    #
-    #     # 7 x 7
-    #     c = Cyclic_shift_board(board("""dMeuTgG ncfiVZo FJRNbLH OPDEKvj ltXpUhq AWSIQmr kwaYBCs""".replace(' ', '\n')))
-    #     self.assertIsNone(
-    #         c.solve(board("""ABCDEFG HIJKLMN OPQRSTU VWXYZab cdefghi jklmnop qrstuvw""".replace(' ', '\n'))))
-    #
-    #     # 9 x 9
-    #     c = Cyclic_shift_board(board(
-    #         """enwξfxWχλ Zh1cv4qωR ρ3TEFψπMJ KmDiεHCγG η7IXA2Uzk 0NβpVB8Yb αuθ6tφdδσ 5LμaOjζsS lyPg9rQνo""".replace(' ',
-    #                                                                                                                 '\n')))
-    #     self.assertIsNone(
-    #         c.solve(board(
-    #             """ABCDEFGHI JKLMNOPQR STUVWXYZa bcdefghij klmnopqrs tuvwxyz01 23456789α βγδεζηθλμ νξπρσφχψω""".replace(
-    #                 ' ', '\n'))))
+    def test_unsolvables(self):
+        # @test.it('Test 5x5 (unsolvable)')
+        c = Cyclic_shift_board(board('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI'))
+        self.assertIsNone(c.solve(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY')))
+
+        # 5 x 5
+        c = Cyclic_shift_board(board("""AQYEH BUXKF WVTLP JCDMR IONGS""".replace(' ', '\n')))
+        self.assertIsNone(c.solve(board("""ABCDE FGHIJ KLMNO PQRST UVWXY""".replace(' ', '\n'))))
+
+        # 5 x 9
+        c = Cyclic_shift_board(board("""PBMnj ZVToq JCpLH UeFDR imIfG WKEON csAgr laYhX dQkSb""".replace(' ', '\n')))
+        self.assertIsNone(
+            c.solve(board("""ABCDE FGHIJ KLMNO PQRST UVWXY Zabcd efghi jklmn opqrs""".replace(' ', '\n'))))
+
+        # 7 x 7
+        c = Cyclic_shift_board(board("""dMeuTgG ncfiVZo FJRNbLH OPDEKvj ltXpUhq AWSIQmr kwaYBCs""".replace(' ', '\n')))
+        self.assertIsNone(
+            c.solve(board("""ABCDEFG HIJKLMN OPQRSTU VWXYZab cdefghi jklmnop qrstuvw""".replace(' ', '\n'))))
+
+        # 9 x 9
+        c = Cyclic_shift_board(board(
+            """enwξfxWχλ Zh1cv4qωR ρ3TEFψπMJ KmDiεHCγG η7IXA2Uzk 0NβpVB8Yb αuθ6tφdδσ 5LμaOjζsS lyPg9rQνo""".replace(' ',
+                                                                                                                    '\n')))
+        self.assertIsNone(
+            c.solve(board(
+                """ABCDEFGHI JKLMNOPQR STUVWXYZa bcdefghij klmnopqrs tuvwxyz01 23456789α βγδεζηθλμ νξπρσφχψω""".replace(
+                    ' ', '\n'))))
 
     def test_random_tests6x6(self):
         # 6 x 6
