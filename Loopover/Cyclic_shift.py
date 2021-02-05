@@ -39,7 +39,8 @@ class Cyclic_shift_board(Debugbehaviour):
 
         self.solution = []  # reset previous solution
         self.solved_board = solved_board
-        Node.target = {val: (r, c) for r, row in enumerate(solved_board) for c, val in enumerate(row)}
+        Node.target = {val: (r, c) for r, row in enumerate(solved_board)
+                       for c, val in enumerate(row)}
 
         StrategyLiftshift.executeStrategy(self)
 
@@ -54,7 +55,8 @@ class Cyclic_shift_board(Debugbehaviour):
         else:
             return self.solution
 
-
+def loopover(mixed_up_board, solved_board):
+    return Cyclic_shift_board(mixed_up_board).solve(solved_board)
 
 if __name__ == '__main__':
     def board(strboard):

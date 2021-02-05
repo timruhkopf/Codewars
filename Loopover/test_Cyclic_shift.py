@@ -1,116 +1,143 @@
 import unittest
-from Loopover.Cyclic_shift import Cyclic_shift_board
+from Loopover.Cyclic_shift import Cyclic_shift_board, loopover
 
 
-class TestCyclic_shift(unittest.TestCase):
-    def test_Calibration(self):
-        #   # # (CALIBRATION TEST) -----------------------------------------------------
-        #     # c = Cyclic_shift_board(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'))
-        #     # c.shift('L0')
-        #     # assert (c.solution[-1] == 'L0')
-        #     # c.shift('R0')
-        #     # assert (c.solution[-1] == 'R0')
-        #     # c.shift('D0')
-        #     # assert (c.solution[-1] == 'D0')
-        #     # c.shift('U0')
-        #     # assert (c.solution[-1] == 'U0')
-        pass
+def board(strboard):
+    return [list(row) for row in strboard.split('\n')]
 
-    def test_unsolvables(self):
-        #  # @test.it('Test 5x5 (unsolvable)')
-        #     run_test('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI',
-        #              'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', True)
-        #
-        #     run_test("""AQYEH BUXKF WVTLP JCDMR IONGS""".replace(' ', '\n'),
-        #              """ABCDE FGHIJ KLMNO PQRST UVWXY""".replace(' ', '\n'), True)
-        #
-        #     # 5x9
-        #     run_test("""PBMnj ZVToq JCpLH UeFDR imIfG WKEON csAgr laYhX dQkSb""".replace(' ', '\n'),
-        #              """ABCDE FGHIJ KLMNO PQRST UVWXY Zabcd efghi jklmn opqrs""".replace(' ', '\n'), True)
-        #
-        #     # 9x9
-        #     run_test(
-        #         """enwξfxWχλ Zh1cv4qωR ρ3TEFψπMJ KmDiεHCγG η7IXA2Uzk 0NβpVB8Yb αuθ6tφdδσ 5LμaOjζsS lyPg9rQνo""".replace(' ',
-        #                                                                                                                 '\n'),
-        #         """ABCDEFGHI JKLMNOPQR STUVWXYZa bcdefghij klmnopqrs tuvwxyz01 23456789α βγδεζηθλμ νξπρσφχψω""".replace(' ',
-        #                                                                                                                 '\n'),
-        #         True)
-        #
-        #     # 7x7
-        #     run_test("""dMeuTgG ncfiVZo FJRNbLH OPDEKvj ltXpUhq AWSIQmr kwaYBCs""".replace(' ', '\n'),
-        #              """ABCDEFG HIJKLMN OPQRSTU VWXYZab cdefghi jklmnop qrstuvw""".replace(' ', '\n'), True)
-        pass
+
+def check_solved(self, base_board, solved_board_True):
+    c = Cyclic_shift_board(base_board)
+    solution = c.solve(solved_board_True)
+
+    d = Cyclic_shift_board(base_board)
+    for direction in solution:
+        d.shift(direction)
+    solved_board = d.__repr__().replace(' ', '')
+    self.assertEqual(solved_board_True, solved_board)
+
+
+class Test_Cyclic_shift(unittest.TestCase):
+    def test_Calibration_RowShift(self):
+        """check that the playable behavior of the board works as expected"""
+        board = [
+            ['A', 'B', 'C', 'D', 'E'],
+            ['F', 'G', 'H', 'I', 'J'],
+            ['K', 'L', 'M', 'N', 'O'],
+            ['P', 'Q', 'R', 'S', 'T']]
+        c = Cyclic_shift_board(board)
+
+        c.shift('L0')
+        self.assertEqual(c.solution[-1], 'L0')
+        c.shift('U0')
+        self.assertEqual(c.solution[-1], 'U0')
+        c.shift('R0')
+        self.assertEqual(c.solution[-1], 'R0')
+        c.shift('D0')
+        self.assertEqual(c.solution[-1], 'D0')
+
+        self.assertEqual(c.solution, ['L0', 'U0', 'R0', 'D0'])
+        self.assertEqual(c.__repr__(), 'B F C D E\nA G H I J\nK L M N O\nP Q R S T')
+
+    def test_Calibration_DebugShift(self):
+        """testing Debugbehaviour.shift does the exact same thing as Row.shift"""
+        board = [
+            ['A', 'B', 'C', 'D', 'E'],
+            ['F', 'G', 'H', 'I', 'J'],
+            ['K', 'L', 'M', 'N', 'O'],
+            ['P', 'Q', 'R', 'S', 'T']]
+        c = Cyclic_shift_board(board)
+
+        c.rows[0].shift(-1)  # L0
+        c.cols[0].shift(1)  # U0
+        c.rows[0].shift(1)  # R0
+        c.cols[0].shift(-1)  # D0
+
+        self.assertEqual(c.solution, ['L0', 'U0', 'R0', 'D0'])
+        self.assertEqual(c.__repr__(), 'B F C D E\nA G H I J\nK L M N O\nP Q R S T')
 
     def test_solve_simple(self):
-        # # @test.it('Test 2x2 (1)')
-        # run_test('12\n34', '12\n34', False)
-        #
-        # # @test.it('Test 2x2 (2)')
-        # run_test('42\n31', '12\n34', False)
-
-        # # @test.it('Test 5x5 (2)')
-        # run_test('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY',
-        #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
-        pass
+        check_solved(self, board('12\n34'), '12\n34')
+        check_solved(self, board('42\n31'), '12\n34')
+        check_solved(self, board('ABCDE\nKGHIJ\nPLMNO\nFQRST\nUVWXY'),
+                     'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY')
 
     def test_solve(self):
-        # # @test.it('Test 5x5 (3)')
-        # run_test('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI',
-        #          'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
-        #
+        # 5 x 5
+        base_board = board('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI')
+        solved_board_True = board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY')
+        check_solved(self, base_board, solved_board_True)
+
         # # @test.it('Test 6x6')
-        # run_test('WCMDJ0\nORFBA1\nKNGLY2\nPHVSE3\nTXQUI4\nZ56789',
-        #          'ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789', False)
-        pass
+        base_board = board('WCMDJ0\nORFBA1\nKNGLY2\nPHVSE3\nTXQUI4\nZ56789')
+        solved_board_True = board('ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789')
+        check_solved(self, base_board, solved_board_True)
 
-    def test_random_tests(self):
-        # # 5x5
-        # c = Cyclic_shift_board(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY'))
-        # c.__repr__()
-        # scrambled = c.shuffle(100)
-        # c.solve(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY'))
+    def test_unsolvables(self):
+        # @test.it('Test 5x5 (unsolvable)')
+        c = Cyclic_shift_board(board('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI'))
+        self.assertIsNone(c.solve(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY')))
 
-        # # 6x6
-        # c = Cyclic_shift_board(board('ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789'))
-        # c.shuffle(100)
-        # c.solve(board(('ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789')))
-        pass
+        # 5 x 5
+        c = Cyclic_shift_board(board("""AQYEH BUXKF WVTLP JCDMR IONGS""".replace(' ', '\n')))
+        self.assertIsNone(c.solve(board("""ABCDE FGHIJ KLMNO PQRST UVWXY""".replace(' ', '\n'))))
 
-    # (DEBUGBEHAVIOUR) ---------------------------------------------------------
+        # 5 x 9
+        c = Cyclic_shift_board(board("""PBMnj ZVToq JCpLH UeFDR imIfG WKEON csAgr laYhX dQkSb""".replace(' ', '\n')))
+        self.assertIsNone(
+            c.solve(board("""ABCDE FGHIJ KLMNO PQRST UVWXY Zabcd efghi jklmn opqrs""".replace(' ', '\n'))))
 
+        # 7 x 7
+        c = Cyclic_shift_board(board("""dMeuTgG ncfiVZo FJRNbLH OPDEKvj ltXpUhq AWSIQmr kwaYBCs""".replace(' ', '\n')))
+        self.assertIsNone(
+            c.solve(board("""ABCDEFG HIJKLMN OPQRSTU VWXYZab cdefghi jklmnop qrstuvw""".replace(' ', '\n'))))
 
-    def test_shift(self):
-        pass
+        # 9 x 9
+        c = Cyclic_shift_board(board(
+            """enwξfxWχλ Zh1cv4qωR ρ3TEFψπMJ KmDiεHCγG η7IXA2Uzk 0NβpVB8Yb αuθ6tφdδσ 5LμaOjζsS lyPg9rQνo""".replace(' ',
+                                                                                                                    '\n')))
+        self.assertIsNone(
+            c.solve(board(
+                """ABCDEFGHI JKLMNOPQR STUVWXYZa bcdefghij klmnopqrs tuvwxyz01 23456789α βγδεζηθλμ νξπρσφχψω""".replace(
+                    ' ', '\n'))))
 
-    def test_shuffle(self):
-        pass
+    def test_random_tests6x6(self):
+        # 6 x 6
+        b = 'ABCDEF\nGHIJKL\nMNOPQR\nSTUVWX\nYZ0123\n456789'
+        base_board = board(b)
+        for repeat in range(5):
+            c = Cyclic_shift_board(base_board)
+            scrambled = c.shuffle(100)
+            solution = c.solve(base_board)
 
-    def test_debug_check(self):
-        pass
+            for direction in solution:
+                c.shift(direction)
+            solved_board = c.__repr__().replace(' ', '')
+            self.assertEqual(b, solved_board)
 
     def test_kata_interface(self):
         # DEBUG INTERFACE: The kata requires a loopover function
-        # def loopover(mixed_up_board, solved_board):
-        #     return Cyclic_shift_board(mixed_up_board).solve(solved_board)
-        #
-        # # deprec: run_test & board these function was copied and adjusted from the
-        # #  kata's tests to emulate the behaviour. With unittests, this is obsolete
-        # #  and unnecessary tedious.
-        # def board(strboard):
-        #     return [list(row) for row in strboard.split('\n')]
-        #
-        # def run_test(start, end, unsolvable):
-        #
-        #     # print_info(board(start), board(end))
-        #     moves = loopover(board(start), board(end))
-        #     if unsolvable:
-        #         assert moves is None  # 'Unsolvable configuration
-        #
-        #     else:
-        #         moves = tuple(moves)
-        #         assert Cyclic_shift_board(board(start)).debug_check(moves, board(end)) == True
-        #
-        pass
+
+        #  run_test & board these function was copied and adjusted from the
+        #  kata's tests to emulate the behaviour. With unittests, this is obsolete
+        #  and unnecessary tedious.
+        def run_test(start, end, unsolvable):
+
+            # print_info(board(start), board(end))
+            moves = loopover(board(start), board(end))
+            if unsolvable:
+                self.assertIsNone(moves)  # 'Unsolvable configuration
+
+            else:
+                moves = tuple(moves)
+                self.assertEqual(Cyclic_shift_board(board(start)).debug_check(moves, board(end)), True)
+
+        run_test('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI',
+                 'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', False)
+
+        run_test('WCMDJ\nORFBA\nKNGLY\nPHVSE\nTXQUI',
+                 'ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY', True)
+
 
 
 if __name__ == '__main__':
