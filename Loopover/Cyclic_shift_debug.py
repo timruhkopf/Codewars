@@ -14,8 +14,6 @@ class Debugbehaviour:
         board = {'L': self.rows, 'R': self.rows, 'D': self.cols, 'U': self.cols}[direct]
         board[int(pos)].shift(direction=self.direct[direct])
 
-        # print(self)
-
     def shuffle(self, steps):
         """method to create random tests"""
         from random import sample

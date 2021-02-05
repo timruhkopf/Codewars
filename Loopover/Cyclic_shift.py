@@ -1,14 +1,11 @@
 from Loopover.StrategyLiftshift import StrategyLiftshift
 from Loopover.StrategyToprow import StrategyToprow
-from Loopover.Row import Row, Node
+from Loopover.Row import Row, Column, Node
 from Loopover.Cyclic_shift_debug import Debugbehaviour
 
 
-# FIXME: multiple consecutive tests fail for an unidentified reason. eventhough
-#  on their own, the solution is valid
-
 class Cyclic_shift_board(Debugbehaviour):
-    direct = {'L': -1, 'R': 1, 'D': 1, 'U': -1}
+    direct = {'L': -1, 'R': 1, 'D': -1, 'U': 1}
 
     def __init__(self, mixed_up_board):
         """
@@ -25,10 +22,12 @@ class Cyclic_shift_board(Debugbehaviour):
         Node.current = {val: (r, c) for r, row in enumerate(mixed_up_board) for c, val in enumerate(row)}
 
         # Create a playable board
-        self.rows = [Row([Node((r, c), val) for c, val in enumerate(row)], r, True) for r, row in
+        self.rows = [Row([Node((r, c), val) for c, val in enumerate(row)], r, self) for r, row in
                      enumerate(mixed_up_board)]
-        self.cols = [Row(col, c, False) for c, col in enumerate(zip(*reversed(self.rows)))]
+        self.cols = [Column(col, c, self) for c, col in enumerate(zip(*reversed(self.rows)))]
         self.rdim, self.cdim = len(self.rows[0]), len(self.cols[0])
+
+        self.solution = []  # reset previous solution
 
     def __repr__(self):
         return '\n'.join([' '.join([str(val) for val in row]) for row in self.rows])
@@ -38,6 +37,7 @@ class Cyclic_shift_board(Debugbehaviour):
            grid into the solved one. All values of the scrambled and unscrambled
            grids will be unique! Moves will be 2 character long Strings"""
 
+        self.solution = []  # reset previous solution
         self.solved_board = solved_board
         Node.target = {val: (r, c) for r, row in enumerate(solved_board) for c, val in enumerate(row)}
 
@@ -54,10 +54,11 @@ class Cyclic_shift_board(Debugbehaviour):
         else:
             return self.solution
 
-    @property
-    def solution(self):
-        return Row.Solution
 
 
 if __name__ == '__main__':
-   pass
+    def board(strboard):
+        return [list(row) for row in strboard.split('\n')]
+
+
+    c = Cyclic_shift_board(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'))
