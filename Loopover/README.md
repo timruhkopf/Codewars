@@ -119,10 +119,10 @@ Before progressing to solve the board, the target configuration is translated
 to the same dictionary format as before ( {value:position} ) and placed 
 into **_Node.target_**. This allows to easily obtain a value's target position.
 
-Afterwards, two strategies are applied that have different focuses on the board. 
+Afterwards, up to three strategies are applied that have different focuses on the board. 
 From an implementational point of view, the ['Strategy Design Pattern'][1]
 is used for each of them. The board's solve method more or less merely delegates 
-to these Strategies.
+to these following Strategies. 
 
 ### (1) Liftshift
 
@@ -178,6 +178,8 @@ added to ensure even count of ups and downs -->
 
 Initialisation of the algorithm. & wildcards  
 Criteria for a solve graph (and what does not suffice)
+
+### (3) Transposed solving
 
 ### Use Case
 

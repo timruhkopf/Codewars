@@ -1,5 +1,6 @@
 from Loopover.StrategyLiftshift import StrategyLiftshift
 from Loopover.StrategyToprow import StrategyToprow
+from Loopover.StrategyTranspose import Strategy_Transpose
 from Loopover.Row import Row, Column, Node
 from Loopover.Cyclic_shift_debug import Debugbehaviour
 
