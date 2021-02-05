@@ -1,11 +1,5 @@
 import unittest
 
-from Loopover.StrategyLiftshift import StrategyLiftshift
-
-
-def board(strboard):
-    return [list(row) for row in strboard.split('\n')]
-
 
 class Test_StrategyLiftshift(unittest.TestCase):
     def test_Liftshift(self):

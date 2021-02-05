@@ -1,9 +1,7 @@
 import unittest
-from Loopover.Cyclic_shift import Cyclic_shift_board, loopover
 
-
-def board(strboard):
-    return [list(row) for row in strboard.split('\n')]
+from Loopover.Board.Cyclic_shift import Cyclic_shift_board, loopover
+from Loopover.Board.Cyclic_shift_debug import board
 
 
 def check_solved(self, base_board, solved_board_True):

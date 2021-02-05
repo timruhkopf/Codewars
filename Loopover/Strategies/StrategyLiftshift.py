@@ -1,4 +1,5 @@
-from Loopover.Row import Node
+from ..Board.Row import Node
+
 
 class StrategyLiftshift:
     def executeStrategy(board):

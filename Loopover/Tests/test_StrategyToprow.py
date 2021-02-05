@@ -1,13 +1,9 @@
 import unittest
-from Loopover.StrategyToprow import StrategyToprow
-from Loopover.StrategyLiftshift import StrategyLiftshift
-from Loopover.Cyclic_shift import Cyclic_shift_board
 
-from Loopover.Row import Row, Node
-
-
-def board(strboard):
-    return [list(row) for row in strboard.split('\n')]
+from Loopover.Board.Cyclic_shift import Cyclic_shift_board
+from Loopover.Board.Cyclic_shift_debug import board
+from Loopover.Board.Row import Row, Node
+from Loopover.Strategies.StrategyToprow import StrategyToprow
 
 
 class TestStrategies(unittest.TestCase):

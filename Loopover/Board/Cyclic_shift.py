@@ -1,8 +1,6 @@
-from Loopover.StrategyLiftshift import StrategyLiftshift
-from Loopover.StrategyToprow import StrategyToprow
-from Loopover.StrategyTranspose import Strategy_Transpose
-from Loopover.Row import Row, Column, Node
-from Loopover.Cyclic_shift_debug import Debugbehaviour
+from .Cyclic_shift_debug import Debugbehaviour
+from .Row import Row, Column, Node
+from ..Strategies import StrategyLiftshift, StrategyToprow
 
 
 class Cyclic_shift_board(Debugbehaviour):
@@ -64,9 +62,9 @@ class Cyclic_shift_board(Debugbehaviour):
 def loopover(mixed_up_board, solved_board):
     return Cyclic_shift_board(mixed_up_board).solve(solved_board)
 
+
 if __name__ == '__main__':
-    def board(strboard):
-        return [list(row) for row in strboard.split('\n')]
+    from .Cyclic_shift_debug import board
 
     # BASIC USEAGE:
     c = Cyclic_shift_board(board('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI'))

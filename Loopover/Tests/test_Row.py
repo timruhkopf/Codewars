@@ -1,11 +1,11 @@
 import unittest
-from Loopover.Row import Row, Column, Node
+
+from Loopover.Board.Row import Row, Column, Node
 
 
 class TestRow(unittest.TestCase):
 
     def test_toList(self):
-
         row = Row([Node(position=(1, c), value=v) for c, v in enumerate('ABCDE')], ind=0, context=None)
         self.assertEqual(row.toList(), ['A', 'B', 'C', 'D', 'E'])
 
@@ -13,7 +13,7 @@ class TestRow(unittest.TestCase):
         class Context:
             solution = []
 
-        context = Context() # to check the context awareness of Row
+        context = Context()  # to check the context awareness of Row
 
         row = Row([Node(position=(1, c), value=c) for c, node in enumerate(range(5))],
                   ind=0, context=context)

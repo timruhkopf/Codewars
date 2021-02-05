@@ -1,11 +1,9 @@
 import unittest
 
-from Loopover.Cyclic_shift import Cyclic_shift_board
-from Loopover.StrategyTranspose import Strategy_Transpose
+from Loopover.Board.Cyclic_shift import Cyclic_shift_board
+from Loopover.Board.Cyclic_shift_debug import board
+from Loopover.Strategies.StrategyTranspose import StrategyTranspose
 
-
-def board(strboard):
-    return [list(row) for row in strboard.split('\n')]
 
 class Test_StrategyTranspose(unittest.TestCase):
 
@@ -131,10 +129,11 @@ class Test_StrategyTranspose(unittest.TestCase):
             c = Cyclic_shift_board(p)
             c.solved_board = s
 
-            Strategy_Transpose.execute_strategy(c)
+            StrategyTranspose.execute_strategy(c)
             self.assertEqual(c.toList(), c.solved_board)  # solution is also transposed
 
-            # ensure that the board can be solved using the translated solution
+            # ensure that the original board can be solved using the translated
+            # 'transposed' solution
             d = Cyclic_shift_board(p)
             d.solved_board = s
 
@@ -142,7 +141,6 @@ class Test_StrategyTranspose(unittest.TestCase):
                 d.shift(step)
 
             self.assertEqual(c.toList(), c.solved_board)  # solution is also transposed
-
 
 
 if __name__ == '__main__':

@@ -36,3 +36,7 @@ class Debugbehaviour:
             # print('\n')
 
         return all([solved_board[r] == [str(val) for val in self.rows[r]] for r in range(self.cdim)])
+
+
+def board(strboard):
+    return [list(row) for row in strboard.split('\n')]

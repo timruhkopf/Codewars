@@ -1,4 +1,4 @@
-class Strategy_Transpose:
+class StrategyTranspose:
     def execute_strategy(board):
         # TODO board.solve has to decide when to use Transpose.
         #  Be carefull not to create a loop!
@@ -15,7 +15,7 @@ class Strategy_Transpose:
         board.solved_board = solved_board
 
         # TODO: translate solution
-        board.solution = Strategy_Transpose.translate_solution(solution)
+        board.solution = StrategyTranspose.translate_solution(solution)
 
     @staticmethod
     def translate_solution(solution):
@@ -24,4 +24,4 @@ class Strategy_Transpose:
         As consequence the solution must be translated."""
 
         translation = {'L': 'U', 'R': 'D', 'U': 'L', 'D': 'R'}
-        return [translation[letter] + ind for letter,ind in solution]
+        return [translation[letter] + ind for letter, ind in solution]
