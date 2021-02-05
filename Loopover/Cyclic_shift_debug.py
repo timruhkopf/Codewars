@@ -30,12 +30,9 @@ class Debugbehaviour:
         return '\n'.join([''.join([node.value for node in row]) for row in self.rows])
 
     def debug_check(self, moves, solved_board):
-        # self.shape = len(self.mixed_up_board), len(self.mixed_up_board[0])
-        # self.nodes = {node.position: node for node in chain(*self.rows)}
-
         for move in moves:
             self.shift(move)
-            print(self)
-            print('\n')
+            # print(self)
+            # print('\n')
 
         return all([solved_board[r] == [str(val) for val in self.rows[r]] for r in range(self.cdim)])

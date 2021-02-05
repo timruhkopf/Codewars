@@ -62,5 +62,6 @@ if __name__ == '__main__':
     def board(strboard):
         return [list(row) for row in strboard.split('\n')]
 
-
-    c = Cyclic_shift_board(board('ACDBE\nFGHIJ\nKLMNO\nPQRST'))
+    # BASIC USEAGE:
+    c = Cyclic_shift_board(board('CWMFJ\nORDBA\nNKGLY\nPHSVE\nXTQUI'))
+    c.solve(board('ABCDE\nFGHIJ\nKLMNO\nPQRST\nUVWXY'))
