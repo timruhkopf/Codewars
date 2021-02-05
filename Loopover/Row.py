@@ -12,10 +12,13 @@ class Node:
     def __repr__(self):
         return str(self.value)
 
+class Context:
+    # Default only for test cases, to initalise Row with no context
+    solution = []
 
 class Row(list):
     direct = ('L', 'R')
-    context = []
+    context = Context()
 
     def __init__(self, iterable, ind, context=None):
         """
@@ -66,6 +69,7 @@ class Row(list):
 
 class Column(Row):
     direct = ('D', 'U')
+    context = Context()
 
     def __init__(self, iterable, ind, context=None):
         """
