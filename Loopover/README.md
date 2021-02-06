@@ -215,12 +215,13 @@ Criteria for a solve graph (and what does not suffice)
 
 (*) make StrategyTranspose a method class decorator for solve
 
+(*) make the entire Toprow graph selection process generators.
+
 (*) There must be a less verbose solution based on the very same insights from the graph approach. A good place to start
-is a cherry pick to commit:
-specific solution to avoid the subgraph & choose strategy calculation. This strategy takes a graph - that may consist of
-closed subgraphs and moves according to it. In this variant, care must be taken to ensure once the closed subgraph is
-traversed, the last u is countered with a starting d or vice versa. Are all graphs valid? only with an even row (or
-column) length?
+is StrategyToprow_short: specific solution to avoid the subgraph & choose strategy calculation. This strategy takes a
+graph - that may consist of closed subgraphs and moves according to it. In this variant, care must be taken to ensure
+once the closed subgraph is traversed, the last u is countered with a starting d or vice versa. Are all graphs valid?
+only with an even row (or column) length? - Is transpose solving sufficient?
 
 [0] https://www.codewars.com/kata/5c1d796370fee68b1e000611/train/python  
 [1] https://refactoring.guru/design-patterns/strategy/python/example
