@@ -1,6 +1,6 @@
 from .Cyclic_shift_debug import Debugbehaviour
 from .Row import Row, Column, Node
-from ..Strategies import StrategyLiftshift, StrategyToprow
+from ..Strategies import StrategyLiftshift, StrategyToprow, transpose
 
 
 class Cyclic_shift_board(Debugbehaviour):
@@ -31,6 +31,7 @@ class Cyclic_shift_board(Debugbehaviour):
     def __repr__(self):
         return '\n'.join([' '.join([str(val) for val in row]) for row in self.rows])
 
+    @transpose
     def solve(self, solved_board):
         """Your task: return a List of moves that will transform the unsolved
            grid into the solved one. All values of the scrambled and unscrambled
