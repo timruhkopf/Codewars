@@ -5,6 +5,10 @@ def sudoku_solver(puzzle):
     return Sudoku(problem=puzzle).solve()
 
 
+# TODO: make a check functino, that cares only for the current state
+#  abandon sets - their updates take tooo damn long for multiple sudoku. Test cases
+#  work locally though
+
 class Sudoku:
     def __init__(self, problem):
         """
