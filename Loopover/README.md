@@ -209,5 +209,18 @@ Criteria for a solve graph (and what does not suffice)
      'U2', 'R0', 'D2', 'U1', 'R0', 'D1', 'U0', 'L0', 'D0', 'L0', 'L0', 'L0', 
      'U0', 'L0', 'D0', 'L0', 'U0', 'R0', 'R0', 'D0', 'R0', 'R0']        
 
+### Refactoring Ideas
+
+(*) move Row's Context class to Cyclic_shift_debug and import it
+
+(*) make StrategyTranspose a method class decorator for solve
+
+(*) There must be a less verbose solution based on the very same insights from the graph approach. A good place to start
+is a cherry pick to commit:
+specific solution to avoid the subgraph & choose strategy calculation. This strategy takes a graph - that may consist of
+closed subgraphs and moves according to it. In this variant, care must be taken to ensure once the closed subgraph is
+traversed, the last u is countered with a starting d or vice versa. Are all graphs valid? only with an even row (or
+column) length?
+
 [0] https://www.codewars.com/kata/5c1d796370fee68b1e000611/train/python  
 [1] https://refactoring.guru/design-patterns/strategy/python/example
