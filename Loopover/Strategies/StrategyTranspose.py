@@ -60,14 +60,11 @@ class StrategyTranspose:
         return [translation[letter] + ind for letter, ind in solution]
 
     def shouldtranspose(board):
-        """determine whether the board should be transposed.
-        Search for (if available) the even dimension and make that dimension
-        the rowmajor (by transposing if necessary):
-        e.g. rdim = 3, cdim = 4, then cdim is even dim and board should be solved columnmajor
-        rdim = 4, cdim = 3, rdim is even--> solve in rowmajor, no transpose needed.
-        rdim = 3, cdim = 3 neither is even. stick with rowmajor """
-        transposing = False  # default
-        even_dim = [board.rdim % 2 == 0, board.cdim % 2 == 0]
-        if any(even_dim):
-            transposing = [False, True][even_dim.index(True)]
-        return transposing
+        """determine whether the board should be transposed (has uneven rdim, but even cdim)"""
+        return board.rdim % 2 != 0 and board.cdim % 2 == 0
+
+        # transposing = False  # default
+        # even_dim = [board.rdim % 2 == 0, board.cdim % 2 == 0]
+        # if any(even_dim):
+        #     transposing = [False, True][even_dim.index(True)]
+        # return transposing
