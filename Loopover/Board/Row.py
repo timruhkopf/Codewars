@@ -1,5 +1,7 @@
 from collections import deque
 
+from .Cyclic_shift_debug import Context
+
 
 class Node:
     current = dict()
@@ -12,10 +14,6 @@ class Node:
     def __repr__(self):
         return str(self.value)
 
-
-class Context:
-    # Default only for test cases, to initalise Row with no context
-    solution = []
 
 
 class Row(list):

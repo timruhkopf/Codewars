@@ -38,5 +38,10 @@ class Debugbehaviour:
         return all([solved_board[r] == [str(val) for val in self.rows[r]] for r in range(self.cdim)])
 
 
+class Context:
+    # Default only for test cases, to initialise Row with no context
+    solution = []
+
+
 def board(strboard):
     return [list(row) for row in strboard.split('\n')]
