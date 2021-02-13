@@ -2,6 +2,8 @@ import unittest
 
 from ..Board.Game import Game
 from ..Board.Solution import Solution
+from ..Board.Solver import Solver
+from ..Strategies.StrategyCommunication import StrategyOpenZero
 from ..Util import board
 
 
@@ -24,8 +26,7 @@ class TestCommunication(unittest.TestCase):
         solution = Solution(board(result))
         for i in range(10):
             m = Game(board=solution.covered_board, n=solution.n, context=solution)
-            StrategyInitZeros.execute(m)  # TODO replace
-
+            StrategyOpenZero.execute(m)
             self.assertEqual(m.board, board(result))
 
     def test_CommunicationStrategy01(self):
@@ -41,13 +42,8 @@ class TestCommunication(unittest.TestCase):
         solution = Solution(board(result))
         for i in range(10):
             m = Game(board=solution.covered_board, n=solution.n, context=solution)
-            StrategyInitZeros.execute(m)
-
-            try:
-                self.assertEqual(m.board, board(result))
-            except:
-                print(m.anreiner)
-                print(m)
+            StrategyOpenZero.execute(m)
+            self.assertEqual(m.board, board(result))
 
     def test_CommunicationStrategy1(self):
         """only com. strategy is required to solve the board."""
@@ -65,11 +61,7 @@ class TestCommunication(unittest.TestCase):
 
         solution = Solution(board(result))
         for i in range(10):
-            m = Game(board=solution.covered_board, n=solution.n, context=solution)
-            try:
-                m.solve()
-                self.assertEqual(m.board, board(result))
-            except Exception as e:
-                print(e)
-                print(m)
-                print(m.anreiner)
+            # m = Game(board=solution.covered_board, n=solution.n, context=solution)
+            m = Solver(board=solution.covered_board, n=solution.n, context=solution)
+            m.solve()
+            self.assertEqual(m.board, board(result))

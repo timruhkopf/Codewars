@@ -147,35 +147,34 @@ class State_Clue(STATE):
                 if not isinstance(bomb, State_bomb):
                     bomb.STATE = State_bomb(bomb)
 
-
-if __name__ == '__main__':
-    from Minesweeper.StatePattern.Node import Node
-
-
-    class Context:
-        dim = (1, 2)
-        remain_bomb = 2
-
-        def open(self, r, c):
-            if (r, c) == (0, 0):
-                return 0
-            elif (r, c) == (0, 1):
-                return 1
-
-
-    n = Node(position=(0, 0), context=Context())  # context required for find_neighb
-    neighb = Node(position=(0, 1), context=Context())
-    neighb.neighbours == set(((0, 0),))
-    n.neighbours == set(((0, 1),))
-    n.neighb_inst = set([neighb, ])
-    n.questionmarks = set([neighb, ])
-    neighb.neighb_inst = set([n, ])
-    neighb.questionmarks = set([n, ])
-
-    n.__repr__()
-    [n.clue, neighb.clue] == [0, 1]
-
-    n.STATE = State_Clue(n, 0)
-    [n.clue, neighb.clue] == [0, 1]
-
-    n.__repr__()
+# if __name__ == '__main__':
+#     from Minesweeper.StatePattern.Node import Node
+#
+#
+#     class Context:
+#         dim = (1, 2)
+#         remain_bomb = 2
+#
+#         def open(self, r, c):
+#             if (r, c) == (0, 0):
+#                 return 0
+#             elif (r, c) == (0, 1):
+#                 return 1
+#
+#
+#     n = Node(position=(0, 0), context=Context())  # context required for find_neighb
+#     neighb = Node(position=(0, 1), context=Context())
+#     neighb.neighbours == set(((0, 0),))
+#     n.neighbours == set(((0, 1),))
+#     n.neighb_inst = set([neighb, ])
+#     n.questionmarks = set([neighb, ])
+#     neighb.neighb_inst = set([n, ])
+#     neighb.questionmarks = set([n, ])
+#
+#     n.__repr__()
+#     [n.clue, neighb.clue] == [0, 1]
+#
+#     n.STATE = State_Clue(n, 0)
+#     [n.clue, neighb.clue] == [0, 1]
+#
+#     n.__repr__()

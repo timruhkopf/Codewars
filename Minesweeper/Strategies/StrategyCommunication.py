@@ -1,4 +1,9 @@
-from .CommunicationStates import State_zero
+from .CommunicationStates import State_zero, State_Clue
+
+from ..Util import board
+
+
+# TODO refactor into Solver.solve() method
 
 
 class StrategyOpenZero:
@@ -56,8 +61,8 @@ if __name__ == '__main__':
     #       """
 
     result = """
-    x x 1 0
-    3 3 1 0
+    1 x 1 0
+    1 2 1 0
     x 1 0 0
     """
 

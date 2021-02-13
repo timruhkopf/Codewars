@@ -1,6 +1,6 @@
 from itertools import combinations
 
-from ..Board.Position import relentless
+from .StrategySuperset import relentless
 
 
 class StrategyEndgame:

@@ -1,7 +1,15 @@
 from itertools import product
 
-from ..Board.Position import relentless, Position
+def relentless(func):
+    def wrapper(self, *args):
+        before = True
+        after = False
+        while before != after:
+            before = str(self)
+            func(self, *args)
+            after = str(self)
 
+    return wrapper
 
 class StrategySuperset:
     def executeStrategy(Game):
@@ -40,11 +48,11 @@ class StrategySuperset:
 
                 # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state:
-                    Position.communicate_bombs(bombs=remain)
+                    Position.communicate_bombs(bombs=remain)  # FIXME deprec
 
             elif inst2._state - inst1._state == len(a.union(b) - a):
                 remain = a.union(b) - a
-                Position.communicate_bombs(bombs=remain)
+                Position.communicate_bombs(bombs=remain)  # FIXME deprec
 
         # TODO check if splitable here:
         #  @relentless
@@ -76,4 +84,4 @@ class StrategySuperset:
 
                     # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state - inst3._state:
-                    Position.communicate_bombs(bombs=remain)
+                    Position.communicate_bombs(bombs=remain)  # fixme: deprec
