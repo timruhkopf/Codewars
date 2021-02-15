@@ -46,14 +46,12 @@ class Strategy_Superset:
 
                 # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state:
-                    for b in remain:
-                        b.found_bomb()
-                    # Position.bombastic(bombs=remain)  # fixme
+                    game.mark_bomb(remain)
+                    # Position.bombastic(bombs=remain)  # Deprec
 
             elif inst2._state - inst1._state == len(a.union(b) - a):
                 remain = a.union(b) - a
-                for b in remain:
-                    b.found_bomb()
+                game.mark_bomb(remain)
                 # Position.bombastic(bombs=remain)  # deprec
 
     def tripple(game):
@@ -84,6 +82,5 @@ class Strategy_Superset:
 
                 # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state - inst3._state:
-                    for b in remain:
-                        b.found_bomb()
+                    game.mark_bomb(remain)
                     # Position.bombastic(bombs=remain)  # deprec

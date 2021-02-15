@@ -9,8 +9,7 @@ class Strategy_Endgame:
         remain_q = [_ for _ in game.clues.values() if _._clue == '?']
         # all remaining ? must be bombs due to count
         if game.remain_bomb == len(remain_q):
-            for b in remain_q:
-                b.found_bomb()
+            game.mark_bomb(remain_q)
 
         # open all when there are no bombs
         elif game.remain_bomb == 0 and len(remain_q) != 0:

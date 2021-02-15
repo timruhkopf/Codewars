@@ -28,9 +28,9 @@ class Game:
         self.clues = {(r, c): Node(position=(r, c), clue=board[r][c], context=self)
                       for r, c in tuples}
 
-        # # to make board playable by user: display which positions are 0s
-        # for (r, c), node in self.clues.items():
-        #     node.clue = board[r][c]
+        # to make board playable by user: display which positions are 0s
+        for (r, c), node in self.clues.items():
+            node._clue = board[r][c]
 
         # setting up the neighbourhood structure
         for node in self.clues.values():
@@ -56,6 +56,32 @@ class Game:
             n.questionmarks.discard(node)
 
         node.clue = value
+
+    def mark_bomb(self, bombs):
+        """
+        mark the bombs on the board and communicate them to their neighbours
+        :param bombs: list of node instances, that were identified as bomb
+        """
+        while bool(bombs):
+            b = bombs.pop()
+            if b._clue == '?':  # not opened yet: check for statesafety
+
+                # (0) inform board
+                b._clue = 'x'
+                self.remain_bomb -= 1
+
+                # (1) inform neighbours about being a bomb
+                # not activating state setter yet! statesafety!
+                for n in b.neighb_inst:
+                    n._state -= 1
+                    if b in n.questionmarks:
+                        n.questionmarks.discard(b)
+
+                # (2) Invoke recursion in statesafe enfiroment
+                # let each neighbour check if the updated state
+                # now contains info - either being 0 or all ? are bombs.
+                for n in b.neighb_inst:
+                    n.state = n._state
 
     def solve(self):
         # (0) open known zeros and use recursive communication

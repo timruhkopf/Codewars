@@ -1,4 +1,3 @@
-
 class Node:
 
     def __init__(self, position, clue='?', context=None):
@@ -41,8 +40,7 @@ class Node:
 
     @clue.setter
     def clue(self, value):
-
-        # TODO check if can be moved to context.open & remove property
+        # TODO check if body can be moved to context.open & remove property
         # called at open of this position.
         # at opening --> statechange ? to CLUE. here prior information
         # already contained in ?: self.state has to be added.
@@ -59,46 +57,21 @@ class Node:
         if value == 0:
             # open all ?
             self._state = 0
-            toopen = self.questionmarks.copy()
-            for q in toopen:
+            while bool(self.questionmarks):  # while to account for changes during recursion.
+                q = self.questionmarks.pop()
                 self.context.open(*q.position)
 
             # check if any neighb knows  it's ?s are bombs.
             for n in self.neighb_inst:
                 if n.state == len(n.questionmarks):
-                    n.found_bomb()
+                    self.context.mark_bomb(bombs=self.questionmarks)
 
         # default case, setting the received value and check if my ? are all bombs
         #  --> update state of a ? and a Clue instance
         else:
             self._state = value
             if self.state == len(self.questionmarks):
-                self.found_bomb()
-
-    def found_bomb(self):
-        """
-        self (A Clue node) knows, that all remaining quesionmarks must be bombs;
-        it communicates this information to the other instances & the board.
-        """
-        bombs = self.questionmarks.copy()  # TODO: fix mistake where self.questionmark produces neighb with clue 'x'
-        if bool(bombs):  # TODO refactor to while loop and pop
-            for b in bombs:
-                if b._clue == '?':  # not opened yet for statesafety
-                    # inform
-                    b._clue = 'x'
-                    self.context.remain_bomb -= 1
-
-                    # inform neighbours about being a bomb
-                    # not activating state setter yet! statesafety!
-                    for n in b.neighb_inst:
-                        n._state -= 1
-                        if b in n.questionmarks:
-                            n.questionmarks.discard(b)
-
-                    # let each neighbour check if the updated state
-                    # now contains info - either being 0 or all ? are bombs.
-                    for n in b.neighb_inst:
-                        n.state = n._state
+                self.context.mark_bomb(bombs=self.questionmarks)
 
     def _find_neighbours(self, r, c):
         """

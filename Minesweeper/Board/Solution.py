@@ -20,7 +20,7 @@ class Solution:
         """
         if solved_board is not None:
             self.__solved_board = solved_board  # private attribute
-            self.n = solved_board.count('x')
+            self.n = sum(row.count('x') for row in solved_board)
             self.covered_board = [['?' if v != '0' else v for v in row] for row in solved_board]
         else:
             self.sample_board(nbombs=10, dim=(10, 10))
@@ -30,7 +30,8 @@ class Solution:
 
     def open(self, r, c):
         """
-        Access the positions from the private attribute self.__solved_board from
+        Intermediary:
+        Access the single positions from the private attribute self.__solved_board from
         out of scope.
         :param r: int. row index that is to be opened
         :param c: int. column index that is to be opened
@@ -45,7 +46,9 @@ class Solution:
 
     def sample_board(self, nbombs, dim):
         """
-
+        Create new Solution boards - it does not distinguish between
+        solvable and unsolvable.
+        # TODO mark unsolvables!
         :param nbombs: int. number of bombs placed on the board
         :param dim: tuple: rowdimension, column dimension of the board
         :return: List of list of str, containing only '?' and 'x'.
@@ -76,7 +79,7 @@ class Solution:
 
 
 if __name__ == '__main__':
-    from .Util import board
+    from ..Util import board
 
     gamemap = """
        ? ? ? ? 0 0 0
@@ -110,5 +113,3 @@ if __name__ == '__main__':
     # sample a board:
     result_board = Solution()
     result_board.sample_board(10, dim=(5, 7))
-
-    # TODO write test case with new interface!
