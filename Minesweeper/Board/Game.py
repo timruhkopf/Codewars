@@ -25,12 +25,13 @@ class Game:
         # instantiate the communication network with their clues
         # do not invoke communication yet by setting state property!
         tuples = [(i, j) for i in range(self.dim[0]) for j in range(self.dim[1])]
-        self.clues = {(r, c): Node(position=(r, c), clue=board[r][c], context=self)
+        self.clues = {(r, c): Node(position=(r, c), clue='?', context=self)
                       for r, c in tuples}
 
+        self.zeros = set((r, c) for r, c in tuples if board[r][c] == '0')
         # to make board playable by user: display which positions are 0s
-        for (r, c), node in self.clues.items():
-            node._clue = board[r][c]
+        # for (r, c), node in self.clues.items():
+        #     node._clue = board[r][c]
 
         # setting up the neighbourhood structure
         for node in self.clues.values():
@@ -65,6 +66,8 @@ class Game:
         while bool(bombs):
             b = bombs.pop()
             if b._clue == '?':  # not opened yet: check for statesafety
+                # TODO exclude bombs entirely after spreading their info?
+                #  to reduce recursion amount
 
                 # (0) inform board
                 b._clue = 'x'
@@ -84,10 +87,14 @@ class Game:
                     n.state = n._state
 
     def solve(self):
-        # (0) open known zeros and use recursive communication
-        zeros = [n.position for n in self.clues.values() if n.clue == '0']
-        for ind in zeros:
-            self.open(*ind)
+        # (0) open known zeros and use recursive communication on them only once
+        # note how self.zeros can be empty after a single open call, if all zeros are
+        # recursively connected & opened. this avoids opening the same 0 twice
+        while bool(self.zeros):
+            zero = self.zeros.pop()
+            self.open(*zero)
+            placedzeros = set(n.position for n in self.clues.values() if n.clue == '0')
+            self.zeros.difference_update(placedzeros)
 
         # (1) find sets of nodes, that are jointly informative
         Strategy_Superset.execute(self)

@@ -30,6 +30,8 @@ class TestSolvableEndgame(unittest.TestCase):
     def test_endgame_simple(self):
         """all remaining ? after communication must be bombs due to count of bombs
          (simple endgame)"""
+
+        # TODO refactor this to be call to Strategy_Endgame.simple() after zeros are opened
         self.result = """
         0 0 0 0 0 0 0 0 0 0 0
         0 0 0 1 2 3 3 2 1 0 0

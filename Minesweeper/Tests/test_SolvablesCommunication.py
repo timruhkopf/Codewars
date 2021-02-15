@@ -5,28 +5,43 @@ from ..Board.Solution import Solution
 from ..Util import board
 
 
+# TODO simple cases fail after considering only solve()'s snipped opening the zeros.
+# TODO make more atomic tests on updating to ensure the behaviour is correct and
+#  check that after a discard ? or statechange a ceck up on the conditions is done appropriately
 class TestMinesweeperSolvables(unittest.TestCase):
-
-    def setUp(self) -> None:
-        pass
 
     def tearDown(self) -> None:
         solution = Solution(board(self.result))
         m = Game(board=solution.covered_board, n=solution.n, context=solution)
-        m.solve()
+
+        while bool(m.zeros):
+            zero = m.zeros.pop()
+            m.open(*zero)
+
+            placedzeros = set(n.position for n in self.clues.values() if n.clue == '0')
+            m.zeros.difference_update(placedzeros)
 
         self.assertEqual(m.board, board(self.result))
 
         del self.result
 
-    def test_CommunicationPartial1(self):
+    def test_CommunicationSimple0(self):
         self.result = """
         1 x 1 0
         1 1 1 0
         0 0 0 0
         """
 
-    def test_CommunicationPartial2(self):
+    def test_CommunicationSimple0transpose(self):
+        """partial of Com.Strategy 1: only com. strategy is required to solve the board."""
+        self.result = """
+        0 0 0
+        0 1 1
+        0 1 x
+        0 1 1
+        """
+
+    def test_CommunicationPartial1(self):
         self.result = """
         0 2 x 2 1 x 1 0
         0 2 x 3 2 1 1 0
@@ -35,13 +50,36 @@ class TestMinesweeperSolvables(unittest.TestCase):
         0 0 0 0 0 0 0 0
         """
 
-    def test_CommunicationStrategy0(self):
-        """partial of Com.Strategy 1: only com. strategy is required to solve the board."""
-        self.result = """
-        0 0 0
-        0 1 1
-        0 1 x
-        0 1 1
+        """
+        0 2 ? ? ? ? 1 0
+        0 2 ? ? 2 1 1 0
+        0 1 2 ? 1 0 0 0
+        0 0 1 1 1 0 0 0
+        0 0 0 0 0 0 0 0
+        """
+
+        """
+        0 2 ? ? 1 x 1 0  # if this 0 is opened before lower left
+        0 2 ? ? 2 1 1 0
+        0 1 2 ? 1 0 0 0
+        0 0 1 1 1 0 0 0
+        0 0 0 0 0 0 0 0
+        """
+
+        """
+        0 2 ? 2 1 x 1 0  
+        0 2 ? 3 2 1 1 0
+        0 1 2 x 1 0 0 0
+        0 0 1 1 1 0 0 0
+        0 0 0 0 0 0 0 0
+        """
+
+        """
+        0 2 x 2 1 x 1 0  
+        0 2 x 3 2 1 1 0
+        0 1 2 x 1 0 0 0
+        0 0 1 1 1 0 0 0
+        0 0 0 0 0 0 0 0
         """
 
     def test_CommunicationStrategy01(self):
