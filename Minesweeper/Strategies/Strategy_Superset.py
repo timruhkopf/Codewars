@@ -16,7 +16,10 @@ def relentless(func):
 class Strategy_Superset:
     @relentless
     def execute(game):
+        Strategy_Superset.double(game)
+        Strategy_Superset.tripple(game)
 
+    def double(game):
         # first find the neighbours to remaining questionmarks
         inquestion = set(n for q in game.clues.values()
                          for n in q.neighb_inst
@@ -43,12 +46,18 @@ class Strategy_Superset:
 
                 # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state:
-                    Position.bombastic(bombs=remain)  # fixme
+                    for b in remain:
+                        b.found_bomb()
+                    # Position.bombastic(bombs=remain)  # fixme
 
             elif inst2._state - inst1._state == len(a.union(b) - a):
                 remain = a.union(b) - a
-                Position.bombastic(bombs=remain)  # fixme
+                for b in remain:
+                    b.found_bomb()
+                # Position.bombastic(bombs=remain)  # deprec
 
+    def tripple(game):
+        # TODO tripple & double's code is very similar: make it Dry (do not repeat yourself)
         # search for all direct neighbor triplet who share the same questionmarks to make inferrence about bomb location
         inquestion = set(n for q in game.clues.values()
                          for n in q.neighb_inst
@@ -73,6 +82,8 @@ class Strategy_Superset:
                     for n in toopen:
                         game.open(*n.position)
 
-                    # remaining are bombs
+                # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state - inst3._state:
-                    Position.bombastic(bombs=remain)  # fixme
+                    for b in remain:
+                        b.found_bomb()
+                    # Position.bombastic(bombs=remain)  # deprec

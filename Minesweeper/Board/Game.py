@@ -3,10 +3,8 @@ import sys
 from .Node import Node
 from ..Strategies import Strategy_Superset, Strategy_Endgame
 
-sys.setrecursionlimit(10 ** 6)
-
-
 # TODO reduce Recursion depth: unnecessary communication?
+sys.setrecursionlimit(10 ** 6)
 
 
 class Game:
