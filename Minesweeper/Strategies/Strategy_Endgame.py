@@ -5,9 +5,21 @@ from .Strategy_Superset import relentless
 
 class Strategy_Endgame:
 
-    @relentless
-    def execute(game):
+    def simple(game):
+        remain_q = [_ for _ in game.clues.values() if _._clue == '?']
+        # all remaining ? must be bombs due to count
+        if game.remain_bomb == len(remain_q):
+            for b in remain_q:
+                b.found_bomb()
 
+        # open all when there are no bombs
+        elif game.remain_bomb == 0 and len(remain_q) != 0:
+            for _ in remain_q:
+                game.open(*_.position)
+
+    @relentless
+    def sequential_combinations(game):
+        """"""
         remain_q = set(q for q in game.clues.values() if q._clue == '?')
         anreiner = set(n for q in game.clues.values()
                        for n in q.neighb_inst
@@ -30,5 +42,5 @@ class Strategy_Endgame:
                     n._state += 1
 
         untouched = remain_q - potential_bomb
-        for Pos in untouched:
-            game.open(*Pos.position)
+        for node in untouched:
+            game.open(*node.position)

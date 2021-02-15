@@ -1,8 +1,12 @@
 import sys
 
 from .Node import Node
+from ..Strategies import Strategy_Superset, Strategy_Endgame
 
 sys.setrecursionlimit(10 ** 6)
+
+
+# TODO reduce Recursion depth: unnecessary communication?
 
 
 class Game:
@@ -61,26 +65,21 @@ class Game:
         for ind in zeros:
             self.open(*ind)
 
-        # (1) exactly one bomb in questionmarks logic
-        # Strategy_Superset.execute(self)
-        #
-        # (2) check if Superset was sufficient
-        # remain_q = [_ for _ in self.clues.values() if _._clue == '?']
-        # if self.remain_bomb == len(remain_q):
-        #     Position.bombastic(remain_q)  # FIXME bombastic
-        # elif self.remain_bomb == 0 and len(remain_q) != 0:
-        #     for _ in remain_q:
-        #         self.open(*_.position)
-        #
-        # # (3) Endgame logic based on number of bombs.
-        # if bool(self.remain_bomb) and self.remain_bomb <= 3:
-        #     Strategy_Endgame.execute(self)
-        #
-        # # remaining ambiguity? --> Unsolvable
-        # if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
-        #     return '?'
-        # else:
-        #     return self.board
+        # (1) find sets of nodes, that are jointly informative
+        Strategy_Superset.execute(self)
+
+        # (2) check if Superset was sufficient to solve
+        Strategy_Endgame.simple(self)
+
+        # (3) Endgame logic based on number of bombs.
+        if bool(self.remain_bomb) and self.remain_bomb <= 3:
+            Strategy_Endgame.sequential_combinations(self)
+
+        # remaining ambiguity? --> Unsolvable
+        if bool([inst._clue for inst in self.clues.values() if inst._clue == '?']):
+            return '?'
+        else:
+            return self.board
 
     # Debug display methods. ---------------------------------------------------
     @property
