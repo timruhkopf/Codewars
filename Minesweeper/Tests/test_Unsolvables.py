@@ -18,7 +18,7 @@ class TestUnsolvables(unittest.TestCase):
         self.result = """
         0 1 x
         0 1 1
-        """.strip()
+        """
 
     def test_unsolvable2(self):
         """Huge ambivalent state"""
@@ -47,7 +47,7 @@ class TestUnsolvables(unittest.TestCase):
         0 0 0 0 1 2 2 1 1 1 1 1 1 1 0 1 x 3 2
         0 0 0 0 1 1 1 1 2 x 1 1 1 1 0 2 3 x 2
         0 0 0 0 1 x 1 1 x 2 1 1 x 1 0 1 x 3 x
-        """.strip()
+        """
 
     def test_unsolvable3(self):
         # differently shaped ambivalent state
@@ -62,7 +62,7 @@ class TestUnsolvables(unittest.TestCase):
         2 2 1 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 1 1 1
         1 x 1 0 0 0 0 0 0 0 1 2 2 1 0 0 1 1 1 0 0
         1 1 1 0 0 0 0 0 0 0 1 x x 1 0 0 1 x 1 0 0
-        """.strip()
+        """
 
 
 if __name__ == '__main__':
