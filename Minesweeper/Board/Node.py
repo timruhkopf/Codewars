@@ -1,3 +1,4 @@
+
 class Node:
 
     def __init__(self, position, clue='?', context=None):
@@ -7,7 +8,7 @@ class Node:
         self._clue = clue
         self._state = 0
 
-        neighbours = self._find_neighbours(position)
+        neighbours = self._find_neighbours(*position)
         self.neighbours = neighbours
         self.neighb_inst = set()
         self.questionmarks = set()
@@ -25,7 +26,13 @@ class Node:
     def __eq__(self, other):  # to support in
         return self.position == other.position
 
-    def isneighb(self, other):  # deprec
+    def isneighb(self, other):
+        """
+        checks if two Nodes are Neighbours.
+        convenience method for superset logic.
+        :param other: other Node instance
+        :return: boolean
+        """
         return other in self.neighb_inst
 
     @property
@@ -35,7 +42,7 @@ class Node:
     @clue.setter
     def clue(self, value):
 
-        # TODO check if can be moved to context.open
+        # TODO check if can be moved to context.open & remove property
         # called at open of this position.
         # at opening --> statechange ? to CLUE. here prior information
         # already contained in ?: self.state has to be added.
@@ -48,7 +55,7 @@ class Node:
 
     @state.setter
     def state(self, value):
-        # open all questionmarks by state hitting 0 (again after initialisation)
+        # open all questionmarks of a Clue instance by its state hitting 0
         if value == 0:
             # open all ?
             self._state = 0
@@ -62,12 +69,17 @@ class Node:
                     n.found_bomb()
 
         # default case, setting the received value and check if my ? are all bombs
+        #  --> update state of a ? and a Clue instance
         else:
             self._state = value
             if self.state == len(self.questionmarks):
                 self.found_bomb()
 
     def found_bomb(self):
+        """
+        self (A Clue node) knows, that all remaining quesionmarks must be bombs;
+        it communicates this information to the other instances & the board.
+        """
         bombs = self.questionmarks.copy()  # TODO: fix mistake where self.questionmark produces neighb with clue 'x'
         if bool(bombs):  # TODO refactor to while loop and pop
             for b in bombs:
@@ -88,10 +100,10 @@ class Node:
                     for n in b.neighb_inst:
                         n.state = n._state
 
-    def _find_neighbours(self, position):
-        """returns the set of all neighbours (excluding self's position).
+    def _find_neighbours(self, r, c):
+        """
+        :returns the set of all neighbours (excluding self's position).
         all of them are bound checked"""
-        r, c = position
         cond = lambda r, c: 0 <= r < self.context.dim[0] and 0 <= c < self.context.dim[1]
         kernel = (-1, 0, 1)
         neighb = set((r + i, c + j) for i in kernel for j in kernel
