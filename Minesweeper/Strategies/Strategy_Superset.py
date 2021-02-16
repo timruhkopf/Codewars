@@ -25,7 +25,7 @@ class Strategy_Superset:
                          for n in q.neighb_inst
                          if q.clue == '?' and n.clue not in ['?', 'x'])  # TODO discard this simplification
 
-        # most informative intersections start with:
+        # most informative intersections start with those that have state 1:
         single = set(n for n in inquestion if n._state == 1)
         candidates = ([inst1, inst2] for inst1, inst2 in product(single, inquestion)
                       if (inst1.isneighb(inst2)) and inst2._state != 0)
@@ -47,15 +47,14 @@ class Strategy_Superset:
                 # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state:
                     game.mark_bomb(remain)
-                    # Position.bombastic(bombs=remain)  # Deprec
+
 
             elif inst2._state - inst1._state == len(a.union(b) - a):
                 remain = a.union(b) - a
                 game.mark_bomb(remain)
-                # Position.bombastic(bombs=remain)  # deprec
 
     def tripple(game):
-        # TODO tripple & double's code is very similar: make it Dry (do not repeat yourself)
+        # TODO tripple & double's code is very similar: make it Dry (Do not Repeat Yourself)
         # search for all direct neighbor triplet who share the same questionmarks to make inferrence about bomb location
         inquestion = set(n for q in game.clues.values()
                          for n in q.neighb_inst
@@ -83,4 +82,3 @@ class Strategy_Superset:
                 # remaining are bombs
                 elif len(remain) == inst2._state - inst1._state - inst3._state:
                     game.mark_bomb(remain)
-                    # Position.bombastic(bombs=remain)  # deprec
