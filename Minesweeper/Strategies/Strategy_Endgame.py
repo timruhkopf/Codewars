@@ -5,7 +5,7 @@ from .Strategy_Superset import relentless
 
 class Strategy_Endgame:
 
-    def simple(game):
+    def remain_bomb_count(game):
         remain_q = [_ for _ in game.clues.values() if _._clue == '?']
         # all remaining ? must be bombs due to count
         if game.remain_bomb == len(remain_q):

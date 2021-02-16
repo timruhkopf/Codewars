@@ -103,7 +103,7 @@ class Game:
         Strategy_Superset.execute(self)
 
         # (2) check if Superset was sufficient to solve
-        Strategy_Endgame.simple(self)
+        Strategy_Endgame.remain_bomb_count(self)
 
         # (3) Endgame logic based on number of bombs.
         if bool(self.remain_bomb) and self.remain_bomb <= 3:

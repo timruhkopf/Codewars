@@ -21,7 +21,7 @@ class TestSolvableEndgame(unittest.TestCase):
         # (1) find sets of nodes, that are jointly informative
         Strategy_Superset.execute(m)
 
-        Strategy_Endgame.simple(m)
+        Strategy_Endgame.remain_bomb_count(m)
         Strategy_Endgame.sequential_combinations(m)
 
         self.assertEqual(m.board, board(self.result))
@@ -63,9 +63,9 @@ class TestSolvableEndgame(unittest.TestCase):
 
     def test_endgame_simple(self):
         """all remaining ? after communication must be bombs due to count of bombs
-         (simple endgame)"""
+         (remain_bomb_count endgame)"""
 
-        # TODO refactor this to be call to Strategy_Endgame.simple() after zeros are opened
+        # TODO refactor this to be call to Strategy_Endgame.remain_bomb_count() after zeros are opened
         self.result = """
         0 0 0 0 0 0 0 0 0 0 0
         0 0 0 1 2 3 3 2 1 0 0

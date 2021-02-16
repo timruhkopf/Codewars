@@ -51,9 +51,9 @@ class TestSupersets(unittest.TestCase):
 
         solution, m = prep_test(self)
 
-        Strategy_Superset.double(m)  # Fixme: it finds a bomb which it shouldnt
+        Strategy_Superset.double(m)  # Fixme: it finds a bomb which it shouldn't
 
-        self.assertEqual(
+        self.assertEqual(  # equivalent to the zero open calls!
             m.board, board("""
              0 1 x ? ?
              0 1 3 ? ?

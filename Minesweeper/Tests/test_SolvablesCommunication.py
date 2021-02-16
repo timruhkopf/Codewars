@@ -5,7 +5,7 @@ from ..Board.Solution import Solution
 from ..Util import board
 
 
-# TODO simple cases fail after considering only solve()'s snipped opening the zeros.
+# TODO remain_bomb_count cases fail after considering only solve()'s snipped opening the zeros.
 # TODO make more atomic tests on updating to ensure the behaviour is correct and
 #  check that after a discard ? or statechange a ceck up on the conditions is done appropriately
 class TestMinesweeperSolvables(unittest.TestCase):

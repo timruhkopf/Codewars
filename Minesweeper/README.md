@@ -135,20 +135,26 @@ Once the communication structure is in place, information must be generated. The
    be traced back to this solution.
 
 
-3) **Endgame.simple**
+3) **Endgame.remain_bomb_count**
    Consider the following board
 
-           0 0 0 0 0 0 0 0 0 0 0
-           0 0 0 1 2 3 3 2 1 0 0
-           0 0 1 3 x x x x 1 0 0
-           0 0 2 x x 6 x 5 2 0 0
-           0 0 3 x 4 4 x x 2 0 0
-           0 0 3 x 5 5 x x 2 0 0
-           0 0 2 x x x x 3 1 0 0
-           0 0 1 2 3 3 2 1 0 0 0
-           0 0 0 0 0 0 0 0 0 0 0
+         0 0 0 0 0 0 0 0 0 
+         0 0 1 2 3 3 2 1 0 
+         0 1 3 x x x x 1 0 
+         0 2 x x 6 x 5 2 0 
+         0 3 x 4 4 x x 2 0 
+         0 3 x 5 5 x x 2 0 
+         0 2 x x x x 3 1 0 
+         0 1 2 3 3 2 1 0 0 
+         0 0 0 0 0 0 0 0 0 
 
-   knowing the number of remaining bombs will reveal, that the inner clues can be opened safely.
+   knowing the number of remaining bombs will reveal, that the inner clues can be opened safely. The opposite is true
+   here:
+
+         0 2 x x
+         0 2 x x
+
+   all remaining ? must be bombs and marked as such.
 
 
 4) **Endgame.combinations**. The number of Bombs is very limited, indicating that most of the board is already unveiled.
@@ -182,8 +188,8 @@ With all those partial solutions in place, the whole **_solve_** method reads as
      jointly.
 
 3) ideally this already sufficed to solve the board, in this case , the StrategyEndgame
-   **_simple_** method is invoked which merely checks if the number of remaining '?' equals the number of bombs or if
-   all bombs were found.
+   **_remain_bomb_count_** method is invoked which merely checks if the number of remaining '?' equals the number of
+   bombs or if all bombs were found.
 
 4) if that did not suffice, StrategyEndgame is called to find positions that can be opened safely, as the restriction on
    the number of bombs and the clues indicate only a few remaining combinations of bombs across the '?' that are
