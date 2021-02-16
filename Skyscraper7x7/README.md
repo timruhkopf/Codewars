@@ -15,3 +15,5 @@
 
 2) **Ambigious**
    only necessary for 7x7 stacking & reverting the stack
+
+Solution method is purely to sample problems
