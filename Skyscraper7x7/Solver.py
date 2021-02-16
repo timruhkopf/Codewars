@@ -7,7 +7,8 @@ from .Util import timeit
 
 
 class Skyscraper:
-    _pclues = {4: None, 6: None, 7: None}  # preallocation to make it work with all
+    # preallocation to make it lazily work with all sizes in one testing
+    _pclues = {4: None, 6: None, 7: None}
 
     def __init__(self, clues):
         """
@@ -17,12 +18,13 @@ class Skyscraper:
         7*7 Skyscraper: https://www.codewars.com/kata/5917a2205ffc30ec3a0000a8 (kyu 1)
         """
         self.clues = clues
-        self.probsize = None  # TODO infer probsize
+        self.probsize = int(len(self.clues) / 4)  # TODO infer probsize from clues.
 
         # parse the clues
         colclues, rowclues = self._interpret_clues(self.clues, self.probsize)
         self.colclues = colclues
         self.rowclues = rowclues
+
 
     def __repr__(self):
         # TODO write a debug method, that displays what the current board looks like
@@ -113,3 +115,10 @@ class Skyscraper:
         if self.probsize == 7:
             return [list(self.downtown_row[i][0]) for i in range(self.probsize)]
         return tuple(tuple(self.downtown_row[i][0]) for i in range(self.probsize))
+
+    def sample_board(self):
+        # TODO sample one permutation & and make use of updates
+        #  -> wasnt there a non informative clue? in this case, simply sample some tuple clue and make all others
+        #  unifnormative - using the update strategies, the applicable tuples remain.
+        #  now sample another. repeat. if there is no solution available, start again? or make use of stack?
+        pass
