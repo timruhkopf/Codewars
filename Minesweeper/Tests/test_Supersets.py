@@ -35,6 +35,34 @@ class TestSupersets(unittest.TestCase):
         solution, m = prep_test(self)
         Strategy_Superset.tripple(m)
 
+    def do_not_find_endgame_bomb(self):
+        """Supersets double has a bug, that marks (0,3) correctly as bomb,
+        despite this should not be possible for double strategy. (solution is
+        endgame combinations)"""
+        self.result = """
+           0 1 x x 1
+           0 1 3 4 3
+           0 0 1 x x
+           0 0 1 2 2
+           0 0 1 1 1
+           0 1 2 x 1
+           0 1 x 2 1
+           """
+
+        solution, m = prep_test(self)
+
+        Strategy_Superset.double(m)  # Fixme: it finds a bomb which it shouldnt
+
+        self.assertEqual(
+            m.board, board("""
+             0 1 x ? ?
+             0 1 3 ? ?
+             0 0 1 ? ?
+             0 0 1 ? ?
+             0 0 1 ? ?
+             0 1 2 ? ?
+             0 1 x ? ?"""))
+
 
 if __name__ == '__main__':
     unittest.main()
