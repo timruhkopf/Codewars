@@ -2,10 +2,12 @@
 
 #### A communication approach.
 
-This package implements the submitted and successful solution to [Codewar's Minesweeper][0] kyu 1 kata.
+This package implements the refactored & successful solution to [Codewar's Minesweeper][0] kyu 1 kata. The originally
+submitted (single file) solution draft can be found in Minesweeper.Minesweeper.py The refactored version emphasises on
+structure, test- and maintainability. Additionally, it comes with a new debug interface and board sampling method. The
+code is decluttered and far better documented & tested. The code of the state property, found_bomb and open are far more
+consice and annotated with intent.
 
-
-<!--- explain the boards & games conventions in this kata.-->
 
         result = """
         0 0 0 0 0 0 0 0 0 0 0
@@ -73,6 +75,11 @@ questionmarks and to access the **_mark_bomb_** method to communicate to the boa
 open_**, **_mark_bomb_** and the **_state.setter_** methods are tightly intertwined and hardwired into the board. This
 way __any__ (!) information obtained is immediately and automatically recursively communiciated accross the board.
 
+Except for this communication strategy, that is hardwired into the very foundation of the board, all other Strategies
+are factored into separate classes according to the ['Strategy design pattern'][3]. This way the  **_Game_** is not
+clutterd with solving strategies that go beyond the recursive pattern. The Algorithms are nicely separated from the
+board and can be switched easily on demand.
+
 ### Intertwined Solving Strategies
 
 Once the communication structure is in place, information must be generated. There are three strategies applied here:
@@ -102,15 +109,6 @@ Once the communication structure is in place, information must be generated. The
          x 2 0
          x 2 0
 
-[comment]: <> (When either the number of "?" is the same as the number of)
-
-[comment]: <> (   remaining bombs &#40;"**_clue_**"&#41; or the number of bombs found in the vicinity is exactly equal to)
-
-[comment]: <> (   **_clue_**; indicating all remaining "?" neighbours can be **_open_**[ed] safely. This strategy is made use of during)
-
-[comment]: <> (   the subsequent strategies automatically -without interrupting their flow-, whenever they uncover new )
-
-[comment]: <> (   information.  )
 
 2) **Supersets**. Double & tripple supersets  
    To grasp the basic idea of this strategy consider the following board.
@@ -120,7 +118,7 @@ Once the communication structure is in place, information must be generated. The
          x 2 x
 
    The last row cannot be known by single Node's communication patterns; the ones will have two questionmarks and the
-   two has three; none of them ever meets the condition  **_state_** == len(questionmarks). The first Strategy is thus
+   two has three; none of them ever meets the condition  **_state_** == len(questionmarks). The first strategy is thus
    incapable of solving such (common) patterns. However, considering all three  **_Node_**[s]
    provides a definite solution: since the two needs two bombs still and the ones questionmarks build a non empty
    intersection, it wouldn't suffice to place a bomb underneath the two. What remains is the combination
@@ -183,9 +181,9 @@ With all those partial solutions in place, the whole **_solve_** method reads as
    **_state_**,  **_mark_bomb_** and  **_open_** recursively reveals all the information, that can be derived from a
    single position's state and questionmarks.
 
-2) When there is no further information derivable from a single position, Supersets is leveraged in relentless execution
-   - executing both double and tripple supersets to find higher level; aggregated information of multiple positions
-     jointly.
+2) When there is no further information derivable from a single position, Supersets is leveraged in relentless  
+   execution - executing both double and tripple supersets to find higher level; aggregated information of multiple
+   positions jointly.
 
 3) ideally this already sufficed to solve the board, in this case , the StrategyEndgame
    **_remain_bomb_count_** method is invoked which merely checks if the number of remaining '?' equals the number of
@@ -209,11 +207,11 @@ With all those partial solutions in place, the whole **_solve_** method reads as
 * Another option is to split the **_state_** property into subclasses, that can be more easily tested. This can be
   implemented in a ["State" design pattern][2]. easily. Issue: State.__init__ i.e. do's at the switch of a State are not
   accessible from the outside such as Game.board - which make debugging painstacking. The advantage is that the
-  recursive communication behaviour (and when not to communicate) can be modeled far more verbose and explicitly.
-
+  recursive communication behaviour (and when not to communicate) can be modeled far more verbose and explicitly. For a
+  first draft check out the 'Refactor_Minesweeper_Statepattern' git branch.
 * Implement random tests: make the board samplable
 
-<!--
+
 ### Issues:
 
 * The recursion depth can be significant due to the communication.
@@ -225,11 +223,6 @@ assumption is necessary at all, since **_Superset_** solver is a fairly potent s
 and board awareness of the other Nodes and **_Node.game.open_** are not per se 
 an issue, but there should be a more elegant solution to it.
 
-### TODOs
-* write test cases for Node.state to ensure stability during maintainance
--->
-
-
 <!--- MARKDOWN COMMENT: Reference Section-->
 
 [0]: https://www.codewars.com/kata/57ff9d3b8f7dda23130015fa
@@ -237,4 +230,6 @@ an issue, but there should be a more elegant solution to it.
 [1]: https://refactoring.guru/design-patterns/observer
 
 [2]: https://refactoring.guru/design-patterns/state
+
+[3]: https://refactoring.guru/design-patterns/strategy
 
