@@ -50,9 +50,12 @@ class Game:
         :return: None. places new clue on board and removes the instance
         from its neighbours question marks.
         """
-        value = int(self.context.open(r, c))
-        node = self.clues[(r, c)]
+        if self.context is not None:
+            value = int(self.context.open(r, c))
+        else:
+            value = open(r, c)
 
+        node = self.clues[(r, c)]
         for n in node.neighb_inst:
             n.questionmarks.discard(node)
 
