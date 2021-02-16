@@ -64,6 +64,13 @@ class TestUnsolvables(unittest.TestCase):
         1 1 1 0 0 0 0 0 0 0 1 x x 1 0 0 1 x 1 0 0
         """
 
+    def test_unsolvable4(self):
+        self.result = """
+        x x x
+        x 8 x
+        x x x
+        """
+
 
 if __name__ == '__main__':
     unittest.main(exit=False)
