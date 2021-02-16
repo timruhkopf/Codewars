@@ -25,6 +25,21 @@ def prep_test(self):
 
 class TestSupersets(unittest.TestCase):
 
+    def test_edgepattern(self):
+        # top left can be opened safely, since the two ones guarantee it
+        # (reduce the factual state of 2 -
+        self.result = """
+        ? ? ?
+        ? 2 1
+        ? 1 0
+        """
+
+        solution, m = prep_test(self)
+        Strategy_Superset.double(m)
+        Strategy_Superset.triple(m)
+
+        self.assertEqual(m.board, board(self.result))
+
     def test_121pattern(self):
         self.result = """
         0 0 0
@@ -33,7 +48,10 @@ class TestSupersets(unittest.TestCase):
         """
 
         solution, m = prep_test(self)
-        Strategy_Superset.tripple(m)
+        Strategy_Superset.double(m)
+        Strategy_Superset.triple(m)
+
+        self.assertEqual(m.board, board(self.result))
 
     def do_not_find_endgame_bomb(self):
         """Supersets double has a bug, that marks (0,3) correctly as bomb,

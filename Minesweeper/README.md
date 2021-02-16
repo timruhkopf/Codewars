@@ -111,17 +111,62 @@ Once the communication structure is in place, information must be generated. The
 
 
 2) **Supersets**. Double & tripple supersets  
-   To grasp the basic idea of this strategy consider the following board.
+   The basic idea of this strategy is best understood through the examples, it is intended to solve. Consider the
+   following board:
+
+         0 0 0
+         1 2 1
+         ? ? *
+
+   The last row cannot be known by single Node's communication patterns; the ones will have two questionmarks and the
+   two has three; none of them ever meets the condition  **_state_** == len(questionmarks). The communication strategy
+   is thus incapable of solving such (common and early stage) patterns. However, considering all two  
+   **_Node_**[s]  provides a definite solution: a single 1 and the 2 suffice: since 1's questionmarks are a real subset
+   of two's questionmarks, two's state is 'softly' reduced and since two's surpluss questionmark is equal its reduced
+   state from the soft reduction, * must be a bomb. However, this algorithm would require additional steps in a more
+   complex example
+
+         0 0 0 0 0
+         1 1 2 1 1
+         ? ? * ? ?
+
+   here, the rightmost one's questionmarks are a subset of its neighbours' and in turn * can be opened. Recursive
+   communication solves the rest, since opening * checks two's state against its no. of questionmarks - and finds the
+   two bombs. In turn, the ones are reduced in state and the outer ? can be opened safely.
+
+   The same logic can be applied in the following partial example
+
+         x 3 ? ? ?
+         x 3 ? ? ?
+         2 3 ? ? ?
+         x 2 1 ? ?  
+      
+         the state_map of the above example looks like this:
+         x 1 ? ? ?  # topmost 1
+         x 1 ? ? ?  # the one below
+         0 1 ? ? ?
+         x 1 1 ? ?  
+
+         x 1 ? ? ?
+         x 1 ? ? ?
+         0 1 * ? ?
+         x 1 1 ? ?  
+
+   The * can be opened safely because of the above ones:
+   the topmost one's questionmarks are a subset of the one's questionmarks below it. This is a 'soft' state reduction of
+   the second one: it is certain that there is one bomb exacly in the questionmarks excluding the intersection of the
+   two ones. The second one's state is 'softly' reduced to 0, and the questionmarks not contained in the intersection
+   can can be opened safely.
+
+   Upon revisiting the first example, it becomes apparent, that this variant could have been solved using three rather
+   than two positions jointly as well:
 
          0 0 0
          1 2 1
          x 2 x
 
-   The last row cannot be known by single Node's communication patterns; the ones will have two questionmarks and the
-   two has three; none of them ever meets the condition  **_state_** == len(questionmarks). The first strategy is thus
-   incapable of solving such (common) patterns. However, considering all three  **_Node_**[s]
-   provides a definite solution: since the two needs two bombs still and the ones questionmarks build a non empty
-   intersection, it wouldn't suffice to place a bomb underneath the two. What remains is the combination
+   since the two needs two bombs still and the ones' questionmarks build a non empty intersection, it wouldn't suffice
+   to place a bomb underneath the two. What remains is the combination
    'x ? x'. Notice how this is still true, if the neighbouring ones' questionmarks are real supersets
 
         0 0 0 0 0
@@ -132,6 +177,72 @@ Once the communication structure is in place, information must be generated. The
    shape. Besides, since the strategy works with  **_state_** rather than clue, many information states of the game can
    be traced back to this solution.
 
+   The next example is somewhat similar (sub/superset & intersection - based):
+
+         * ? ?
+         ? 2 1
+         ? 1 0
+
+   the top leftmost (*) can be opened safely, because the ones' questionmarks are a real subset of two's, but they '
+   softly' reduce the state of 2, such that there cannot be a bomb in the corner. This former example is the lower right
+   corner of the larger example:
+
+         x 3 x ? ? ? ?
+         1 3 x 3 ? ? ?
+         0 2 2 3 ? * ?
+         0 1 x 2 1 * ?  # 2 1 in this row
+         0 1 2 ? ? 2 1
+         0 0 1 ? ? 1 0
+
+   Notice how the * positions can now be opened safely, because of the '2 1'. Because the 2 is of state 1, and 2's
+   questionmarks are a subset to those of the one's questionmarks, one is 'softly' reduced to state 0, and all those
+   questionmarks that are not shared with 2 (i.e. *) can be opened safely.
+
+   Notice, that instead we could have derived something else by the same logic, looking at the two stacked 3s
+
+         x 3 x * * ? ?
+         1 3 x 3 ? ? ?  # the right one
+         0 2 2 3 ? ? ?  # and this one
+         0 1 x 2 1 ? ?
+         0 1 2 ? ? 2 1
+         0 0 1 ? ? 1 0
+
+   If the state_map is considered, these types of informative pattern occur fairly frequent during the course of the
+   game - and in very hard problems may even proove decisive very early on. The main intent of this strategy is to
+   progress the board in tricky positions, where recursion simply does not suffice and brute force is way to expensive.
+   There may exist more complex sets of logic, a real player may employ, but these "simple" comparisons proove very
+   potent.
+
+   Now that we established a feeling for what the algorithm is supposed to do, let's formalise it. The current
+   implementation distinguishes set comparisons between two and three nodes. In both it favours informative
+   comparisions, that is state comparisons, were at lest a one or in case of three nodes, two ones are used. This is a
+   second pillar of simplification. It remains to be tested, if lifting this simplification will lead to runtime gains (
+   since the endgames burden is reduced)
+   or itself would be a burden.
+
+   **_Double_**:
+   Find those positions that are neighbour to a questionmark and not a bomb and of those find the ones of state 1, as
+   they are most informative. Build all pairs of questionmark neighbours that themselves are neighbours and where at
+   least one of them has state 1. For each pair check if the "larger"
+   (i.e. higher state) position's questionmarks is a superset of the other. If True, check the soft state (i.e. the
+   superset's state reduced by the smaller state)
+   against the soft questionmarks i.e. the questionmarks without the intersection. if they are equal, all questionmarks
+   without the intersection are bombs. if the soft state is 0, the questionmarks without the intersection can be opened
+   safely.
+
+   **_Triple_**:
+   Essentially, it tries the same thing; Find those positions that are neighbour to a questionmark and not a bomb and of
+   those find the ones of state 1, as they are most informative. Build all triples of questionmark neighbours that
+   themselves are (intermediate) neighbours and where at least two of them have state 1. For each pair check if the "
+   largest"
+   (i.e. highest state) position's questionmarks is a superset of the union of the others. If True, check the soft
+   state (i.e. the superset's state reduced by the smaller states)
+   against the soft questionmarks i.e. the questionmarks without the intersections. also check if the soft state is
+   zero.
+
+   Notice how recursion is triggered whenever a bomb is found or a clue is opened!
+   These two procedures can jointly be repeated
+   **_relentless_**[ly] until the board does not change anymore.
 
 3) **Endgame.remain_bomb_count**
    Consider the following board
@@ -200,6 +311,9 @@ With all those partial solutions in place, the whole **_solve_** method reads as
 
 ### Refactoring Ideas:
 
+* It is fairly apparent, that these two substrategies are very simmilar in structure, and usually DRY (Do not Repeat
+  Yourself) is favoured: join the StrategySupersets.triple and double strategy to a single one
+
 * The communication pattern may be more easily implemented via the ["Observer" design pattern][1]. The Issue here might
   be that each position must be both observer and sender and the recursive feedback loop must be avoided (solved in
   **_Node.state_**).
@@ -210,6 +324,9 @@ With all those partial solutions in place, the whole **_solve_** method reads as
   recursive communication behaviour (and when not to communicate) can be modeled far more verbose and explicitly. For a
   first draft check out the 'Refactor_Minesweeper_Statepattern' git branch.
 * Implement random tests: make the board samplable
+
+* StrategySupersets: do higher order comparisions or comparisons without the 'single' simplifaction help? or are they a
+  mere computational burden?
 
 
 ### Issues:
