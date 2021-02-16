@@ -77,6 +77,14 @@ class Solution:
             self.__init__(solved_board=new_board)
             return new_board
 
+    def check_board(board):
+        """TODO check if a board is solvable
+        this would allow to create test cases and prevent the user from play an
+        unsolvable game"""
+        # (0) create a Game instance and use its' solve method.
+
+        # how to check the rest of the board from here? - independent of the solve method?
+        pass
 
 if __name__ == '__main__':
     from ..Util import board
