@@ -64,7 +64,7 @@ class Node:
             # check if any neighb knows  it's ?s are bombs.
             for n in self.neighb_inst:
                 if n.state == len(n.questionmarks):
-                    self.context.mark_bomb(bombs=self.questionmarks)
+                    self.context.mark_bomb(bombs=n.questionmarks)
 
         # default case, setting the received value and check if my ? are all bombs
         #  --> update state of a ? and a Clue instance

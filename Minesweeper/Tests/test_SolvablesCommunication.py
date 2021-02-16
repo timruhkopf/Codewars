@@ -14,13 +14,16 @@ class TestMinesweeperSolvables(unittest.TestCase):
         solution = Solution(board(self.result))
         m = Game(board=solution.covered_board, n=solution.n, context=solution)
 
+        count = 0
         while bool(m.zeros):
             zero = m.zeros.pop()
             m.open(*zero)
 
-            placedzeros = set(n.position for n in self.clues.values() if n.clue == '0')
+            placedzeros = set(n.position for n in m.clues.values() if n.clue == 0)
             m.zeros.difference_update(placedzeros)
+            count += 1
 
+        self.assertEqual(count, 1)
         self.assertEqual(m.board, board(self.result))
 
         del self.result
@@ -44,38 +47,6 @@ class TestMinesweeperSolvables(unittest.TestCase):
     def test_CommunicationPartial1(self):
         self.result = """
         0 2 x 2 1 x 1 0
-        0 2 x 3 2 1 1 0
-        0 1 2 x 1 0 0 0
-        0 0 1 1 1 0 0 0
-        0 0 0 0 0 0 0 0
-        """
-
-        """
-        0 2 ? ? ? ? 1 0
-        0 2 ? ? 2 1 1 0
-        0 1 2 ? 1 0 0 0
-        0 0 1 1 1 0 0 0
-        0 0 0 0 0 0 0 0
-        """
-
-        """
-        0 2 ? ? 1 x 1 0  # if this 0 is opened before lower left
-        0 2 ? ? 2 1 1 0
-        0 1 2 ? 1 0 0 0
-        0 0 1 1 1 0 0 0
-        0 0 0 0 0 0 0 0
-        """
-
-        """
-        0 2 ? 2 1 x 1 0  
-        0 2 ? 3 2 1 1 0
-        0 1 2 x 1 0 0 0
-        0 0 1 1 1 0 0 0
-        0 0 0 0 0 0 0 0
-        """
-
-        """
-        0 2 x 2 1 x 1 0  
         0 2 x 3 2 1 1 0
         0 1 2 x 1 0 0 0
         0 0 1 1 1 0 0 0

@@ -93,7 +93,7 @@ class Game:
         while bool(self.zeros):
             zero = self.zeros.pop()
             self.open(*zero)
-            placedzeros = set(n.position for n in self.clues.values() if n.clue == '0')
+            placedzeros = set(n.position for n in self.clues.values() if n.clue == 0)
             self.zeros.difference_update(placedzeros)
 
         # (1) find sets of nodes, that are jointly informative
