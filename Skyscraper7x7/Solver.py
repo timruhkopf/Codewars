@@ -25,7 +25,6 @@ class Skyscraper:
         self.colclues = colclues
         self.rowclues = rowclues
 
-
     def __repr__(self):
         # TODO write a debug method, that displays what the current board looks like
         # does this even make sense? since this is a more combinatorical solver.
@@ -116,9 +115,3 @@ class Skyscraper:
             return [list(self.downtown_row[i][0]) for i in range(self.probsize)]
         return tuple(tuple(self.downtown_row[i][0]) for i in range(self.probsize))
 
-    def sample_board(self):
-        # TODO sample one permutation & and make use of updates
-        #  -> wasnt there a non informative clue? in this case, simply sample some tuple clue and make all others
-        #  unifnormative - using the update strategies, the applicable tuples remain.
-        #  now sample another. repeat. if there is no solution available, start again? or make use of stack?
-        pass

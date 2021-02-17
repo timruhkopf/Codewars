@@ -1,8 +1,9 @@
 import time
 from functools import wraps
 
-from .Solver import Skyscraper
 
+# from .Solver import Skyscraper
+#
 
 def timeit(func):
     @wraps(func)
@@ -15,6 +16,6 @@ def timeit(func):
 
     return wrapper
 
-
-def solve_puzzle(clues):
-    return Skyscraper(clues).solve()
+#
+# def solve_puzzle(clues):
+#     return Skyscraper(clues).solve()

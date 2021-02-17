@@ -1,4 +1,4 @@
-@staticmethod
+
 def relentless(func):
     """method decorator to execute the function until the board no longer changes by the
     method's updates"""
