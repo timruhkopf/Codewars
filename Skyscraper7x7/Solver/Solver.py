@@ -27,7 +27,9 @@ class Skyscraper:
 
     def __repr__(self):
         # TODO write a debug method, that displays what the current board looks like
-        # does this even make sense? since this is a more combinatorical solver.
+        #  does this even make sense? since this is a more combinatorical solver.
+        # Consider displaying the set of 'fix' for each position if both row & column downtown
+        #  are intersected. Be carefull to allign the differntly sized sets properly.
         pass
 
     @property

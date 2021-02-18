@@ -1,3 +1,5 @@
+from .StrategyStack import StrategyStack
+
 
 def relentless(func):
     """method decorator to execute the function until the board no longer changes by the
@@ -18,39 +20,45 @@ def relentless(func):
 
 
 class Strategy2:
-    # TODO refactor the classes name
+    # TODO refactor the classes name: CrossSolving? / Columnssets?
 
     @relentless
     def execute(board):
-        """"""
+        """TODO describe strategy briefly
+        sorting to find the most informative clues (shortest sets)"""
         for row in sorted(range(board.probsize), key=lambda i: len(board.downtown_row[i])):
             Strategy2.update(row, margin=0)
 
         for col in sorted(range(board.probsize), key=lambda i: len(board.downtown_col[i])):
             Strategy2.update(col, margin=1)
 
-    def update(board, col, margin=1):
-        """column update for margin== 1, rowupdate if margin == 0"""
+    def update(board, col, margin=1):  # TODO refactor name
+        """
+        # TODO add description
+        :param col: int. index of the row / column, on which's basis the update
+        of the respective opposite downtown_*s is produced
+        :param margin: int. update of downtown_row based on downtown_col for margin== 1,
+         reverse if margin == 0
+        :return: None
+        """
 
+        # flip the cross; either row updates the columns or vice versa:
+        # rename pos1, pos2 updater, updatee
         pos1 = (board.downtown_row, board.downtown_col)[margin]
         pos2 = (board.downtown_row, board.downtown_col)[margin - 1]
 
-        # updating rows indepenendly based on column
+        # TODO Move comment to docstring
+        # updating rows independently based on column
+        # take all permutations of a e.g. row clue (which is a nested list == a matrix)
+        # and for each column build the set of values contained in it.
+        # these are the values, that are allowed at the column clue's respective index
+        # position.
         fix = [set(column) for column in zip(*pos1[col])]
         for i, valid in enumerate(fix):
             pos2[i] = [tup for tup in pos2[i] if tup[col] in valid]
 
-        Strategy2._update_det(pos1, fix, col)
-
-    def _update_det(board, pos1, fix, col):
-        """update deterministics across "columns" & early stopping!"""
-        uniques = list((i, v) for i, v in enumerate(fix) if len(v) == 1)
-        stack = {k: [] for k in range(board.probsize)}
-        for j in {*range(board.probsize)} - {col}:
-            for tup in pos1[j]:
-                for i, v in uniques:
-                    if tup[i] in v:
-                        pos1[j].remove(tup)
-                        stack[j].append(tup)
-                        break
-        return stack  # relevant only for last 7*7er case
+        # create a stack of the removals, that can be added lateron for larger problems
+        # TODO make this optional for efficiency (only ambigious problems need stack)
+        #  move it to decorator of update?
+        # TODO : check if this actually does something - since it does not have inplace changes!
+        StrategyStack._update_det(pos1, fix, col)
