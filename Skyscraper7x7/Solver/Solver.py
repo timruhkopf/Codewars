@@ -1,9 +1,9 @@
 from collections import deque
 from itertools import permutations
 
-from .Strategies.Strategy2 import Strategy2
-from .Strategies.StrategyStack import StrategyStack
-from .Util import timeit
+from ..Strategies.Strategy2 import Strategy2
+from ..Strategies.StrategyStack import StrategyStack
+from ..Util import timeit
 
 
 class Skyscraper:
