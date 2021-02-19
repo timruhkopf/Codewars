@@ -108,17 +108,18 @@ Solution method is purely to sample problems
 
 * Potential for increase in efficiency: the (0,0)s contain no information on their own. However, as they reflect
   information from 'intersections' of clues, they can become informative lateron to solve residual ambiguity. With lots
-  of information available and in an umabigious setting, keeping track of the zeros' permutations is not efficient.
-  Maybe start of with updating only those clues that are either partially or fully informative. Keep track of what
-  updates are made to downtown_row and column. Should there remain any ambiguity across the board, sequentially create
-  the necessary! (0,0) permutations and update them in accord with the track record until the residual ambiguity is
-  resolved.
-  
+  of information available and large boards in an umabigiuous setting, keeping track of the zeros' permutations is not
+  efficient. Maybe start of with updating only those clues that are either partially or fully informative. Keep track of
+  what updates are made to downtown_row and column. Should there remain any ambiguity across the board, sequentially
+  create the necessary! (0,0) permutations and update them in accord with the track record until the residual ambiguity
+  is resolved.
+
 
 * Potential for increase in efficiency: reduce the number of permutations by half; each permutation has a mirrored
   example. Knowing one and analysing it on its visibility automatically reveals the reverse's. pclues could be filled
   with them by reversing the clue tuple and the permutation!
 
+# TODO CHECK if stack is build encessarily in Strategy2.update at all!
 
-* Efficiency increase: most (all except one problem) do not need the stack of changes make it togglable by the user - or
-  by the algorithm as well (provided it failed in the first run). This will increase the speed on all other test cases.
+* Efficiency increase: most (all except one problem) do not need the stack of changes; make it togglable by the user or
+  by the algorithm  (provided it failed in the first run). This will increase the speed on all other test cases.

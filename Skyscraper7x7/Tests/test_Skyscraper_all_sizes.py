@@ -1,9 +1,26 @@
 import unittest
 
-from ..Solver import Skyscraper
+from ..Solver.Solver import Skyscraper
 
 
 class TestSkyscraper(unittest.TestCase):
+    # def test_speedincrease(self):
+    #     """This test is aimed at pclues caching and loading it after the first time"""
+    #     sky = Skyscraper([2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2])
+    #     # TODO time solving
+    #     solution = sky.solve()
+    #     self.assertEqual(solution,
+    #                      ((3, 4, 2, 1),
+    #                       (1, 2, 3, 4),
+    #                       (2, 1, 4, 3),
+    #                       (4, 3, 1, 2)))
+    #
+    #     sky = Skyscraper([2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2])
+    #     # TODO time solving
+    #     sky.solve()
+    #
+    #     # self.assertTrue(first_time > second_time)
+
     def test_continously(self):
         sky = Skyscraper([2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2])
         self.assertEqual(sky.solve(),
