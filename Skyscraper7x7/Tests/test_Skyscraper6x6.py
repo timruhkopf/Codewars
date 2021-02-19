@@ -1,6 +1,6 @@
 import unittest
 
-from ..Util import solve_puzzle
+from .Util_tests import solve_puzzle
 
 
 class test_Skyscraper6x6(unittest.TestCase):

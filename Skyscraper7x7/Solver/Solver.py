@@ -3,7 +3,6 @@ from itertools import permutations
 
 from ..Strategies.Strategy2 import Strategy2
 from ..Strategies.StrategyStack import StrategyStack
-from ..Util import timeit
 
 
 class Skyscraper:
@@ -21,7 +20,7 @@ class Skyscraper:
         self.probsize = int(len(self.clues) / 4)  # TODO infer probsize from clues.
 
         # parse the clues
-        colclues, rowclues = self._interpret_clues(self.clues, self.probsize)
+        colclues, rowclues = self._interpret_clues(self.clues)
         self.colclues = colclues
         self.rowclues = rowclues
 
@@ -41,6 +40,7 @@ class Skyscraper:
         #  but rather they change their copy of it
         if self._pclues[self.probsize] is None:
             self._pclues[self.probsize] = self._sort_permutations(self.probsize)
+            return self._pclues[self.probsize]
         else:
             return self._pclues[self.probsize]
 
@@ -64,7 +64,6 @@ class Skyscraper:
         :return: how many buildings are visible from the left for this particular tup
         of skyscrapers.
         :example:
-        # TODO testing
         (1,2,3,4) --> 4
         (3,2,1,4) --> 2
         """
@@ -74,16 +73,19 @@ class Skyscraper:
                 ismax.appendleft(value)
         return len(ismax)
 
-    @timeit
+    # @timeit
     @staticmethod
     def _sort_permutations(problemsize):
         """sorting the permutations by visibility in both directions, creates a lookup table
         for the clues.
-        :returns dict.key: visibility from left & right, value: set of """
+        :returns dict. key: tuple: visibility from left & right (left, right),
+        value: set of all tuples, that are the permutations with the corresponding left & right
+        visibility.
+        """
         permute = set(permutations(range(1, problemsize + 1)))
 
-        # due to lexicographic ordering in permuations: cut no of permutations to half
-        # permute = [p for p in permutations(range(1,problemsize +1)) if p[0] < p[-1]]
+        # Consider; due to lexicographic ordering in permuations: cut no of permutations to half
+        #  permute = [p for p in permutations(range(1,problemsize +1)) if p[0] < p[-1]]
         gen = range(1, problemsize + 1)
         pclues = {(k0, k1): set() for k0 in gen for k1 in gen}
         for tup in permute:
@@ -110,7 +112,7 @@ class Skyscraper:
         # (2nd stage updating) solves ambigous cases -----------------------
         after = [len(a[i]) for a in (self.downtown_row, self.downtown_col) for i in range(self.probsize)]
         if after != [1, 1, 1, 1, 1, 1, 1]:
-            StrategyStack.update_2ndstage(row=0)
+            StrategyStack.update_2ndstage(self, row=0)
 
         # The kata's result formats differ
         if self.probsize == 7:

@@ -1,6 +1,6 @@
 import unittest
 
-from ..Util import solve_puzzle
+from .Util_tests import solve_puzzle
 
 
 class Test_Skyscraper7x7_ambigious(unittest.TestCase):

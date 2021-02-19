@@ -27,10 +27,10 @@ class Strategy2:
         """TODO describe strategy briefly
         sorting to find the most informative clues (shortest sets)"""
         for row in sorted(range(board.probsize), key=lambda i: len(board.downtown_row[i])):
-            Strategy2.update(row, margin=0)
+            Strategy2.update(board, row, margin=0)
 
         for col in sorted(range(board.probsize), key=lambda i: len(board.downtown_col[i])):
-            Strategy2.update(col, margin=1)
+            Strategy2.update(board, col, margin=1)
 
     def update(board, col, margin=1):  # TODO refactor name
         """
@@ -61,4 +61,4 @@ class Strategy2:
         # TODO make this optional for efficiency (only ambigious problems need stack)
         #  move it to decorator of update?
         # TODO : check if this actually does something - since it does not have inplace changes!
-        StrategyStack._update_det(pos1, fix, col)
+        StrategyStack._update_det(board, pos1, fix, col)

@@ -17,7 +17,7 @@ class StrategyStack:
         """
         for choice in board.downtown_row[row]:
             # notice the dependence to ._update_det
-            stack = StrategyStack._update_det(pos1=board.downtown_row, fix=[set([v]) for v in choice], col=row)
+            stack = StrategyStack._update_det(board, pos1=board.downtown_row, fix=[set([v]) for v in choice], col=row)
             board.downtown_row[row] = [choice]
 
             # determine how many combinations are left in the dictionary for that row
@@ -27,7 +27,7 @@ class StrategyStack:
                 continue
 
             elif row != board.probsize - 1:  # there are more rows
-                if StrategyStack.update_2ndstage(row + 1):
+                if StrategyStack.update_2ndstage(board, row + 1):
                     return True
                 else:
                     continue
