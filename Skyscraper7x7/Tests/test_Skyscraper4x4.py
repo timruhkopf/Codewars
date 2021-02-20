@@ -1,14 +1,9 @@
 import unittest
 
-from ..Solver.Solver import Skyscraper
+from .Util_tests import Util_tests
 
 
-class Test_Skyskraper4x4(unittest.TestCase):
-    def tearDown(self) -> None:
-        self.assertEqual(Skyscraper(self.clues).solve(), self.solution)
-
-        del self.clues
-        del self.solution
+class Test_Skyskraper4x4(Util_tests, unittest.TestCase):
 
     def test_4x4_1(self):
         self.clues = (2, 2, 1, 3, 2, 2, 3, 1, 1, 2, 2, 3, 3, 2, 1, 3)

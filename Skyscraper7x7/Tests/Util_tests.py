@@ -1,6 +1,8 @@
 from Skyscraper7x7.Solver.Solver import Skyscraper
 
+class Util_tests:
+    def tearDown(self) -> None:
+        self.assertEqual(Skyscraper(self.clues).solve(), self.solution)
 
-def solve_puzzle(clues):
-    """The kata's interface requires a functional interface."""
-    return Skyscraper(clues).solve()
+        del self.clues
+        del self.solution
