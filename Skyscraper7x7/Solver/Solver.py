@@ -24,12 +24,45 @@ class Skyscraper:
         self.colclues = colclues
         self.rowclues = rowclues
 
+    def table(self, downtown):
+        """__repr__ helper: prints out a table from the "columnsets" of each position"""
+        fix = lambda r: [set(column) for column in zip(*downtown[r])]
+        rows = [fix(r) for r in range(self.probsize)]
+
+        max_lens = [max([str(s) for s in row], key=len) for row in zip(*rows)]
+        max_lens = [len(x) for x in max_lens]
+
+        S = ''
+        for row in rows:
+            S += '|'.join('{0:{width}}'.format(str(x), width=y) for x, y in zip(row, max_lens)) + '\n'
+
+        return S
+
     def __repr__(self):
-        # TODO write a debug method, that displays what the current board looks like
-        #  does this even make sense? since this is a more combinatorical solver.
-        # Consider displaying the set of 'fix' for each position if both row & column downtown
-        #  are intersected. Be carefull to allign the differntly sized sets properly.
-        pass
+        """EXPERIMENTAL debug method, prints out tables of downtown_row and downtown_col's
+         interpret in a 'columnview' fashion. A row reads as the following:
+        given
+        downtown_row = {0:[(2, 3, 4, 1),
+                           (1, 2, 4, 3),
+                           (1, 3, 4, 2)], ...}
+        we can build the sets across the column, that represent the row
+        [{1, 2}, {2, 3}, {4}, {1, 2, 3}]
+         They are the index specific applicable values across all positions.
+
+        Notice, since both tables follow the index of the downtown object,
+        the column view is printing the columns in transpose. (which is in
+        accordance to the downtown_col object!
+
+        WARNING: an intersection of the sets of downtown_row and downtown_column
+        for an index position is not a valid operation, as the other sets in the
+        same row / column are not appropriately updated!
+        """
+        if self.downtown_row is not None and self.downtown_col is not None:
+            S = 'Row view\n'
+            S += self.table(self.downtown_row) + '\n'
+            S += 'Column view\n'
+            S += self.table(self.downtown_col)
+            return S
 
     @property
     def pclues(self):
@@ -116,4 +149,3 @@ class Skyscraper:
         if self.probsize == 7:
             return [list(self.downtown_row[i][0]) for i in range(self.probsize)]
         return tuple(tuple(self.downtown_row[i][0]) for i in range(self.probsize))
-
