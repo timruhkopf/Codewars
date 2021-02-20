@@ -1,12 +1,12 @@
 from collections import deque
 from itertools import permutations
 
-from ..Strategies.Strategy2 import Strategy2
+from ..Strategies.StrategyCrossSolving import StrategyCrossSolving
 from ..Strategies.StrategyStack import StrategyStack
 
 
 class Skyscraper:
-    # preallocation to make it lazily work with all sizes in one testing
+    # preallocation to make it work lazily with all sizes in one test scenario
     _pclues = {4: None, 6: None, 7: None}
 
     def __init__(self, clues):
@@ -17,7 +17,7 @@ class Skyscraper:
         7*7 Skyscraper: https://www.codewars.com/kata/5917a2205ffc30ec3a0000a8 (kyu 1)
         """
         self.clues = clues
-        self.probsize = int(len(self.clues) / 4)  # TODO infer probsize from clues.
+        self.probsize = int(len(self.clues) / 4)
 
         # parse the clues
         colclues, rowclues = self._interpret_clues(self.clues)
@@ -100,19 +100,17 @@ class Skyscraper:
         pclues.update({(0, 0): permute})
         return pclues
 
-    # @mem_visability(probsize=6)
-    # TODO mem_visability decorator???
     def solve(self):
         self.downtown_row = {r: list(self.pclues[self.rowclues[r]]) for r in range(self.probsize)}
         self.downtown_col = {c: list(self.pclues[self.colclues[c]]) for c in range(self.probsize)}
 
         # (1st stage updating) solves all unambigous cases -------------------------
-        Strategy2.execute(self)
+        StrategyCrossSolving.execute(self)
 
         # (2nd stage updating) solves ambigous cases -----------------------
         after = [len(a[i]) for a in (self.downtown_row, self.downtown_col) for i in range(self.probsize)]
         if after != [1, 1, 1, 1, 1, 1, 1]:
-            StrategyStack.update_2ndstage(self, row=0)
+            StrategyStack.backtracking_update(self, row=0)
 
         # The kata's result formats differ
         if self.probsize == 7:

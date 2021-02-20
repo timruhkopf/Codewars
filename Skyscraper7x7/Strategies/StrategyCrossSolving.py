@@ -1,6 +1,3 @@
-from .StrategyStack import StrategyStack
-
-
 def relentless(func):
     """method decorator to execute the function until the board no longer changes by the
     method's updates"""
@@ -19,33 +16,32 @@ def relentless(func):
     return wrapper
 
 
-class Strategy2:
-    # TODO refactor the classes name: CrossSolving? / Columnssets?
+class StrategyCrossSolving:
 
     @relentless
     def execute(board):
         """TODO describe strategy briefly
         sorting to find the most informative clues (shortest sets)"""
         for row in sorted(range(board.probsize), key=lambda i: len(board.downtown_row[i])):
-            Strategy2.update(board, row, margin=0)
+            StrategyCrossSolving.intersect_update(board, row, margin=0)
 
         for col in sorted(range(board.probsize), key=lambda i: len(board.downtown_col[i])):
-            Strategy2.update(board, col, margin=1)
+            StrategyCrossSolving.intersect_update(board, col, margin=1)
 
-    def update(board, col, margin=1):  # TODO refactor name
+    def intersect_update(board, col, margin=1):  # TODO refactor name
         """
         # TODO add description
-        :param col: int. index of the row / column, on which's basis the update
+        :param col: int. index of the row / column, on which's basis the intersect_update
         of the respective opposite downtown_*s is produced
-        :param margin: int. update of downtown_row based on downtown_col for margin== 1,
+        :param margin: int. intersect_update of downtown_row based on downtown_col for margin== 1,
          reverse if margin == 0
         :return: None
         """
 
         # flip the cross; either row updates the columns or vice versa:
         # rename pos1, pos2 updater, updatee
-        pos1 = (board.downtown_row, board.downtown_col)[margin]
-        pos2 = (board.downtown_row, board.downtown_col)[margin - 1]
+        updater = (board.downtown_row, board.downtown_col)[margin]
+        updatee = (board.downtown_row, board.downtown_col)[margin - 1]
 
         # TODO Move comment to docstring
         # updating rows independently based on column
@@ -53,12 +49,13 @@ class Strategy2:
         # and for each column build the set of values contained in it.
         # these are the values, that are allowed at the column clue's respective index
         # position.
-        fix = [set(column) for column in zip(*pos1[col])]
+        fix = [set(column) for column in zip(*updater[col])]
         for i, valid in enumerate(fix):
-            pos2[i] = [tup for tup in pos2[i] if tup[col] in valid]
+            updatee[i] = [tup for tup in updatee[i] if tup[col] in valid]
 
         # create a stack of the removals, that can be added lateron for larger problems
         # TODO make this optional for efficiency (only ambigious problems need stack)
         #  move it to decorator of update?
         # TODO : check if this actually does something - since it does not have inplace changes!
-        StrategyStack._update_det(board, pos1, fix, col)
+        #  ---> uncertain if it is needed for 7x7 medved case
+        # StrategyStack._update_and_track(board, pos1, fix, col)

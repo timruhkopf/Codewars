@@ -1,23 +1,26 @@
-
-
-
 class StrategyStack:
 
     def execute(board, row):
         """
         TODO briefly describe the strategy
-        :param row:
-        """
-        StrategyStack.update_2ndstage(board, row)
 
-    def update_2ndstage(board, row):
-        """
-        recursive solving for the last remaining ambiguous case
+        strategy only relevant for 7x7 medved case
         :param row:
+        """
+        StrategyStack.backtracking_update(board, row)
+
+    def backtracking_update(board, row):
+        """
+        recursive (backtracking) solving for the medved case;
+        successively try out all permutations in downtown_row[row] for validity.
+        Doing so implies inplace changes on the downtown_row object.
+        As some recursive selections may proof invalid, a stack is created to
+        track the changes made and allow reverting from the stack.
+        :param row: index of the row, whose downtown_row is selected from.
         """
         for choice in board.downtown_row[row]:
-            # notice the dependence to ._update_det
-            stack = StrategyStack._update_det(board, pos1=board.downtown_row, fix=[set([v]) for v in choice], col=row)
+            stack = StrategyStack._update_and_track(board, pos1=board.downtown_row, fix=[set([v]) for v in choice],
+                                                    col=row)
             board.downtown_row[row] = [choice]
 
             # determine how many combinations are left in the dictionary for that row
@@ -27,7 +30,7 @@ class StrategyStack:
                 continue
 
             elif row != board.probsize - 1:  # there are more rows
-                if StrategyStack.update_2ndstage(board, row + 1):
+                if StrategyStack.backtracking_update(board, row + 1):
                     return True
                 else:
                     continue
@@ -40,12 +43,20 @@ class StrategyStack:
             return False
 
     def _revert(board, stack):
-        """# TODO """
+        """recreate the downtown_row state before the latest update from a stack"""
         for k, v in stack.items():
             board.downtown_row[k].extend(v)
 
-    def _update_det(board, pos1, fix, col):  # TODO refactor name
-        """update deterministics across "columns" & early stopping!"""
+    def _update_and_track(board, pos1, fix, col):  # TODO refactor pos1 name
+        """
+        Update the pos1 object in place from the selected fix object with early stopping;
+        Further, a stack object is created & returned which keeps track of all the changes made.
+        :param pos1: downtown_* object; dict: {index: list of candidate tuples}
+        :param fix: list of sets, that represent the updater's (i.e. a row) choice.
+        e.g. [{2}, {1}, {6}, {4}, {3}, {7}, {5}] which originated from
+        :param col:
+        :return: stack: dict of lists. key:
+        """
         uniques = list((i, v) for i, v in enumerate(fix) if len(v) == 1)
         stack = {k: [] for k in range(board.probsize)}
         for j in {*range(board.probsize)} - {col}:
@@ -55,4 +66,4 @@ class StrategyStack:
                         pos1[j].remove(tup)
                         stack[j].append(tup)
                         break
-        return stack  # relevant only for last 7*7er case
+        return stack
