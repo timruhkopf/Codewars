@@ -9,10 +9,18 @@ class Solution:
         self.clues = self.parse_clues_from_board(self.__board)
 
     def sample_board(self, problemsize):
-        # TODO sample one permutation & and make use of updates
+        # TODO sample one permutation & and make use of updates (particularly StrategyStack)
         #  -> wasnt there a non informative clue? in this case, simply sample some tuple clue and make all others
         #  unifnormative - using the update strategies, the applicable tuples remain.
         #  now sample another. repeat. if there is no solution available, start again? or make use of stack?
+        #  further, using only a fraction of the available clue information may indicate multiple solutions
+        #  there are two options
+        #   1) ensure that only one solution is available (hard) - requires checking all possible choices in
+        #       StrategyStack - that is after given a clue and the CrossSolving strategy is applied.
+        #   2) check a potential solution provided by any solver for visability - and return true,
+        #       if the provided solution is in accordance with the clues and that each row & col is
+        #       a valid permutation of the set of range(1, board.probsize +1). Jointly these two criteria should
+        #       guarantee the correctness of a board.
         return None
 
     @staticmethod
@@ -41,9 +49,21 @@ class Solution:
 
     def check_a_valid_solution(self, original_clue, proposed_board):
         """check if the proposed board - when interpreted for visibility matches the
-        (possibly incomplete) original_clue."""
+        (possibly incomplete) original_clue. also ensures that all rows and columns are a 
+        set of range(1, board.probsize +1) and the board is thereby a valid cityblock."""
+        if not Solution.check_valid_board(proposed_board):
+            return False
+
         interpreted = Solution.parse_clues_from_board(proposed_board)
         return all([True if o == i or o == 0 else False for o, i in zip(original_clue, interpreted)])
+
+    def check_valid_board(board):
+        """Debug method: check that all rows and columns are a
+        set of range(1, board.probsize +1) and the board is thereby a valid cityblock."""
+        board = [list(board.downtown_row[i][0]) for i in range(board.probsize)]
+        numbers = range(1, board.probsize + 1)
+        return all([set(row) == numbers for row in board]) and \
+               all([set(col) == numbers for col in zip(*board)])
 
 
 if __name__ == '__main__':

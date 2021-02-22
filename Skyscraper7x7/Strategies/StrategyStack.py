@@ -7,7 +7,9 @@ class StrategyStack:
         strategy only relevant for 7x7 medved case
         :param row:
         """
+        board.column_sets = [set() for i in range(len(board.downtown_row))]
         StrategyStack.backtracking_update(board, row)
+        del board.column_sets
 
     def backtracking_update(board, row):
         """
@@ -19,8 +21,18 @@ class StrategyStack:
         :param row: index of the row, whose downtown_row is selected from.
         """
         for choice in board.downtown_row[row]:
-            stack = StrategyStack._update_and_track(board, pos1=board.downtown_row, fix=[set([v]) for v in choice],
-                                                    col=row)
+            # FIXME: progressively choosing in this manner on *_row alone does not ensure that
+            #   the columns of the board will also be the unique set of range(1, 8).
+            #   keep track of the columns: whenever a tuple is chosen, add its skyscraper
+            #   to a list of sets [{}, {}, {}, {}, {}, {}, {}] that contains the previous'
+            #   choices values for the repesctive positions.
+            #   should a choice have a value that is already contained in the respective
+            #   set, continue the for loop. If the for loop ends without any valid candidate,
+            #   revert the choice in the previous recursion call and continue.
+            #   a revert also must include removing the choice from this list of sets.
+
+            stack = StrategyStack._update_and_track(
+                board, pos1=board.downtown_row, fix=[set([v]) for v in choice], col=row)
             board.downtown_row[row] = [choice]
 
             # determine how many combinations are left in the dictionary for that row
