@@ -56,7 +56,7 @@ class StrategyStack:
                     choice=choice,
                     row=row,
                     fix=[set([v, *board.column_sets[i]]) for i, v in enumerate(choice)],
-                    exclude={row})  # set(range(0, board.probsize)) - board.unvisited)  # already visited rows
+                    exclude=set(range(0, board.probsize)) - board.unvisited)  # {row})   # already visited rows
                 board.downtown_row[row] = [choice]
 
                 # (2) check if the communication left a row with no choices
@@ -79,12 +79,7 @@ class StrategyStack:
 
                 # (4) The choice was valid up until now - if there are more rows to explore, do so (recursively)
                 elif bool(board.unvisited):
-                    # todo change this condition and subsequent if statement (recursive
-                    #  call) - to make smart trials: always choose the next row by the smallest amount
-                    #  of choices for that row. (fastest way through the tree?)
                     if StrategyStack.backtracking_update(board, StrategyStack.least_choices(board)):
-                        # the latter condition suffices but is more expensive lazy 'and' saves computation
-
                         # (4*) upward path after successful recursion.
                         return True
                     else:
@@ -145,21 +140,20 @@ if __name__ == '__main__':
     # A simple 4x4 example to ckeck out
     from Skyscraper7x7.Solver.Solver import Skyscraper
 
-    #
-    # clues = [2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2]
-    #
-    # sky = Skyscraper(clues)
-    # sky.downtown_row = {r: list(sky.pclues[sky.rowclues[r]]) for r in range(sky.probsize)}
-    # sky.downtown_col = {c: list(sky.pclues[sky.colclues[c]]) for c in range(sky.probsize)}
-    # StrategyStack.execute(sky)
-    #
-    # provided = tuple(tuple(sky.downtown_row[i][0]) for i in range(sky.probsize))
-    # solution = ((3, 4, 2, 1),
-    #             (1, 2, 3, 4),
-    #             (2, 1, 4, 3),
-    #             (4, 3, 1, 2))
-    #
-    # assert solution == provided
+    clues = [2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2]
+
+    sky = Skyscraper(clues)
+    sky.downtown_row = {r: list(sky.pclues[sky.rowclues[r]]) for r in range(sky.probsize)}
+    sky.downtown_col = {c: list(sky.pclues[sky.colclues[c]]) for c in range(sky.probsize)}
+    StrategyStack.execute(sky)
+
+    provided = tuple(tuple(sky.downtown_row[i][0]) for i in range(sky.probsize))
+    solution = ((3, 4, 2, 1),
+                (1, 2, 3, 4),
+                (2, 1, 4, 3),
+                (4, 3, 1, 2))
+
+    assert solution == provided
 
     clues = (0, 0, 1, 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0)
 
