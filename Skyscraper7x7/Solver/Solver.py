@@ -145,7 +145,7 @@ class Skyscraper:
         # (2nd stage updating) solves ambigous cases -----------------------
         after = [len(a[i]) for a in (self.downtown_row, self.downtown_col) for i in range(self.probsize)]
         if after != [1, 1, 1, 1, 1, 1, 1]:
-            StrategyStack.execute(self, row=0)
+            StrategyStack.execute(self)
 
         # The kata's result formats differ
         if self.probsize == 7:

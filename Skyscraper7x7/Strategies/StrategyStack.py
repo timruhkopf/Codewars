@@ -3,28 +3,37 @@ from Skyscraper7x7.Solver.Solution import Solution
 
 class StrategyStack:
 
-    def execute(board, row):
+    def execute(board):
         """
         TODO briefly describe the strategy
 
         strategy only relevant for 7x7 medved case
         :param row: index of
         """
+
+        # TODO Refactor these attributes & the stack to a seperate object?
         # helper variables needed across the recursion
         board.column_sets = [set() for i in range(len(board.downtown_row))]
         board.bench = set(range(1, board.probsize + 1))
+        board.unvisited = set(range(board.probsize))
 
         # Consider choosing shortest set of permutations as initialisation:
         # row = min(((k, len(v)) for k, v in board.downtown_row.items()), key=lambda k, v: v)
         # this required to change call "StrategyStack.backtracking_update(board, row + 1):" in
         # backtracking_update
-        StrategyStack.backtracking_update(board, row)
+        StrategyStack.backtracking_update(board, StrategyStack.least_choices(board))
 
         # remove helper variables
         del board.column_sets
         del board.bench
+        del board.unvisited
+
+    def least_choices(board):
+        """among those unvistied rows return the index of the one with the least choices"""
+        return min(board.downtown_row, key=lambda k: len(board.downtown_row[k]) if k in board.unvisited else 999)
 
     def backtracking_update(board, row):
+        board.unvisited.remove(row)
         for choice in board.downtown_row[row]:
 
             # (0) check if the current choice is conflicting with currently available
@@ -47,8 +56,7 @@ class StrategyStack:
                     choice=choice,
                     row=row,
                     fix=[set([v, *board.column_sets[i]]) for i, v in enumerate(choice)],
-                    exclude=set(range(row + 1)))  # already chosen rows todo change if 'smart' row choice
-                # strategy
+                    exclude={row})  # set(range(0, board.probsize)) - board.unvisited)  # already visited rows
                 board.downtown_row[row] = [choice]
 
                 # (2) check if the communication left a row with no choices
@@ -61,12 +69,8 @@ class StrategyStack:
                 # move up the recursion stack -> executing (4*)
                 # short circuit if a candidate solution was found.
                 elif after == [1] * board.probsize:
-                    # check if the provided solution is in accordance with the column information
-                    b = tuple(tuple(board.downtown_row[i][0]) for i in range(board.probsize))
-                    columninfo = all([set(vs) == board.bench for vs in zip(*b)])
-
                     # check the visibility is in accordance with the columnclues
-                    if columninfo and Solution.check_a_valid_solution(board, board.clues):
+                    if Solution.check_a_valid_solution(board, board.clues):
                         return True
 
                     else:  # the provided solution was contradicting the column information.
@@ -74,11 +78,11 @@ class StrategyStack:
                         continue
 
                 # (4) The choice was valid up until now - if there are more rows to explore, do so (recursively)
-                elif row != board.probsize - 1:
+                elif bool(board.unvisited):
                     # todo change this condition and subsequent if statement (recursive
                     #  call) - to make smart trials: always choose the next row by the smallest amount
                     #  of choices for that row. (fastest way through the tree?)
-                    if StrategyStack.backtracking_update(board, row + 1):
+                    if StrategyStack.backtracking_update(board, StrategyStack.least_choices(board)):
                         # the latter condition suffices but is more expensive lazy 'and' saves computation
 
                         # (4*) upward path after successful recursion.
@@ -91,6 +95,7 @@ class StrategyStack:
 
         else:  # (5) None of this level's choices was applicable; try next choice in the
             # higher recursion level.
+            board.unvisited.add(row)
             return False
 
     def _revert(board, stack, choice):
@@ -140,17 +145,30 @@ if __name__ == '__main__':
     # A simple 4x4 example to ckeck out
     from Skyscraper7x7.Solver.Solver import Skyscraper
 
-    clues = [2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2]
+    #
+    # clues = [2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2]
+    #
+    # sky = Skyscraper(clues)
+    # sky.downtown_row = {r: list(sky.pclues[sky.rowclues[r]]) for r in range(sky.probsize)}
+    # sky.downtown_col = {c: list(sky.pclues[sky.colclues[c]]) for c in range(sky.probsize)}
+    # StrategyStack.execute(sky)
+    #
+    # provided = tuple(tuple(sky.downtown_row[i][0]) for i in range(sky.probsize))
+    # solution = ((3, 4, 2, 1),
+    #             (1, 2, 3, 4),
+    #             (2, 1, 4, 3),
+    #             (4, 3, 1, 2))
+    #
+    # assert solution == provided
+
+    clues = (0, 0, 1, 2, 0, 2, 0, 0, 0, 3, 0, 0, 0, 1, 0, 0)
 
     sky = Skyscraper(clues)
     sky.downtown_row = {r: list(sky.pclues[sky.rowclues[r]]) for r in range(sky.probsize)}
     sky.downtown_col = {c: list(sky.pclues[sky.colclues[c]]) for c in range(sky.probsize)}
-    StrategyStack.execute(sky, row=0)
+    StrategyStack.execute(sky)
 
     provided = tuple(tuple(sky.downtown_row[i][0]) for i in range(sky.probsize))
-    solution = ((3, 4, 2, 1),
-                (1, 2, 3, 4),
-                (2, 1, 4, 3),
-                (4, 3, 1, 2))
+    solution = ((2, 1, 4, 3), (3, 4, 1, 2), (4, 2, 3, 1), (1, 3, 2, 4))
 
     assert solution == provided
