@@ -1,8 +1,34 @@
 from Skyscraper7x7.Solver.Solution import Solution
 
 
-class StrategyStack:
+class Bookkeeper:
+    def __init__(self, board):
+        """Keeps abstract STATE of the algorithm."""
+        self.board = board
+        self.column_sets = [set() for i in range(len(board.downtown_row))]
+        self.bench = set(range(1, board.probsize + 1))
+        self.unvisited = set(range(board.probsize))
 
+    @property
+    def visited(self):
+        return set(range(0, self.board.probsize)) - self.unvisited
+
+    def fixture(self, choice):
+        return [set([v, *self.column_sets[i]]) for i, v in enumerate(choice)]
+
+    @property
+    def next_row(self):
+        row = self.least_choices()
+        self.unvisited.remove(row)
+        return row
+
+    def least_choices(self):
+        """among those unvistied rows return the index of the one with the least choices"""
+        return min(self.board.downtown_row,
+                   key=lambda k: len(self.board.downtown_row[k]) if k in self.unvisited else 999)
+
+
+class StrategyStack:
     def execute(board):
         """
         TODO briefly describe the strategy
@@ -13,39 +39,23 @@ class StrategyStack:
 
         # TODO Refactor these attributes & the stack to a seperate object?
         # helper variables needed across the recursion
-        board.column_sets = [set() for i in range(len(board.downtown_row))]
-        board.bench = set(range(1, board.probsize + 1))
-        board.unvisited = set(range(board.probsize))
+        booki = Bookkeeper(board)
+        StrategyStack.backtracking_update(booki, board)
 
-        # Consider choosing shortest set of permutations as initialisation:
-        # row = min(((k, len(v)) for k, v in board.downtown_row.items()), key=lambda k, v: v)
-        # this required to change call "StrategyStack.backtracking_update(board, row + 1):" in
-        # backtracking_update
-        StrategyStack.backtracking_update(board, StrategyStack.least_choices(board))
-
-        # remove helper variables
-        del board.column_sets
-        del board.bench
-        del board.unvisited
-
-    def least_choices(board):
-        """among those unvistied rows return the index of the one with the least choices"""
-        return min(board.downtown_row, key=lambda k: len(board.downtown_row[k]) if k in board.unvisited else 999)
-
-    def backtracking_update(board, row):
-        board.unvisited.remove(row)
+    def backtracking_update(booki, board):
+        row = booki.next_row
         for choice in board.downtown_row[row]:
 
             # (0) check if the current choice is conflicting with currently available
             # column information derived from already selected choices (in higher recursion levels)
-            if any(c in s for c, s in zip(choice, board.column_sets)):
+            if any(c in s for c, s in zip(choice, booki.column_sets)):
                 # it is conflicting - try next choice
                 continue
 
             else:
                 # not conflicting; update the available 'column' information
                 for i, v in enumerate(choice):
-                    board.column_sets[i].add(v)
+                    booki.column_sets[i].add(v)
 
                 # (1) communicate the choice to the board.
                 #  update also removes of each subsequent row those values,
@@ -55,14 +65,14 @@ class StrategyStack:
                     downtown_=board.downtown_row,
                     choice=choice,
                     row=row,
-                    fix=[set([v, *board.column_sets[i]]) for i, v in enumerate(choice)],
-                    exclude=set(range(0, board.probsize)) - board.unvisited)  # {row})   # already visited rows
+                    fix=booki.fixture(choice),
+                    exclude=booki.visited)  # {row})   # already visited rows
                 board.downtown_row[row] = [choice]
 
                 # (2) check if the communication left a row with no choices
                 after = [len(row) for row in board.downtown_row.values()]
                 if not all(after):
-                    StrategyStack._revert(board, stack, choice)
+                    StrategyStack._revert(board, booki, stack, choice)
                     continue
 
                 # (3) --BASECASE-- after the update, all rows have only one choice left:
@@ -74,33 +84,33 @@ class StrategyStack:
                         return True
 
                     else:  # the provided solution was contradicting the column information.
-                        StrategyStack._revert(board, stack, choice)
+                        StrategyStack._revert(board, booki, stack, choice)
                         continue
 
                 # (4) The choice was valid up until now - if there are more rows to explore, do so (recursively)
-                elif bool(board.unvisited):
-                    if StrategyStack.backtracking_update(board, StrategyStack.least_choices(board)):
+                elif bool(booki.unvisited):
+                    if StrategyStack.backtracking_update(booki, board):
                         # (4*) upward path after successful recursion.
                         return True
                     else:
                         # this level's choice did not succeed in lower recursive layers;
                         # revert it and remove from column information
-                        StrategyStack._revert(board, stack, choice)
+                        StrategyStack._revert(board, booki, stack, choice)
                         continue
 
         else:  # (5) None of this level's choices was applicable; try next choice in the
             # higher recursion level.
-            board.unvisited.add(row)
+            booki.unvisited.add(row)
             return False
 
-    def _revert(board, stack, choice):
+    def _revert(board, booki, stack, choice):
         """recreate the downtown_row state before the latest update from a stack"""
         for k, v in stack.items():
             board.downtown_row[k].extend(v)
 
         # remove choice from column_sets
         for i, v in enumerate(choice):
-            board.column_sets[i].remove(v)
+            booki.column_sets[i].remove(v)
 
     def _update_and_track(board, downtown_, choice, row, fix, exclude):
         """
