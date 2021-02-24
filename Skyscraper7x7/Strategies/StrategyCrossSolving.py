@@ -43,6 +43,9 @@ class StrategyCrossSolving:
         updater = (board.downtown_row, board.downtown_col)[margin]
         updatee = (board.downtown_row, board.downtown_col)[margin - 1]
 
+        # TODO consider using StrategyStack._update_and_track because it has early stopping and
+        #  makes use of inplace changes rather than an creating new list! merely the stack is not necessary here!
+
         # TODO Move comment to docstring
         # updating rows independently based on column
         # take all permutations of a e.g. row clue (which is a nested list == a matrix)

@@ -134,6 +134,8 @@ class Skyscraper:
         return pclues
 
     def solve(self):
+        # Consider rather than lists make them sets -
+        #  since most removals are check in and removals are cheaper with sets in contrast to lists
         self.downtown_row = {r: list(self.pclues[self.rowclues[r]]) for r in range(self.probsize)}
         self.downtown_col = {c: list(self.pclues[self.colclues[c]]) for c in range(self.probsize)}
 
@@ -143,9 +145,10 @@ class Skyscraper:
         # (2nd stage updating) solves ambigous cases -----------------------
         after = [len(a[i]) for a in (self.downtown_row, self.downtown_col) for i in range(self.probsize)]
         if after != [1, 1, 1, 1, 1, 1, 1]:
-            StrategyStack.backtracking_update(self, row=0)
+            StrategyStack.execute(self, row=0)
 
         # The kata's result formats differ
         if self.probsize == 7:
             return [list(self.downtown_row[i][0]) for i in range(self.probsize)]
         return tuple(tuple(self.downtown_row[i][0]) for i in range(self.probsize))
+
