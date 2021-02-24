@@ -20,31 +20,18 @@ class Solution:
         #       guarantee the correctness of a board.
         return None
 
-    @staticmethod
-    def find_row_clues(b):
-        """
-        :param b: list of lists!
-        """
-        row_clues = list()
-        for row in b:
-            front = board._visible(row)
-            back = board._visible(tuple(reversed(row)))
-
-            row_clues.append((front, back))
-        return row_clues
-
-    @staticmethod
-    def parse_clues_from_board(b):
-        """
-        :param b: list of lists
-        :return:
-        """
-        row_clues = Solution.find_row_clues(b)
-        col_clues = Solution.find_row_clues(list(zip(*b)))
-        return [*[clue[0] for clue in col_clues],
-                *[clue[1] for clue in row_clues],
-                *[clue[1] for clue in reversed(col_clues)],
-                *[clue[0] for clue in reversed(row_clues)]]
+    # @staticmethod
+    # def parse_clues_from_board(b):
+    #     """
+    #     :param b: list of lists
+    #     :return:
+    #     """
+    #     row_clues = Solution.find_row_clues(b)
+    #     col_clues = Solution.find_row_clues(list(zip(*b)))
+    #     return [*[clue[0] for clue in col_clues],
+    #             *[clue[1] for clue in row_clues],
+    #             *[clue[1] for clue in reversed(col_clues)],
+    #             *[clue[0] for clue in reversed(row_clues)]]
 
     @staticmethod
     def parse_clues_from_board(board):
@@ -54,9 +41,21 @@ class Solution:
         :return:
         """
 
+        def find_row_clues(b):
+            """
+            :param b: list of lists!
+            """
+            row_clues = list()
+            for row in b:
+                front = board._visible(row)
+                back = board._visible(tuple(reversed(row)))
+
+                row_clues.append((front, back))
+            return row_clues
+
         b = [list(board.downtown_row[i][0]) for i in range(board.probsize)]
-        row_clues = Solution.find_row_clues(b)
-        col_clues = Solution.find_row_clues(list(zip(*b)))
+        row_clues = find_row_clues(b)
+        col_clues = find_row_clues(list(zip(*b)))
 
         # create a single line from the row & column clues.
         # by convention, the order is top, right, bottom, left
