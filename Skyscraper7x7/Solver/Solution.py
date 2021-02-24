@@ -1,6 +1,3 @@
-from Skyscraper7x7.Solver import Skyscraper
-
-
 class Solution:
     def __init__(self, boardsize):
         """The pure intent of this class is to sample problems"""
@@ -24,20 +21,42 @@ class Solution:
         return None
 
     @staticmethod
+    def find_row_clues(b):
+        """
+        :param b: list of lists!
+        """
+        row_clues = list()
+        for row in b:
+            front = board._visible(row)
+            back = board._visible(tuple(reversed(row)))
+
+            row_clues.append((front, back))
+        return row_clues
+
+    @staticmethod
+    def parse_clues_from_board(b):
+        """
+        :param b: list of lists
+        :return:
+        """
+        row_clues = Solution.find_row_clues(b)
+        col_clues = Solution.find_row_clues(list(zip(*b)))
+        return [*[clue[0] for clue in col_clues],
+                *[clue[1] for clue in row_clues],
+                *[clue[1] for clue in reversed(col_clues)],
+                *[clue[0] for clue in reversed(row_clues)]]
+
+    @staticmethod
     def parse_clues_from_board(board):
-        # use zip transpose & visability
+        """
 
-        def find_row_clues(board):
-            row_clues = list()
-            for row in board:
-                front = Skyscraper._visible(row)
-                back = Skyscraper._visible(tuple(reversed(row)))
+        :param board: Skyscraper instance
+        :return:
+        """
 
-                row_clues.append((front, back))
-            return row_clues
-
-        row_clues = find_row_clues(board)
-        col_clues = find_row_clues(list(zip(*board)))
+        b = [list(board.downtown_row[i][0]) for i in range(board.probsize)]
+        row_clues = Solution.find_row_clues(b)
+        col_clues = Solution.find_row_clues(list(zip(*b)))
 
         # create a single line from the row & column clues.
         # by convention, the order is top, right, bottom, left
@@ -47,26 +66,30 @@ class Solution:
                 *[clue[1] for clue in reversed(col_clues)],
                 *[clue[0] for clue in reversed(row_clues)]]
 
-    def check_a_valid_solution(self, original_clue, proposed_board):
+    @staticmethod
+    def check_a_valid_solution(board, original_clue):
         """check if the proposed board - when interpreted for visibility matches the
         (possibly incomplete) original_clue. also ensures that all rows and columns are a 
         set of range(1, board.probsize +1) and the board is thereby a valid cityblock."""
-        if not Solution.check_valid_board(proposed_board):
+        if not Solution.check_valid_board(board):
             return False
 
-        interpreted = Solution.parse_clues_from_board(proposed_board)
+        b = [list(board.downtown_row[i][0]) for i in range(board.probsize)]
+        interpreted = Solution.parse_clues_from_board(board)
         return all([True if o == i or o == 0 else False for o, i in zip(original_clue, interpreted)])
 
     def check_valid_board(board):
         """Debug method: check that all rows and columns are a
         set of range(1, board.probsize +1) and the board is thereby a valid cityblock."""
-        board = [list(board.downtown_row[i][0]) for i in range(board.probsize)]
-        numbers = range(1, board.probsize + 1)
-        return all([set(row) == numbers for row in board]) and \
-               all([set(col) == numbers for col in zip(*board)])
+        b = [list(board.downtown_row[i][0]) for i in range(board.probsize)]
+        numbers = set(range(1, board.probsize + 1))
+        return all([set(row) == numbers for row in b]) and \
+               all([set(col) == numbers for col in zip(*b)])
 
 
 if __name__ == '__main__':
+    from Skyscraper7x7.Solver.Solver import Skyscraper
+
     # (0) check the intpreted clue is the same as the kata's clue
     assert Solution.parse_clues_from_board(((3, 4, 2, 1), (1, 2, 3, 4), (2, 1, 4, 3), (4, 3, 1, 2))) == \
            [2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2]
@@ -84,7 +107,7 @@ if __name__ == '__main__':
     # (2) Check kata's incomplete clue matches the board (the brovided board is
     # a valid solution given the clue)
     # CAREFULL: if cannot assert: the kata provided 0's
-    interpreted = Solution.parse_clues_from_board(((5, 6, 1, 4, 3, 2),
+    interpreted = Solution.parse_clues_from_Lists(((5, 6, 1, 4, 3, 2),
                                                    (4, 1, 3, 2, 6, 5),
                                                    (2, 3, 6, 1, 5, 4),
                                                    (6, 5, 4, 3, 2, 1),
