@@ -69,8 +69,6 @@ class Skyscraper:
         """property getter ensures, that only when needed, the permutations are ONCE! calculated
         for all problems of the same size,
         :returns dict. describes the visibility of all possible permutations"""
-        # TODO check, that the Skyscraper instances do not change the permutations,
-        #  but rather they change their copy of it
         if self._pclues[self.probsize] is None:
             self._pclues[self.probsize] = self._sort_permutations(self.probsize)
             return self._pclues[self.probsize]
@@ -134,8 +132,6 @@ class Skyscraper:
         return pclues
 
     def solve(self):
-        # Consider rather than lists make them sets -
-        #  since most removals are check in and removals are cheaper with sets in contrast to lists
         self.downtown_row = {r: list(self.pclues[self.rowclues[r]]) for r in range(self.probsize)}
         self.downtown_col = {c: list(self.pclues[self.colclues[c]]) for c in range(self.probsize)}
 
@@ -145,7 +141,7 @@ class Skyscraper:
         # (2nd stage updating) solves ambigous cases -----------------------
         after = [len(a[i]) for a in (self.downtown_row, self.downtown_col) for i in range(self.probsize)]
         if after != [1, 1, 1, 1, 1, 1, 1]:
-            StrategyStack.execute(self, row=0)
+            StrategyStack.execute(self)
 
         # The kata's result formats differ
         if self.probsize == 7:

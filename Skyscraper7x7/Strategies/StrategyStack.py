@@ -1,108 +1,141 @@
 from Skyscraper7x7.Solver.Solution import Solution
 
 
+class Bookkeeper:
+    def __init__(self, board, rowmajor=True):
+        """Keeps abstract STATE of the algorithm and provides guidance to it
+        as to which row is next to be examined. It also declutters the interface.
+        :param rowmajor:"""
+        self.board = board
+        self.downtown = [board.downtown_col, board.downtown_row][rowmajor]
+        # consider set: self.downtown = {k: set(v) for k, v in self.downtown.items()}
+        self.clues = board.clues
+        self.probsize = board.probsize
+        self.column_sets = [set() for i in range(len(self.downtown))]
+        self.bench = set(range(1, board.probsize + 1))
+        self.unvisited = set(range(board.probsize))
+
+    @property
+    def visited(self):
+        return set(range(0, self.probsize)) - self.unvisited
+
+    def fixture(self, choice):
+        return [set([v, *self.column_sets[i]]) for i, v in enumerate(choice)]
+
+    @property
+    def next_row(self):
+        row = self.least_choices()
+        self.unvisited.remove(row)
+        return row
+
+    def least_choices(self):
+        """among those unvistied rows return the index of the one with the least choices"""
+        return min(self.downtown, key=lambda k: len(self.downtown[k]) if k in self.unvisited else 999)
+
+    def _revert(self, stack, choice):
+        """recreate the downtown state before the latest update from a stack"""
+        for k, v in stack.items():
+            self.downtown[k].extend(v)
+
+        # remove choice from column_sets
+        for i, v in enumerate(choice):
+            self.column_sets[i].remove(v)
+
+
 class StrategyStack:
 
-    def execute(board, row):
+    def execute(board, rowmajor=True):
         """
-        TODO briefly describe the strategy
+        This Strategy lives in the context of a bookkeeper object, that declutters its interface and
+        keeps track of additional information. Furthermore the bookkeeper provides additional guidance in
+        terms of efficiency. The core idea of this algorithm is a recursive trial and error; working
+        inplace on board.downtown. Knowing that downtown contains the TRUE choice given the clues,
+        it simply tries them out recursively; creating a stack of its actions and reverts them,
+        the choice was faulty (either it conflicts with the accumulated column information of its former choices,
+        a choice leaves another row with no choices, or if it found a configuration that leaves each
+        row with one choice tests it with the boards clues and fails). The inplace update of downtown
+        is "smart" i.e. it employs early stopping - a single conflict of a candidate is sufficient to remove
+        it from downtown & moves it to the stack. Another "smart" move is guided by the Bookkeeper,
+        which determines the next row, that is to be chosen from in the next recursive layer.
+        It suggests the next row with the least choices. this way, the algorithm can move quickly through
+        the board.
 
-        strategy only relevant for 7x7 medved case
-        :param row: index of
+        Notice, this algorithm is a fully fledged solver, that is guaranteed to find the solution eventually
+        if all collections in downtown contain the True row solution. Despite the performance tweaks,
+        it is highly recommended to reduce the number of available choices.
+        The main purpose of this algorithm lies in its ability to find appropriate solutions
+        for clues that contain insufficient information; i.e. StrategyCrossSolving left ambiguity.
+        This is the case for Skyscraper 7x7 medved testcase.
+
+        :param board: Skyscraper object.
+        :param rowmajor: boolean: decides whether the algorithm works on downtown_row or downtown_col
+        :returns None: inplace changes are made on board.downtown_*
         """
-        # helper variables needed across the recursion
-        board.column_sets = [set() for i in range(len(board.downtown_row))]
-        board.bench = set(range(1, board.probsize + 1))
 
-        # Consider choosing shortest set of permutations as initialisation:
-        # row = min(((k, len(v)) for k, v in board.downtown_row.items()), key=lambda k, v: v)
-        # this required to change call "StrategyStack.backtracking_update(board, row + 1):" in
-        # backtracking_update
-        StrategyStack.backtracking_update(board, row)
+        self = Bookkeeper(board, rowmajor)
+        StrategyStack.backtracking_update(self, row=self.next_row)
 
-        # remove helper variables
-        del board.column_sets
-        del board.bench
-
-    def backtracking_update(board, row):
-        for choice in board.downtown_row[row]:
+    def backtracking_update(self, row):
+        for choice in self.downtown[row]:
 
             # (0) check if the current choice is conflicting with currently available
             # column information derived from already selected choices (in higher recursion levels)
-            if any(c in s for c, s in zip(choice, board.column_sets)):
+            if any(c in s for c, s in zip(choice, self.column_sets)):
                 # it is conflicting - try next choice
                 continue
 
             else:
                 # not conflicting; update the available 'column' information
                 for i, v in enumerate(choice):
-                    board.column_sets[i].add(v)
+                    self.column_sets[i].add(v)
 
                 # (1) communicate the choice to the board.
                 #  update also removes of each subsequent row those values,
                 #  that are already placed in the column! - heavily reduces the recursion
                 stack = StrategyStack._update_and_track(
-                    board,
-                    downtown_=board.downtown_row,
+                    downtown=self.downtown,
                     choice=choice,
                     row=row,
-                    fix=[set([v, *board.column_sets[i]]) for i, v in enumerate(choice)],
-                    exclude=set(range(row + 1)))  # already chosen rows todo change if 'smart' row choice
-                # strategy
-                board.downtown_row[row] = [choice]
+                    fix=self.fixture(choice),
+                    exclude=self.visited)  # {row})   # already visited rows
+                self.downtown[row] = [choice]  # consider set: {choice}
 
                 # (2) check if the communication left a row with no choices
-                after = [len(row) for row in board.downtown_row.values()]
+                after = [len(row) for row in self.downtown.values()]
                 if not all(after):
-                    StrategyStack._revert(board, stack, choice)
+                    self._revert(stack, choice)
                     continue
 
                 # (3) --BASECASE-- after the update, all rows have only one choice left:
                 # move up the recursion stack -> executing (4*)
                 # short circuit if a candidate solution was found.
-                elif after == [1] * board.probsize:
-                    # check if the provided solution is in accordance with the column information
-                    b = tuple(tuple(board.downtown_row[i][0]) for i in range(board.probsize))
-                    columninfo = all([set(vs) == board.bench for vs in zip(*b)])
-
+                elif after == [1] * self.probsize:
                     # check the visibility is in accordance with the columnclues
-                    if columninfo and Solution.check_a_valid_solution(board, board.clues):
+                    if Solution.check_a_valid_solution(self.board, self.clues):
                         return True
 
                     else:  # the provided solution was contradicting the column information.
-                        StrategyStack._revert(board, stack, choice)
+                        self._revert(stack, choice)
                         continue
 
                 # (4) The choice was valid up until now - if there are more rows to explore, do so (recursively)
-                elif row != board.probsize - 1:
-                    # todo change this condition and subsequent if statement (recursive
-                    #  call) - to make smart trials: always choose the next row by the smallest amount
-                    #  of choices for that row. (fastest way through the tree?)
-                    if StrategyStack.backtracking_update(board, row + 1):
-                        # the latter condition suffices but is more expensive lazy 'and' saves computation
-
+                elif bool(self.unvisited):
+                    if StrategyStack.backtracking_update(self, row=self.next_row):
                         # (4*) upward path after successful recursion.
                         return True
                     else:
                         # this level's choice did not succeed in lower recursive layers;
                         # revert it and remove from column information
-                        StrategyStack._revert(board, stack, choice)
+                        self._revert(stack, choice)
                         continue
 
         else:  # (5) None of this level's choices was applicable; try next choice in the
             # higher recursion level.
+            self.unvisited.add(row)
             return False
 
-    def _revert(board, stack, choice):
-        """recreate the downtown_row state before the latest update from a stack"""
-        for k, v in stack.items():
-            board.downtown_row[k].extend(v)
-
-        # remove choice from column_sets
-        for i, v in enumerate(choice):
-            board.column_sets[i].remove(v)
-
-    def _update_and_track(board, downtown_, choice, row, fix, exclude):
+    @staticmethod
+    def _update_and_track(downtown, choice, row, fix, exclude):
         """
         Update the pos1 object in place from the selected fix object with early stopping;
         start with looking at the tuple from the left; if the first position of a pos1's tuple is contained
@@ -111,46 +144,34 @@ class StrategyStack:
         And so on and so forth.
 
         Further, a stack object is created & returned which keeps track of all the changes made.
-        :param downtown_: downtown_* object; dict: {index: list of candidate tuples}
+        :param downtown: downtown_* object; dict: {index: list of candidate tuples}
         :param choice: list/tuple of int; the chosen permutation
+        # TODO refactor row name to index and describe
         :param row: index of the row, where choice was chosen
         :param fix: list of sets, that represent the updater's (i.e. a row) choice.
         e.g. [{2}, {1}, {6}, {4}, {3}, {7}, {5}] which originated from
         :param exclude: set of indices in downtown_* that are not to be updated
         :return: stack: dict of lists. key: downtown_row key. value: list of removed candidate tuples
         """
-        # deselect comparsions, with empty sets (nothing to remove, cause nothing
+        # deselect comparisons, with empty sets (nothing to remove, cause nothing
         # is known in fix for that position (partial updates are possible)
-        uniques = list((i, v) for i, v in enumerate(fix) if len(v) > 0)
-        stack = {k: [] for k in range(board.probsize)}
-        stack[row] = downtown_[row].copy()
+        probsize = len(downtown)
+        stack = {k: [] for k in range(probsize)}
+        stack[row] = downtown[row].copy()
         stack[row].remove(choice)
 
-        for j in {*range(board.probsize)} - exclude:  # update all except for exclueded
-            for tup in downtown_[j]:
+        uniques = list((i, v) for i, v in enumerate(fix) if len(v) > 0)
+        for j in {*range(probsize)} - exclude:  # update all except for exclueded
+            for tup in downtown[j]:
                 for i, v in uniques:
                     if tup[i] in v:
-                        downtown_[j].remove(tup)
+                        downtown[j].remove(tup)
                         stack[j].append(tup)
                         break
+
+        # consider set:
+        # for j in {*range(probsize)} - exclude:
+        #     removals = set(tup for tup in downtown[j] if any(t in u for t, u in zip(tup, fix)))
+        #     stack[j].update(removals)
+        #     downtown[j].difference_update(removals)
         return stack
-
-
-if __name__ == '__main__':
-    # A simple 4x4 example to ckeck out
-    from Skyscraper7x7.Solver.Solver import Skyscraper
-
-    clues = [2, 1, 3, 2, 3, 1, 2, 3, 3, 2, 2, 1, 1, 2, 4, 2]
-
-    sky = Skyscraper(clues)
-    sky.downtown_row = {r: list(sky.pclues[sky.rowclues[r]]) for r in range(sky.probsize)}
-    sky.downtown_col = {c: list(sky.pclues[sky.colclues[c]]) for c in range(sky.probsize)}
-    StrategyStack.execute(sky, row=0)
-
-    provided = tuple(tuple(sky.downtown_row[i][0]) for i in range(sky.probsize))
-    solution = ((3, 4, 2, 1),
-                (1, 2, 3, 4),
-                (2, 1, 4, 3),
-                (4, 3, 1, 2))
-
-    assert solution == provided
