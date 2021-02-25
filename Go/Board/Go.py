@@ -34,7 +34,10 @@ class Go:
         return True
 
     def _fetch_group(self, position):
-        """return the instance of a group by position"""
+        """
+        :param position: # TODO write doc
+        :return: the instance of a group by position
+        """
         return self.groups[self.affiliation[position]]
 
     def _find_neighb(self, r, c):
