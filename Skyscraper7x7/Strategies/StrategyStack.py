@@ -8,6 +8,7 @@ class Bookkeeper:
         :param rowmajor:"""
         self.board = board
         self.downtown = [board.downtown_col, board.downtown_row][rowmajor]
+        # consider set: self.downtown = {k: set(v) for k, v in self.downtown.items()}
         self.clues = board.clues
         self.probsize = board.probsize
         self.column_sets = [set() for i in range(len(self.downtown))]
@@ -29,8 +30,7 @@ class Bookkeeper:
 
     def least_choices(self):
         """among those unvistied rows return the index of the one with the least choices"""
-        return min(self.downtown,
-                   key=lambda k: len(self.downtown[k]) if k in self.unvisited else 999)
+        return min(self.downtown, key=lambda k: len(self.downtown[k]) if k in self.unvisited else 999)
 
     def _revert(self, stack, choice):
         """recreate the downtown state before the latest update from a stack"""
@@ -98,7 +98,7 @@ class StrategyStack:
                     row=row,
                     fix=self.fixture(choice),
                     exclude=self.visited)  # {row})   # already visited rows
-                self.downtown[row] = [choice]
+                self.downtown[row] = [choice]  # consider set: {choice}
 
                 # (2) check if the communication left a row with no choices
                 after = [len(row) for row in self.downtown.values()]
@@ -146,6 +146,7 @@ class StrategyStack:
         Further, a stack object is created & returned which keeps track of all the changes made.
         :param downtown: downtown_* object; dict: {index: list of candidate tuples}
         :param choice: list/tuple of int; the chosen permutation
+        # TODO refactor row name to index and describe
         :param row: index of the row, where choice was chosen
         :param fix: list of sets, that represent the updater's (i.e. a row) choice.
         e.g. [{2}, {1}, {6}, {4}, {3}, {7}, {5}] which originated from
@@ -155,11 +156,11 @@ class StrategyStack:
         # deselect comparisons, with empty sets (nothing to remove, cause nothing
         # is known in fix for that position (partial updates are possible)
         probsize = len(downtown)
-        uniques = list((i, v) for i, v in enumerate(fix) if len(v) > 0)
         stack = {k: [] for k in range(probsize)}
         stack[row] = downtown[row].copy()
         stack[row].remove(choice)
 
+        uniques = list((i, v) for i, v in enumerate(fix) if len(v) > 0)
         for j in {*range(probsize)} - exclude:  # update all except for exclueded
             for tup in downtown[j]:
                 for i, v in uniques:
@@ -167,4 +168,10 @@ class StrategyStack:
                         downtown[j].remove(tup)
                         stack[j].append(tup)
                         break
+
+        # consider set:
+        # for j in {*range(probsize)} - exclude:
+        #     removals = set(tup for tup in downtown[j] if any(t in u for t, u in zip(tup, fix)))
+        #     stack[j].update(removals)
+        #     downtown[j].difference_update(removals)
         return stack

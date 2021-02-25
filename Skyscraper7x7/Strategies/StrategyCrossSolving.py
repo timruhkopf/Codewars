@@ -56,9 +56,11 @@ class StrategyCrossSolving:
         for i, valid in enumerate(fix):
             updatee[i] = [tup for tup in updatee[i] if tup[col] in valid]
 
-        # create a stack of the removals, that can be added lateron for larger problems
-        # TODO make this optional for efficiency (only ambigious problems need stack)
-        #  move it to decorator of update?
-        # TODO : check if this actually does something - since it does not have inplace changes!
-        #  ---> uncertain if it is needed for 7x7 medved case
-        # StrategyStack._update_and_track(board, pos1, fix, col)
+            # early stopping approach is multiple times slower due to remove
+            # # early stopping; if one index of a tuple matches the respective fix criterea,
+            # # the tuple is automatically removed
+            # # Very closely related to StrategyStack._update_and_track - except it does not track
+            # for tup in updatee[i]:
+            #     if tup[col] not in valid:
+            #         updatee[i].remove(tup)
+            #         continue
