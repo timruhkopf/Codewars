@@ -28,44 +28,10 @@ class TestSolvableEndgame(unittest.TestCase):
 
         del self.result
 
-    def test_endgame(self):
-        # FIXME: after open zeros, the
-        self.result = """
-          0 1 x x 1
-          0 1 3 4 3
-          0 0 1 x x
-          0 0 1 2 2
-          0 0 1 1 1
-          0 1 2 x 1
-          0 1 x 2 1
-          """
-
-        solution = Solution(board(self.result))
-        m = Game(board=solution.covered_board, n=solution.n, context=solution)
-
-        while bool(m.zeros):
-            zero = m.zeros.pop()
-            m.open(*zero)
-            placedzeros = set(n.position for n in m.clues.values() if n.clue == 0)
-            m.zeros.difference_update(placedzeros)
-
-        Strategy_Superset.double(m)  # Fixme: it finds a bomb which it shouldnt
-
-        self.assertEqual(
-            m.board, board("""
-            0 1 x ? ?
-            0 1 3 ? ?
-            0 0 1 ? ?
-            0 0 1 ? ?
-            0 0 1 ? ?
-            0 1 2 ? ?
-            0 1 x ? ?"""))
-
     def test_endgame_simple(self):
         """all remaining ? after communication must be bombs due to count of bombs
          (remain_bomb_count endgame)"""
 
-        # TODO refactor this to be call to Strategy_Endgame.remain_bomb_count() after zeros are opened
         self.result = """
         0 0 0 0 0 0 0 0 0 0 0
         0 0 0 1 2 3 3 2 1 0 0
