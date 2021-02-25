@@ -15,8 +15,8 @@ Consider the following row of skyscrapers, where each number indicates the numbe
 
       1 3 2 4
 
-Looking from the left, the building with three storeys is not visible, since the three storey building covers it from
-this point of view. Hence, three buildings are visible. From the right, only the four storey building is visible as all
+Looking from the left, the building with two storeys is not visible, since the three storey building covers it from this
+point of view. Hence, three buildings are visible. From the right, only the four storey building is visible as all
 others are smaller. This information can be translated concisely into the following representation of visible buildings:
 
       (3) 1 3 2 4 (1)
@@ -60,10 +60,10 @@ the board specific precomputations lazily. Furthermore, it is size independent; 
 ## Solving Strategies
 
 In contrast to most of the repository's solutions, this one takes a  
-combinatorial approach, that in the first pillar seeks to efficiently weeds out the inapplicable combinations for the
-rows and columns. The second pillar is solely aimed at the 7 by 7 ambiguous case which requires a new set of logic to
-conquer it; Recursion and Stacks, or more concisely Backtracking. But before getting started with solving the problem,
-some (lazy) preprocessing is required.
+combinatorial approach, that in the first pillar seeks to efficiently weed out the inapplicable combinations for the
+rows and columns. The second pillar is aimed at the 7 by 7 ambiguous case which requires a new set of logic to conquer
+it; Recursion and Stacks, or more concisely Backtracking. However, the latter proofs to be a fully fledged solver on its
+own. But before getting started with solving the problem, some (lazy) preprocessing is required.
 
 ### Preprocessing
 
@@ -85,18 +85,18 @@ visibility from the right. With all these in place, the permutations can be sort
 of the key are unknown, we can build supersets of the dictionaries values based on partial visibility:
 (front, 0) and (0, back). As there are rows with no clue whatsoever all unique permutations are added as key (0,0). This
 dictionary now holds all possible clue combinations, that can easily be queried and follow the format provided by the
-parsed clues. By convention, this dictionary is refered to 'pclues' (permutation clues).
+parsed clues. By convention, this dictionary is referred to as 'pclues' (permutation clues).
 
 ### 1) Solving Unambigious
 
 At the very heart of this solving strategy lie row- & columnclues in combination with pclues. Each city grid is
 determined by its set of clues. These admissible combinations for each clue can be easily looked up in pclues and placed
 into two dictionaries named downtown_row and downtown_col respectively. These dictionaries are keyed by the
-row-/columnindex and at initiation copy the list of admissible permutations for the respective clue combination. The
+row-/columnindex and at initilisation copy the list of admissible permutations for the respective clue combination. The
 crux lies in combining multiple clues together to dismiss combinations in the set of permutations of each downtown_row
-and downtown_col to arrive at a single viable solution. A side note regarding the 'uninformative' (0,0) cases; on their
-own, they are indeed uninformative, but they reflect multiple 'interactions' of clues across the board. Dismissing them
-altogether does not necessarily solve the board.
+and downtown_col to arrive at a single viable solution for the board. A side note regarding the 'uninformative' (0,0)
+cases; on their own, they are indeed uninformative, but as the solving progresses, they reflect multiple
+'interactions' of clues across the board. Dismissing them altogether does not necessarily solve the board.
 
 The basic idea of this solving strategy is the following deterministic 'cross' update between downtown_row and
 downtown_col. Consider starting with the third row (index 2) for illustrative purposes:
@@ -139,7 +139,7 @@ of a position's sets does not capture this information and thus is not state-saf
     columnsets = [{1}, {4}, {2}, {3}]
 
 In the above example, the state of column two is now known. Building all the columnsets of this 2nd!
-column: [{1}, {4}, {2}, {3}] in the exact same manner allows to update all the lists of applicable tuples for the
+column: [{1}, {4}, {2}, {3}] in the exact same manner allows to update all the lists of applicable tuples for
 downtown_row: All applicable tuples for the first row must contain a 1 at the 2nd index position. All applicable tuples
 for the second row must contain a 4 at the 2nd index position - and so on and so forth.
 
@@ -147,13 +147,13 @@ As the example may already have conveyed, the 'cross' updates work both ways. Cy
 and updatee relentlessly and executing all updates implied by the columnsets at each step, until no change in
 downtown_col & downtown_row occurs is a state-safe update and, provided sufficient information is available will yield a
 definitive solution. At the end both *_row & *_col contain only single element lists as values and one of them can be
-used for parsing the solved board from it.
+used for parsing the solved board.
 
 ### 2) Solving **Ambigious** (Medved Case)
 
-The 7x7 kata deliberately provides a 'medved' testcase, that despite the abundance of clues leaves ambigiouity in the
-originally vast searchspace, since the available information is not as informative as its abundance suggests initially
-This is the medved case:
+The 7x7 kata deliberately provides a 'medved' testcase, that despite the abundance of clues leaves ambiguity in the
+originally vast searchspace, since the available clue information is not as informative as its abundance suggests
+initially. This is the medved case:
 
         clues = [3, 3, 2, 1, 2, 2, 3, 4, 3, 2, 4, 1, 4, 2, 2, 4, 1, 4, 5, 3, 2, 3, 1, 4, 2, 5, 2, 3]
         solution =  [[2, 1, 4, 7, 6, 5, 3],
@@ -235,27 +235,65 @@ After employing the CrossSolving Strategy relentlessly, these are the applicable
         (3, 5, 2, 4, 7, 1, 6)]
     }
 
-From the first look it becomes apparent that some positions are already sufficiently, that is definitively described.
+From the first look it becomes apparent that some positions are already sufficiently, that is, definitively described.
 However, the columnsets of the row's permutations still have remaining ambiguity. This is the result of the lack of
 information contained in each of the clues. Most of the clues are fairly vague in the sense of implying a vast amount of
-applicable permutations. However, it is certain that for each of these respective lists of permutations contain the true
+applicable permutations. However, it is certain that each of these respective lists of permutations contain the true
 solution for that row. The solution to this case lies in recursively and successively trying out each of the most
-informative tuples (here *_row[2] is the least ambigious by number of admissibles) to create a definitive and
-informative state in order to remedy some ambiguity. Choosing eg. (1, 2, 4, 6, 3, 7, 5) for row 2 causes an update of
-downtown_col just as in the prior strategy. After such an update, we can move down in the recursion hierarchy and select
-from the next smallest list of permutations. Should a choice produce an empty list of permutations in *_cols, the entire
-update must be reverted and the next candidate of the higher recursion level must be checked for applicability.
-
-# TODO FIX THIS ISSUE
-
+informative tuples (here *_row[2] is the least ambiguous by number of admissible) to create a definitive and informative
+state in order to remedy some ambiguity at each step. Choosing e.g. (1, 2, 4, 6, 3, 7, 5) for row 2 restricts the amount
+of applicable permutations in the other rows. After such an update, we can move down in the recursion hierarchy and
+select from the next smallest list of permutations. Should a choice produce an empty list of permutations in *_rows, the
+latest update must be reverted and the next candidate of the higher recursion level must be checked for applicability.
 There is however a catch; progressively choosing in this manner on *_row alone does not ensure that the columns of the
-board will also be the unique set of range(1, 8).
+board will also be the unique set of range(1, 8); even if the selection adheres to this basic rule, there is no coercion
+that it will be aligned with the columnclues. There are multiple remedies to this that bring about their own expenses:
 
-# WRITE ABOUT EARLY STOPPING AND STACK
+1) only do state safe selections i.e. also update downtown_col & check it for failures. This amounts to double the
+   update efforts.
+
+2) expensively check the row candidates to be in accordance with the columnclues and 'column' uniqueness.
+
+None of them is satisfactory. Instead, the applied algorithm chooses a "guided" approach leaning towards the solution of
+2), but is allowed to ignore the columnclues until the very latest. The core idea is to select from, and merely update
+downtown_row, while weakly keeping track of column uniqueness derived from the history of choices; always choose from
+the row with the fewest choices (make good choices fast). Only if an "applicable" solution that respects both row and
+column uniqueness (as well as inherently abiding to the rowclues), check if the board also adheres to the columnclues.
+Otherwise reject the latest choice, revert it from stack & try out another permutation. Any update along the way, that
+leaves any row with no choices automatically is reverted as well. Notice, that the accumulated column information (
+derived from the choices) can easily be tracked and exploited to deselect choices even before expensively updating
+downtown_row, cutting the recursive tree significantly. While it may not be the optimal, it most certainly is a fast
+algorithm. Furthermore, the algorithm became a fully fledged solver, that is guaranteed to find the true solution on its
+own. It is however highly recommended cutting the amount of choices, since the algorithm does not scale very well.
+Applying StrategyCrossSolveing is higly beneficial. The greatest benefit on the other hand is a) its guarantee and b)
+the ability to work in ambiguity.
+
+From an implementational perspective, it is worth mentioning that most of the 'guidance' and tracking is outsourced into
+a separate object. This further allows the employed strategy class to gain a 'self', which is in fact the Bookkeeper
+object, that is providing state information & on-request guidance on the next row with the fewest choices. This is
+another, self engineered abstraction layer to the employed Strategy pattern which already allowed to separate the '
+board' from the algorithms applied to it. Now the Algorithm is abstracted in the workhorse & its guiding / tracking
+system. The only exception to this is the stack, which more naturally resides in the respective recursive layer (
+workhorse). The Bookkeeper strongly declutters the code and allows a further abstraction; it allows to choose row- or
+columnmajor; i.e. you can choose if the algorithm operates on downtown_row or *_col. Currently, the Solver object
+defaults to rowmajor, but it may proof beneficial to be able to select on the fly if the algorithm should run on
+columnmajor - dependent on which dimension has fewer choices to select from.
+
+Another trick in the book on behalf of efficiency is the actual update of downtown. It employs early stopping in the
+comparisions of applicability: rather than comparing all index positions in the tuple with the inapplicable values for
+the respective index, the update sequentially proceeds through the index positions and removes the tuple as soon as any
+comparision fails.
 
 ## Sampling Boards
 
-Solution method is purely to sample problems
+The Solution class is originally designed to provide a sampling mechanism for boards and check the validitiy of a board.
+Currently the sampling mechanism is under construction, with the intent to utilise the solving algorithms in an
+efficient manner. The current idea is to choose some row explicitly (at random from (0,0) and update the other rows by
+this information. successively (and recursively) try out the next row; updating and stacking in turn, until a
+column-consisitent solution was found. Then check visibility and remove some of the available clue infomration. in the
+testcases, admit all solutions that adhere to the provided clues and respect the row & columnuniqueness
+(this allows for multiple valid solutions - if the clue is not definitive). The validity related methods are already in
+use with StrategyStack.
 
 ## Refactoring Ideas & Scaleing Efficiency:
 
@@ -310,6 +348,17 @@ drastically increase speed for such problems:
   becomes obsolete and on demand computation takes absolute precedence.
 
 
+* Efficiency: StrategyStack._update_and_track: early stopping in the update can also pythonically implemented using
+  'any' in the comparison of the tuple candidate with 'fix'. furthermore, 'remove' call on a list is expensive (as the
+  CrossSolving early stopping attempt displayed) since ordering in update is not important - consider using sets in
+  downtown rather than lists; but ensure, that backtracking_update for loop is ordering safe (e.g. copy?). both 'any'
+  and 'sets' may significantly help improve speed.
+
+
+* Efficiency: StrategyStack row- & columnmajor. Make Solver choose the more appropriate dimension, depending on the
+  amount of choices left in the respective objects.
+
+
 * EXPERIMENTAL. The selection procedure for 'medved' can be modified; for those ambigious positions check the count of
   the 'columnset' candidates - and start selecting from those that have a smaller count (as they are more informative ).
   choosing the *_row index with the smallest ambigouity in this sense might help in some cases. to determine index
@@ -324,14 +373,8 @@ drastically increase speed for such problems:
   the first index position is undecided between 1 and 2 (columnset = [{1,2}])
   trying out the combination with 1 and returning falsely makes the {2} at this position definitive and the update can
   be communicated using CrossSolving. But be aware that the update must be revertible when called from the recursion!
-
   The efficiency gains of this strategy are unclear though and problem dependent.
+
 
 * Notice how a failure of StrategyStack implies an unsolvable board (i.e. a set of contradictory clues) this can be used
   to check if a clue is implying a correct board during sampling_board.
-
-[comment]: <> (# TODO CHECK if stack is build encessarily in Strategy2.update at all!)
-
-[comment]: <> (* Efficiency increase: most &#40;all except one problem&#41; do not need the stack of changes; make it togglable by the user or)
-
-[comment]: <> (  by the algorithm  &#40;provided it failed in the first run&#41;. This will increase the speed on all other test cases.)
