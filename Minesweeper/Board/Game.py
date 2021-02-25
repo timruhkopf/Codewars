@@ -1,11 +1,5 @@
-import sys
-
 from .Node import Node
 from ..Strategies import Strategy_Superset, Strategy_Endgame
-
-# TODO reduce Recursion depth: unnecessary communication?
-sys.setrecursionlimit(10 ** 6)
-
 
 class Game:
     def __init__(self, board, n, context=None):
@@ -106,7 +100,7 @@ class Game:
         Strategy_Endgame.remain_bomb_count(self)
 
         # (3) Endgame logic based on number of bombs.
-        if bool(self.remain_bomb) and self.remain_bomb <= 3:
+        if bool(self.remain_bomb) and self.remain_bomb <= 6:
             Strategy_Endgame.sequential_combinations(self)
 
         # remaining ambiguity? --> Unsolvable
