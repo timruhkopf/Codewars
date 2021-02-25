@@ -1,5 +1,5 @@
-from itertools import product, combinations
 import sys
+from itertools import product, combinations
 
 sys.setrecursionlimit(10 ** 6)
 DEBUG = True
