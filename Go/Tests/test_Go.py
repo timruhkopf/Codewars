@@ -142,10 +142,13 @@ class TestGo(unittest.TestCase):
         self.assertEqual(game.parse_position('2C'), (2, 2))
 
     def test_get_position(self):
-        # illegal moves
         game = Go(3)
-        # TODO raises context manager
-        # game.get_position("9A"), "."  # , "Illegal stone should be removed"
+
+        # out of bounds
+        with self.assertRaises(ValueError):
+            game.move("9A")
+
+        # legal move, black started
         game.move("3B")
         self.assertEqual(game.get_position("3B"), "x")
 
