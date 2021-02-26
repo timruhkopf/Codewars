@@ -4,12 +4,11 @@
 7*7 Skyscraper: https://www.codewars.com/kata/5917a2205ffc30ec3a0000a8
 """
 
-from itertools import permutations
+import time
 from collections import deque
-
 # auxilary for beautifications
 from functools import wraps
-import time
+from itertools import permutations
 
 
 def timeit(func):

@@ -1,6 +1,6 @@
 import re
-from operator import mul, add, truediv
 from collections import deque, defaultdict
+from operator import mul, add, truediv
 
 subdeq = deque()
 op = defaultdict(lambda: add, {'/': truediv, '*': mul})

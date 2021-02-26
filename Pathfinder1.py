@@ -52,10 +52,13 @@ class Graph:
 
 
 def path_finder(map):
+    """https://www.codewars.com/kata/5765870e190b1472ec0022a2"""
     return bool(Graph(map).find_path())
 
 
 if __name__ == '__main__':
+    # TODO : speed up on mostly empty boards - this is the current bottleneck.
+    #   all test caseses work though
     a = "\n".join([
         ".W.",
         ".W.",
