@@ -20,6 +20,13 @@ class Strategy_Superset:
         Strategy_Superset.double(game)
         Strategy_Superset.triple(game)
 
+    #
+    # def __repr__(board):
+    #     """visualisation method to derive the current partial board - including all relevant
+    #     positions to a superset"""
+    #
+    #     pass
+
     def double(game):
         # first find the known neighbours to the remaining questionmarks.
         single, inquestion = Strategy_Superset.find_anreiner(game)
