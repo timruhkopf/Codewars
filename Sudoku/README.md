@@ -14,6 +14,12 @@ Note: The minimum of givens required to create a unique (with no multiple soluti
 * must be capable of determining if a board has multiple solutions (raise)
 * must distinguish invalid boards (raise)
 
+## Views:
+
+just out of curiousity - and avoiding tedious indexing or iterations, getting an easily indexable & iterable block, and
+column that always is only a view and not a copy. Block & Columns. basically emulates some of ndarray's view behaviour.
+facilitates block related computation syntactically.
+
 ## Solving Strategy
 
 Backtracking.
