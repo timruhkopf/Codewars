@@ -1,7 +1,7 @@
 from collections import deque  # just to have a heap convention
 
 from Sudoku.util import timeit, count_calls
-from ..Board.Experiment import Experiment
+from .Experiment import Experiment
 
 
 class Strategyforwardbackward:
