@@ -1,13 +1,5 @@
 import time
 
-from Sudoku.Board.MultiSudoku import Sudoku
-
-
-def sudoku_solver(puzzle):
-    """kata's required interface"""
-    return Sudoku(problem=puzzle).solve()
-
-
 def timeit(method):
     def wrapper(ref, *args, **kwargs):  # method can have arguments. ref is B's self!
         start = time.time()
