@@ -1,4 +1,3 @@
-from Sudoku.Board.BlockView import BlockView
 from Sudoku.Strategies.Strategyforwardbackward import Strategyforwardbackward
 
 
@@ -18,29 +17,10 @@ class Sudoku:
         (2) the puzzle is unsolvable
         """
         self.problem = problem
-        self.valid_grid(problem)
-        self.zeros = [(r, c) for r, row in enumerate(self.problem) for c, v in enumerate(row) if v == 0]
         self.solutions = []
 
     def __repr__(self):
         return '\n'.join([str(row) for row in self.solutions[0]])
-
-    @staticmethod
-    def valid_grid(problem):
-        """solves also (kyu4) https://www.codewars.com/kata/540afbe2dc9f615d5e000425
-        # TODO check solves kyu4"""
-        if len(problem) != 9 or not all([len(row) == 9 for row in problem]):
-            raise ValueError('InvalidGrid: Problem is not not of proper dimensions')
-
-        # check any character is invalid
-        if not set.union(*[set(row) for row in problem]).issubset(set(range(10))):
-            raise ValueError('InvalidGrid: Values of problem are not in range 1~9')
-
-        counts = ([row.count(x) for x in range(1, 10) if x in row]
-                  for problem in (problem, zip(*problem), BlockView(problem))
-                  for row in problem)
-        if any([len(c) != sum(c) for c in counts]):
-            raise ValueError('Detected multiple same values in row, column or block')
 
     def solve(self, strategy='fb'):
         """Kata's required solver"""

@@ -6,7 +6,7 @@ from Sudoku.Board.MultiSudoku import Sudoku
 class MyTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         with self.assertRaises(ValueError):
-            Sudoku(self.problem)
+            Sudoku(self.problem).solve()  # FUNCTIONALITY resides in Experiment.valid_grid_*
 
     def test_invalid_double_inrow(self):
         self.problem = [[1, 1, 3, 4, 5, 6, 7, 8, 9],  # row0: 1, 1 is INVALID
@@ -20,7 +20,6 @@ class MyTestCase(unittest.TestCase):
                         [9, 1, 2, 3, 4, 5, 6, 7, 8]]
 
     def test_invalid_doublevalue_colandrow(self):
-        """also has 0 """
         self.problem = [[1, 2, 3, 4, 5, 6, 7, 8, 9],  # col 0: 1,1 INVALID
                         [1, 0, 6, 7, 8, 9, 1, 2, 3],  # row 1: 1, ..., 1
                         [7, 8, 9, 1, 2, 3, 4, 5, 6],
@@ -42,7 +41,7 @@ class MyTestCase(unittest.TestCase):
                         [6, 7, 8, 9, 1, 2, 3, 4, 5],
                         [9, 1, 2, 3, 4, 5, 6, 7, 8]]
 
-    def test_invalid_sizes(self):
+    def test_invalid_irregular_grid_sizes(self):
         self.problem = [[1, 1, 3, 4, 5, 6, 7, 8, 9],
                         [4, 0, 6, 7, 8, 9, 1, 2, 3],
                         [7, 8, 9, 1, 2, 3, 4, 5, 6],
@@ -63,7 +62,7 @@ class MyTestCase(unittest.TestCase):
                         [3, 4, 5, 6, 7, 8, 9, 1, 2],
                         [6, 7, 8, 9, 1, 2, 3, 4, 5]]
 
-    def test_invalid3(self):
+    def test_invalid_size_too_short(self):
         self.problem = [[1, 2, 3, 4, 5, 6, 7, 8],
                         [4, 0, 6, 7, 8, 9, 1, 2],
                         [7, 8, 9, 1, 2, 3, 4, 5],
@@ -129,9 +128,9 @@ class MyTestCase(unittest.TestCase):
                         [0, 0, 1, 0, 7, 5, 3, 4, 9],
                         [2, 3, 0, 0, 4, 8, 1, 0, 7]]
 
-    def test_invalid5(self):
-        self.problem = [[0, 2, 3, 4, 5, 6, 7, 8, 9],
-                        [1, 5, 6, 7, 8, 9, 0, 2, 3],
+    def test_invalid_no_options(self):
+        self.problem = [[0, 2, 3, 4, 5, 6, 7, 8, 9],  # cannot place 4 here!
+                        [1, 5, 6, 7, 8, 9, 0, 2, 3],  # cannot place 1 here!
                         [7, 8, 9, 1, 2, 3, 4, 5, 6],
                         [2, 3, 4, 5, 6, 7, 8, 9, 1],
                         [5, 6, 7, 8, 9, 1, 2, 3, 4],

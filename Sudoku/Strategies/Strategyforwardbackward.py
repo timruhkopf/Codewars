@@ -24,7 +24,7 @@ class Strategyforwardbackward:
         the path backwards is continued one step back."""
 
         # (1) First Execution find a Solution
-        experiment = Experiment(sudoku.problem, sudoku.zeros)
+        experiment = Experiment(sudoku.problem)
         r, c = experiment.nextzero()
         options = experiment.options(r, c)
         Strategyforwardbackward.forward(experiment, r, c, options)
