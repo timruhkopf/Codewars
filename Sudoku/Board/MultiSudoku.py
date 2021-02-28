@@ -2,11 +2,6 @@ from Sudoku.Board.BlockView import BlockView
 from Sudoku.Strategies.Strategyforwardbackward import Strategyforwardbackward
 
 
-def sudoku_solver(puzzle):
-    """kata's required interface"""
-    return Sudoku(problem=puzzle).solve()
-
-
 class Sudoku:
 
     def __init__(self, problem):
@@ -41,15 +36,17 @@ class Sudoku:
         if not set.union(*[set(row) for row in problem]).issubset(set(range(10))):
             raise ValueError('InvalidGrid: Values of problem are not in range 1~9')
 
-        blockview = BlockView(problem)
         counts = ([row.count(x) for x in range(1, 10) if x in row]
-                  for problem in (problem, zip(*problem), blockview)
+                  for problem in (problem, zip(*problem), BlockView(problem))
                   for row in problem)
         if any([len(c) != sum(c) for c in counts]):
             raise ValueError('Detected multiple same values in row, column or block')
 
-    def solve(self):
-        Strategyforwardbackward.execute(self)
+    def solve(self, strategy='fb'):
+        """Kata's required solver"""
+        if strategy == 'fb':  # TODO add multiple Strategies
+            Strategyforwardbackward.execute(self)
+
         if len(self.solutions) == 1:
             return self.solutions[0]
 
@@ -58,20 +55,6 @@ class Sudoku:
 
         else:
             raise ValueError('Board has multiple Solutions')
-
-    def solve_single(self):
-        """The (kyu3) kata, that requires only a simple solver (single Solution) - and
-        all test cases are guaranteed """
-        from .Experiment import Experiment
-        experiment = Experiment(self.problem, self.zeros)
-        r, c = experiment.nextzero()
-        options = experiment.options(r, c)
-        Strategyforwardbackward.forward(experiment, r, c, options)
-
-        return experiment.problem
-
-    def solve_all_solutions(self):
-        pass
 
 
 if __name__ == '__main__':
@@ -94,7 +77,5 @@ if __name__ == '__main__':
                 [3, 1, 7, 8, 9, 4, 5, 2, 6],
                 [6, 8, 5, 1, 2, 3, 7, 4, 9]]
     s = Sudoku(problem)
-
-
 
     assert s.solve() == solution
