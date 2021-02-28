@@ -1,4 +1,4 @@
-from .Strategyforwardbackward import Strategyforwardbackward, deque, Experiment
+from Sudoku.Strategies.Strategyforwardbackward import Strategyforwardbackward, deque, Experiment
 
 
 class Strategyforwardbackward_sorted(Strategyforwardbackward):
