@@ -1,6 +1,5 @@
-from functools import lru_cache
-
-from ..Strategies import StrategyPosition
+from Sudoku.Board.BlockView import BlockView
+from Sudoku.Strategies.Strategyforwardbackward import Strategyforwardbackward
 
 
 def sudoku_solver(puzzle):
@@ -9,11 +8,10 @@ def sudoku_solver(puzzle):
 
 
 class Sudoku:
-    values = set(range(1, 10))
 
     def __init__(self, problem):
         """
-        https://www.codewars.com/kata/5588bd9f28dbb06f43000085
+        (kyu2) https://www.codewars.com/kata/5588bd9f28dbb06f43000085
         TASK:
         Write a function that solves sudoku puzzles of any difficulty.
         The function will take a sudoku grid and it should return a 9x9
@@ -25,14 +23,17 @@ class Sudoku:
         (2) the puzzle is unsolvable
         """
         self.problem = problem
-
+        self.blockview = BlockView(self.problem)
         self.valid_grid()
+        self.zeros = [(r, c) for r, row in enumerate(self.problem) for c, v in enumerate(row) if v == 0]
         self.solutions = []
 
     def __repr__(self):
-        return '\n'.join([str(row) for row in self.solution])
+        return '\n'.join([str(row) for row in self.solutions[0]])
 
     def valid_grid(self):
+        """solves also (kyu4) https://www.codewars.com/kata/540afbe2dc9f615d5e000425
+        # TODO check solves kyu4"""
         if len(self.problem) != 9 or not all([len(row) == 9 for row in self.problem]):
             raise ValueError('InvalidGrid: Problem is not not of proper dimensions')
 
@@ -46,21 +47,30 @@ class Sudoku:
         if any([len(c) != sum(c) for c in counts]):
             raise ValueError('Detected multiple same values in row, column or block')
 
-    @staticmethod
-    @lru_cache(maxsize=81)
-    def blockindex(r, c):
-        return r // 3 + c // 3 + (r // 3) * 2
-
     def solve(self):
-        StrategyPosition.execute(self)
+        Strategyforwardbackward.execute(self)
         if len(self.solutions) == 1:
             return self.solutions[0]
 
         elif len(self.solutions) == 0:
-            raise ValueError('Board has no Solution')
+            raise ValueError('Unsolvable Board')
 
         else:
             raise ValueError('Board has multiple Solutions')
+
+    def solve_single(self):
+        """The (kyu3) kata, that requires only a simple solver (single Solution) - and
+        all test cases are guaranteed """
+        from .Experiment import Experiment
+        experiment = Experiment(self)
+        r, c = experiment.nextzero()
+        options = experiment.options(r, c)
+        Strategyforwardbackward.solve_first(experiment, r, c, options)
+
+        return experiment.problem
+
+    def solve_all_solutions(self):
+        pass
 
 
 if __name__ == '__main__':
@@ -84,13 +94,6 @@ if __name__ == '__main__':
                 [6, 8, 5, 1, 2, 3, 7, 4, 9]]
     s = Sudoku(problem)
 
-    assert s.options(0, 0) == {8, 5}
-    assert s.options(8, 8) == {8, 1, 3, 9}
 
-    # same block update
-    s.problem[7][7] = 3
-    assert s.options(8, 8) == {8, 1, 9}
-
-    s.blockindex(3, 4)
 
     assert s.solve() == solution

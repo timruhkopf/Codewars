@@ -24,21 +24,6 @@ class BlockView:
         return ListViewIterator(self)
 
 
-class ColumnView(BlockView):
-    def __init__(self, aproblem):
-        """rather than zip(*aproblem), it creates an indexable & iterable view on aproblem
-        same as [aproblem[r][c] for c in range(len(aproblem))], except it is a neat interface"""
-        self.aproblem = aproblem
-
-    def __getitem__(self, c):
-        return [self.aproblem[r][c] for r in range(len(self.aproblem))]
-
-    def __len__(self):
-        return len(self.aproblem[0])
-
-    def __iter__(self):
-        return ListViewIterator(self)
-
 if __name__ == '__main__':
     problem = [[0, 9, 0, 0, 7, 1, 0, 0, 4],
                [2, 0, 0, 0, 0, 0, 0, 7, 0],
