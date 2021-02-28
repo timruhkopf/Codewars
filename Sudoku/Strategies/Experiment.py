@@ -43,14 +43,14 @@ class Experiment:
         if len(self.problem) != 9 or not all([len(row) == 9 for row in self.problem]):
             raise ValueError('InvalidGrid: problem is not not of proper dimensions')
 
-        # check any character is invalid
+        # check if any character is invalid
         if not set.union(*[set(row) for row in self.problem]).issubset(set(range(10))):
             raise ValueError('InvalidGrid: Values of problem are not in range 1~9')
 
     def valid_gird_sets(self):
         """checks if at init, the board is playable (unique values & each position has choices)"""
         counts = ([row.count(x) for x in range(1, 10) if x in row]
-                  for self.problem in (self.problem, zip(*self.problem), self.blockview)
+                  for view in (self.problem, zip(*self.problem), self.blockview)
                   for row in self.problem)
         if any([len(c) != sum(c) for c in counts]):
             raise ValueError('Detected multiple same values in row, column or block')

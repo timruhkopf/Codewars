@@ -6,7 +6,7 @@ from Sudoku.Board.MultiSudoku import Sudoku
 class MyTestCase(unittest.TestCase):
 
     def tearDown(self) -> None:
-        self.assertEqual(Sudoku(self.problem).solve_single(), self.solution)
+        self.assertEqual(Sudoku(self.problem).solve(), self.solution)
 
     def test_single1(self):
         self.problem = [[0, 9, 6, 5, 0, 4, 0, 7, 1],
