@@ -5,7 +5,7 @@ from Sudoku.Board.MultiSudoku import Sudoku
 
 class MyTestCase(unittest.TestCase):
     def tearDown(self) -> None:
-        self.assertEqual(Sudoku(self.problem).solve_single(), self.solution)
+        self.assertEqual(Sudoku(self.problem).solve(), self.solution)
         # self.assertEqual(Sudoku(self.problem).solve(), self.solution)
 
     # def test_sparse2(self):
