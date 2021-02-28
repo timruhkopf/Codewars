@@ -51,7 +51,7 @@ class Experiment:
         """checks if at init, the board is playable (unique values & each position has choices)"""
         counts = ([row.count(x) for x in range(1, 10) if x in row]
                   for view in (self.problem, zip(*self.problem), self.blockview)
-                  for row in self.problem)
+                  for row in view)
         if any([len(c) != sum(c) for c in counts]):
             raise ValueError('Detected multiple same values in row, column or block')
 

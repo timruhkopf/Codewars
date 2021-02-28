@@ -106,7 +106,7 @@ class MyTestCase(unittest.TestCase):
                         [8, 8, 8, 8, 8, 8, 8, 8, 8],
                         [9, 9, 9, 9, 9, 9, 9, 9, 9]]
 
-    def test_invalid_bocks(self):
+    def test_invalid_blocks(self):
         self.problem = [[1, 2, 3, 4, 5, 6, 7, 8, 9],
                         [2, 3, 4, 5, 6, 7, 8, 9, 1],
                         [3, 4, 5, 6, 7, 8, 9, 1, 2],
