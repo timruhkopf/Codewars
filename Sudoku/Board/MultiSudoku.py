@@ -62,10 +62,10 @@ class Sudoku:
         """The (kyu3) kata, that requires only a simple solver (single Solution) - and
         all test cases are guaranteed """
         from .Experiment import Experiment
-        experiment = Experiment(self)
+        experiment = Experiment(self.problem, self.zeros)
         r, c = experiment.nextzero()
         options = experiment.options(r, c)
-        Strategyforwardbackward.solve_first(experiment, r, c, options)
+        Strategyforwardbackward.forward(experiment, r, c, options)
 
         return experiment.problem
 
