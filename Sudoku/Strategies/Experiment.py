@@ -1,5 +1,4 @@
 from collections import deque
-from copy import deepcopy
 from functools import lru_cache
 
 from Sudoku.Board.BlockView import BlockView
@@ -9,7 +8,7 @@ class Experiment:
     values = set(range(1, 10))
 
     def __init__(self, sudokuboard):
-        self.problem = deepcopy(sudokuboard)
+        self.problem = sudokuboard
         self.valid_grid_basic()
 
         self.blockview = BlockView(self.problem)
