@@ -32,7 +32,7 @@ class Strategyforwardbackward:
 
         # early stopping - if no solution was found next algo will not be executed
         success = Strategyforwardbackward.append_solution(sudoku, experiment)
-        if success:
+        if not success:
             return None
 
         # (2) Second Execution figure out if there is another Solution
@@ -66,7 +66,7 @@ class Strategyforwardbackward:
             # (0) BASECASE no zeros on the board
             if not bool(experiment.unvisited):
                 experiment.problem[r][c] = choice
-                # experiment.remaining_choices[(r, c)] = options  # tracking for the second run # todo remove?
+                experiment.remaining_choices[(r, c)] = options  # tracking for the second run
                 return True
 
             # (1) recursive continuation:
@@ -98,8 +98,8 @@ class Strategyforwardbackward:
             r, c = experiment.nextzero()
             options = experiment.remaining_choices.pop((r, c))
             while bool(options):
-                choice = options.pop(0)
-                experiment.board[r][c] = choice
+                choice = options.pop()
+                experiment.problem[r][c] = choice
 
                 # now go forward again from this choice:
                 r, c = experiment.nextzero()
@@ -110,7 +110,7 @@ class Strategyforwardbackward:
 
             else:
                 # set this position to 0 and move up in the options 'stack'
-                experiment.board[r][c] = 0
+                experiment.problem[r][c] = 0
 
             if flag:
                 # exit the outer while - if a (second) solution was found
