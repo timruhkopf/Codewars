@@ -16,6 +16,7 @@ class Bookkeeper:
 
 
 class StrategySets:
+    """Deprec. Was working, but to slow on the second path"""
     def execute(board):
         t1 = time.time()
         StrategySets._solve_single(position=board.zeros[0], current_idx=0, reverse=False)

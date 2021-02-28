@@ -1,9 +1,12 @@
-from collections import deque
+from collections import deque  # just to have a heap convention
 
+from Sudoku.util import timeit, count_calls
 from ..Board.Experiment import Experiment
 
 
 class Strategyforwardbackward:
+
+    @timeit
     def execute(sudoku):
         """Strategy is a composite of Experiment, forward & backNforth.
         Experiment is the 'guidance' i.e. which zero to look next to and what options are
@@ -25,10 +28,11 @@ class Strategyforwardbackward:
         r, c = experiment.nextzero()
         options = experiment.options(r, c)
         Strategyforwardbackward.forward(experiment, r, c, options)
+        print('no.calls to forward:', Strategyforwardbackward.forward.calls)  # FIXME: this seems a bit high.
 
+        # early stopping - if no solution was found next algo will not be executed
         success = Strategyforwardbackward.append_solution(sudoku, experiment)
         if success:
-            # early stopping - if no solution was found next algo will not be executed
             return None
 
         # (2) Second Execution figure out if there is another Solution
@@ -47,6 +51,7 @@ class Strategyforwardbackward:
         else:
             return False
 
+    @count_calls
     def forward(experiment, r, c, options):
         """forward path with recursive backtracking:
         given a position figure out the applicable choices for that position;
@@ -80,6 +85,7 @@ class Strategyforwardbackward:
             experiment.problem[r][c] = 0
             return False
 
+    @timeit
     def backNforth(experiment):
         """Given the board was solved with the StrategyPosition.forward -
         a stack of the remaining_options for a position is available - look for another solution.
