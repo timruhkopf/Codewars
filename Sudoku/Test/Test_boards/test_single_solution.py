@@ -1,6 +1,6 @@
 import unittest
 
-from ..Board.MultiSudoku import Sudoku
+from Sudoku.Board.MultiSudoku import Sudoku
 
 
 class MyTestCase(unittest.TestCase):
