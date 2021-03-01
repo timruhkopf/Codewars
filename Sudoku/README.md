@@ -35,8 +35,19 @@ The very essence of this strategy is backtracking and recursion with smart track
 sequentially reverts the board and continues forward recursively on the previously untried options for a position, until
 a second solution is found.
 
-Experiment.option & Experiment.blockindex (caching)
-Strategy works on a deepcopy of the problem
+Experiment.option & Experiment.blockindex (caching) , creates Blockview of problem finds zeros across the board and
+moves the to a deque object that guides the recursive path
+
+at end of recursion all remaining options for each recursive level are written out to Experiment.remaining_options,
+which are used in the second run for continuation.
+
+second run starts from the solved board and moves in the exact reverse order - at each step setting the current location
+to 0 and popping an option from the respective position's untried ('remaining') options. From this state, the first
+strategy is employed and recursively run forward. If this run fails, i.e. no other solution was found, the algorithm
+moves further back.
+
+This strategy is guaranteed to never find the same solution twice, since this set of options is no longer contained in
+the remaining options
 
 ## (OPTIONAL) Finding all boards
 
@@ -44,3 +55,8 @@ Currently under construction. Finding all solutions to a board is trying all app
 reverting early from a branch if a single error was made. To do this rather efficiently, the previously displayed
 continuation protocol can be used relentlessly until all untried options are tested and removed from the tracking
 mechanism.
+
+## REFACTORINGS:
+
+* to find multiple or all solutions of the board simply execute the recursive path once, in the base case create a
+  deepcopy and revert this move --> this will continue the recursion. No Tracking and continuation protocol required.
