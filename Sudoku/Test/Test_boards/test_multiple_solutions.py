@@ -8,10 +8,12 @@ class MyTestCase(unittest.TestCase):
 
     def tearDown(self) -> None:
         s = Sudoku(self.problem)
+        # solve should raise, since kata requires it is invalid; however, solutions are appended when found
+        # changing the Sudoku object!
         with self.assertRaises(ValueError):
             s.solve()
         self.assertTrue(len(s.solutions) > 1)
-        for sol in s.solutons:
+        for sol in s.solutions:
             self.assertTrue(sol in self.solutions)
 
     def test_square_switch(self):
