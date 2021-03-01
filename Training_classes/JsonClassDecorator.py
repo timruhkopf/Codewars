@@ -8,14 +8,6 @@ def jsonattr(path):
         data = json.load(json_file)
 
     def class_rebuilder(cls):
-        # Deprec working verison on its own , but more elegant below
-        # class NewClass(cls):
-        #     pass
-        # for name, val in data.items():
-        #     setattr(NewClass, name, val)
-        #
-        # return NewClass
-
         for name, val in data.items():
             setattr(cls, name, val)
         return cls
