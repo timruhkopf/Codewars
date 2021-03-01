@@ -2,19 +2,18 @@ from collections import deque  # just to have a heap convention
 from copy import deepcopy
 
 from Sudoku.util import timeit, count_calls
-from .Experiment import Experiment
 
 
 class Strategyforwardbackward:
 
     @timeit
     def execute(sudoku):
-        """Strategy is a composite of Experiment, forward & backNforth.
-        Experiment is the 'guidance' i.e. which zero to look next to and what options are
+        """Strategy is a composite of sudoku, forward & backNforth.
+        sudoku is the 'guidance' i.e. which zero to look next to and what options are
         available given the boards state.
         forward is a recursive backtracker, that lazily evaluates the options
         and moves FORWARD until all zeros are filled (or no solution was found).
-        Notice, that forward communicates to Experiment all the remaining options
+        Notice, that forward communicates to sudoku all the remaining options
         at the end of the recursive path. (going back)
         Given a Solution was found, backNforth starts at the last zero position
         on the full board., sets it
@@ -25,35 +24,35 @@ class Strategyforwardbackward:
         the path backwards is continued one step back."""
 
         # (1) First Execution find a Solution
-        experiment = Experiment(sudoku.problem)
-        r, c = experiment.nextzero()
-        options = experiment.options(r, c)
-        Strategyforwardbackward.forward(experiment, r, c, options)
+
+        r, c = sudoku.nextzero()
+        options = sudoku.options(r, c)
+        Strategyforwardbackward.forward(sudoku, r, c, options)
         print('no.calls to forward:', Strategyforwardbackward.forward.calls)
 
         # early stopping - if no solution was found next algo will not be executed
-        success = Strategyforwardbackward.append_solution(sudoku, experiment)
+        success = Strategyforwardbackward.append_solution(sudoku)
         if not success:
             return None
 
         # (2) Second Execution figure out if there is another Solution
-        experiment.unvisited = deque(reversed(experiment.zeros))
-        Strategyforwardbackward.backNforth(experiment)
+        sudoku.unvisited = deque(reversed(sudoku.zeros))
+        Strategyforwardbackward.backNforth(sudoku)
 
         # check recursion found a solution. solutions are guaranteed to be valid.
         # notice: since forward options.pop, the second solution will never be the same as first
-        Strategyforwardbackward.append_solution(sudoku, experiment)
+        Strategyforwardbackward.append_solution(sudoku)
 
-    def append_solution(sudoku, experiment):
+    def append_solution(sudoku):
         # check recursion found a solution. solutions are guaranteed to be valid.
-        if not any([row.count(0) for row in experiment.problem]):
-            sudoku.solutions.append(deepcopy(experiment.problem))
+        if not any([row.count(0) for row in sudoku.problem]):
+            sudoku.solutions.append(deepcopy(sudoku.problem))
             return True
         else:
             return False
 
     @count_calls
-    def forward(experiment, r, c, options):
+    def forward(sudoku, r, c, options):
         """forward path with recursive backtracking:
         given a position figure out the applicable choices for that position;
         try one out and see what the next position's choices are - if it has no choice
@@ -62,19 +61,19 @@ class Strategyforwardbackward:
 
         while bool(options):
             choice = options.pop()
-            experiment.problem[r][c] = choice
+            sudoku.problem[r][c] = choice
 
             # (0) BASECASE no zeros on the board
-            if not bool(experiment.unvisited):
-                experiment.problem[r][c] = choice
-                experiment.remaining_choices[(r, c)] = options  # tracking for the second run
+            if not bool(sudoku.unvisited):
+                sudoku.problem[r][c] = choice
+                sudoku.remaining_choices[(r, c)] = options  # tracking for the second run
                 return True
 
             # (1) recursive continuation:
-            newr, newc = experiment.nextzero()
-            newoptions = experiment.options(newr, newc)
-            if Strategyforwardbackward.forward(experiment, newr, newc, newoptions):  # recursion
-                experiment.remaining_choices[(r, c)] = options  # tracking for the second run
+            newr, newc = sudoku.nextzero()
+            newoptions = sudoku.options(newr, newc)
+            if Strategyforwardbackward.forward(sudoku, newr, newc, newoptions):  # recursion
+                sudoku.remaining_choices[(r, c)] = options  # tracking for the second run
                 return True
 
             else:
@@ -82,12 +81,12 @@ class Strategyforwardbackward:
 
         else:
             # (3) no options are applicable: return to higher hierarchy level
-            experiment.unvisited.appendleft((r, c))  # counters nextzero()
-            experiment.problem[r][c] = 0
+            sudoku.unvisited.appendleft((r, c))  # counters nextzero()
+            sudoku.problem[r][c] = 0
             return False
 
     @timeit
-    def backNforth(experiment):
+    def backNforth(sudoku):
         """Given the board was solved with the StrategyPosition.forward -
         a stack of the remaining_options for a position is available - look for another solution.
         This is efficiently done by walking through the stack in reverse and trying out
@@ -95,23 +94,23 @@ class Strategyforwardbackward:
         once a single solution is found, stop the entire execution"""
 
         flag = False
-        while bool(experiment.remaining_choices):
-            r, c = experiment.nextzero()
-            options = experiment.remaining_choices.pop((r, c))
+        while bool(sudoku.remaining_choices):
+            r, c = sudoku.nextzero()
+            options = sudoku.remaining_choices.pop((r, c))
             while bool(options):
                 choice = options.pop()
-                experiment.problem[r][c] = choice
+                sudoku.problem[r][c] = choice
 
                 # now go forward again from this choice:
-                r, c = experiment.nextzero()
-                newoption = experiment.options(r, c)
-                if Strategyforwardbackward.forward(experiment, r, c, newoption):
+                r, c = sudoku.nextzero()
+                newoption = sudoku.options(r, c)
+                if Strategyforwardbackward.forward(sudoku, r, c, newoption):
                     flag = True
                     break  # does break hinder while-else branch to execute?
 
             else:
                 # set this position to 0 and move up in the options 'stack'
-                experiment.problem[r][c] = 0
+                sudoku.problem[r][c] = 0
 
             if flag:
                 # exit the outer while - if a (second) solution was found
