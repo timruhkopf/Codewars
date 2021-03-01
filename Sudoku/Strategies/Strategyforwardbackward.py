@@ -1,5 +1,4 @@
 from collections import deque  # just to have a heap convention
-from copy import deepcopy
 
 from Sudoku.util import timeit, count_calls
 
@@ -24,16 +23,14 @@ class Strategyforwardbackward:
         the path backwards is continued one step back."""
 
         # (1) First Execution find a Solution
-
         r, c = sudoku.nextzero()
         options = sudoku.options(r, c)
         Strategyforwardbackward.forward(sudoku, r, c, options)
         print('no.calls to forward:', Strategyforwardbackward.forward.calls)
 
         # early stopping - if no solution was found next algo will not be executed
-        success = Strategyforwardbackward.append_solution(sudoku)
-        if not success:
-            return None
+        if not sudoku.append_solution():
+            raise ValueError('Unsolvable Board')
 
         # (2) Second Execution figure out if there is another Solution
         sudoku.unvisited = deque(reversed(sudoku.zeros))
@@ -41,15 +38,7 @@ class Strategyforwardbackward:
 
         # check recursion found a solution. solutions are guaranteed to be valid.
         # notice: since forward options.pop, the second solution will never be the same as first
-        Strategyforwardbackward.append_solution(sudoku)
-
-    def append_solution(sudoku):
-        # check recursion found a solution. solutions are guaranteed to be valid.
-        if not any([row.count(0) for row in sudoku.problem]):
-            sudoku.solutions.append(deepcopy(sudoku.problem))
-            return True
-        else:
-            return False
+        sudoku.append_solution()
 
     @count_calls
     def forward(sudoku, r, c, options):

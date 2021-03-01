@@ -1,4 +1,5 @@
 from collections import deque
+from copy import deepcopy
 from functools import lru_cache
 from itertools import chain
 
@@ -78,13 +79,16 @@ class Sudoku:
 
         if len(self.solutions) == 1:
             return self.solutions[0]
-
-        elif len(self.solutions) == 0:
-            raise ValueError('Unsolvable Board')
-
         else:
             raise ValueError('Board has multiple Solutions')
 
+    def append_solution(self):
+        # check recursion found a solution. solutions are guaranteed to be valid.
+        if not any([row.count(0) for row in self.problem]):
+            self.solutions.append(deepcopy(self.problem))
+            return True
+        else:
+            return False
 
 if __name__ == '__main__':
     problem = [[0, 9, 0, 0, 7, 1, 0, 0, 4],
