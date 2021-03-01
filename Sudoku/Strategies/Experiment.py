@@ -18,30 +18,23 @@ class Experiment:
     def __repr__(self):
         return '\n'.join([str(row) for row in self.problem])
 
-    @staticmethod
-    @lru_cache(maxsize=81)
-    def blockindex(r, c):
-        return r // 3 + c // 3 + (r // 3) * 2
-
-    def _blockview(self, rref, cref):
-        return chain(*(self.problem[rref + i][cref:cref + 3] for i in range(3)))
-
     def blockview(self, b):
-        """:returns: generator object, iterating a 'rowlike' version of the block"""
-        return self._blockview(*self.blockrefs[b])
-
-        # TODO write TESTCASES:
-        # aproblem = [[v + i for v in range(9)] for i in range(0, 81, 9)]
-        # assert list(blockView(0)) == [0, 1, 2, 9, 10, 11, 18, 19, 20]
-        # assert list(blockView(1)) == [3, 4, 5, 12, 13, 14, 21, 22, 23]
-        # assert list(blockView(4)) == [30, 31, 32, 39, 40, 41, 48, 49, 50]
-        # assert list(blockView(8)) == [60, 61, 62, 69, 70, 71, 78, 79, 80]
+        """
+        :param b: blockindex (by convention: rowwise)
+        :returns: generator object, iterating a 'rowlike' version of the block"""
+        rref, cref = self.blockrefs[b]
+        return chain(*(self.problem[rref + i][cref:cref + 3] for i in range(3)))
 
     def columnview(self, c):
         """
         :param c: columnindex
         :returns: generator object, iterating a 'rowlike' version of the column"""
         return (self.problem[r][c] for r in range(len(self.problem)))
+
+    @staticmethod
+    @lru_cache(maxsize=81)
+    def blockindex(r, c):
+        return r // 3 + c // 3 + (r // 3) * 2
 
     def options(self, r, c):
         """at position (r, c) in the sudoku, which are the current applicable choices"""
@@ -84,7 +77,9 @@ if __name__ == '__main__':
                                 [0, 0, 9, 0, 0, 6, 0, 0, 0],
                                 [0, 1, 7, 8, 0, 0, 0, 0, 0],
                                 [6, 0, 0, 0, 2, 0, 7, 0, 0]],
-                   zeros=(0))
+                   )
+
+    # TODO write test casess for options & blockindex
     assert s.options(0, 0) == {8, 5}
     assert s.options(8, 8) == {8, 1, 3, 9}
 
@@ -93,3 +88,10 @@ if __name__ == '__main__':
     assert s.options(8, 8) == {8, 1, 9}
 
     s.blockindex(3, 4)
+
+    # TODO write TESTCASES:
+    # aproblem = [[v + i for v in range(9)] for i in range(0, 81, 9)]
+    # assert list(blockView(0)) == [0, 1, 2, 9, 10, 11, 18, 19, 20]
+    # assert list(blockView(1)) == [3, 4, 5, 12, 13, 14, 21, 22, 23]
+    # assert list(blockView(4)) == [30, 31, 32, 39, 40, 41, 48, 49, 50]
+    # assert list(blockView(8)) == [60, 61, 62, 69, 70, 71, 78, 79, 80]
