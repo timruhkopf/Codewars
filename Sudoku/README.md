@@ -60,3 +60,7 @@ mechanism.
 
 * to find multiple or all solutions of the board simply execute the recursive path once, in the base case create a
   deepcopy and revert this move --> this will continue the recursion. No Tracking and continuation protocol required.
+
+* Blockview is a replacement for explicit index operations. Simply write a lambda, that given a blockindex returns a
+  generator object that iterates over the blocks entries. Remember that a block is fully determined by its '
+  basecoordeinate' e.g (0,0), (0,3), (0,6),... and can be expanded from there. 
