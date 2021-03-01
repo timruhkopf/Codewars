@@ -6,7 +6,7 @@ from Sudoku.util import timeit, count_calls
 class Tracker:
     def __init__(self, sudoku):
         self.unvisited = deque(sudoku.zeros)
-        self.remaining_choices = dict()  # deprec this when moving to single forward function
+        self.remaining_choices = dict()
 
     def nextzero(self):
         """yield the next zero to choose from."""
@@ -45,6 +45,8 @@ class Strategyforwardbackward:
 
         # (2) Second Execution figure out if there is another Solution
         tracker.unvisited = deque(reversed(sudoku.zeros))
+
+        raise NotImplementedError('backNforth currently is buggy - does not find a second solution.')
         Strategyforwardbackward.backNforth(sudoku, tracker)
 
         # check recursion found a solution. solutions are guaranteed to be valid.
