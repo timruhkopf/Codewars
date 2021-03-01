@@ -49,12 +49,12 @@ class StrategyForward:
             if not bool(tracker.unvisited):
                 sudoku.problem[r][c] = choice
                 # write out solution
-                StrategyForward.policy(sudoku, r, c)
+                return StrategyForward.policy(sudoku, tracker, r, c)
 
             # (1) recursive continuation:
             newr, newc = tracker.nextzero()
             newoptions = sudoku.options(newr, newc)
-            if StrategyForward.forward(sudoku, tracker, newr, newc, newoptions):  # recursion
+            if StrategyForward.forward(sudoku, tracker, newr, newc, newoptions):
                 return True
             else:
                 continue
@@ -65,10 +65,11 @@ class StrategyForward:
             sudoku.problem[r][c] = 0
             return False
 
-    def policy(sudoku, r, c):
+    def policy(sudoku, tracker, r, c):
         """find a single solution; check for a second solution - raise if a second is found"""
         if not bool(sudoku.solutions):
             sudoku.solutions.append(deepcopy(sudoku.problem))
+            tracker.unvisited.appendleft((r, c))
             sudoku.problem[r][c] = 0
             return False
         else:
@@ -76,8 +77,9 @@ class StrategyForward:
 
 
 class StrategyAll(StrategyForward):
-    def policy(sudoku, r, c):
+    def policy(sudoku, tracker, r, c):
         """find all solutions of the board and append them"""
         sudoku.solutions.append(deepcopy(sudoku.problem))
+        tracker.unvisited.appendleft((r, c))
         sudoku.problem[r][c] = 0
         return False

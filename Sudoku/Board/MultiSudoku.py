@@ -67,14 +67,17 @@ class Sudoku:
 
     def solve(self, strategy='f'):
         """Kata's required solver"""
-        if strategy == 'fb':  # TODO add multiple Strategies
+        if strategy == 'fb':
             Strategyforwardbackward.execute(self)
         elif strategy == 'f':
             StrategyForward.execute(self)
         elif strategy == 'all':
             StrategyAll.execute(self)
 
-        return self.solutions[0]
+        if bool(self.solutions):
+            return self.solutions[0]
+        else:
+            raise ValueError('unsolvable')
 
     def append_solution(self):
         # check recursion found a solution. solutions are guaranteed to be valid.
@@ -108,26 +111,26 @@ if __name__ == '__main__':
 
     assert s.solve() == solution
 
-    s = Experiment(sudokuboard=[[0, 9, 0, 0, 7, 1, 0, 0, 4],
-                                [2, 0, 0, 0, 0, 0, 0, 7, 0],
-                                [0, 0, 3, 0, 0, 0, 2, 0, 0],
-                                [0, 0, 0, 9, 0, 0, 0, 3, 5],
-                                [0, 0, 0, 0, 1, 0, 0, 8, 0],
-                                [7, 0, 0, 0, 0, 8, 4, 0, 0],
-                                [0, 0, 9, 0, 0, 6, 0, 0, 0],
-                                [0, 1, 7, 8, 0, 0, 0, 0, 0],
-                                [6, 0, 0, 0, 2, 0, 7, 0, 0]],
-                   )
-
-    # TODO write test casess for options & blockindex
-    assert s.options(0, 0) == {8, 5}
-    assert s.options(8, 8) == {8, 1, 3, 9}
-
-    # same block update
-    s.problem[7][7] = 3
-    assert s.options(8, 8) == {8, 1, 9}
-
-    s.blockindex(3, 4)
+    # s = Experiment(sudokuboard=[[0, 9, 0, 0, 7, 1, 0, 0, 4],
+    #                             [2, 0, 0, 0, 0, 0, 0, 7, 0],
+    #                             [0, 0, 3, 0, 0, 0, 2, 0, 0],
+    #                             [0, 0, 0, 9, 0, 0, 0, 3, 5],
+    #                             [0, 0, 0, 0, 1, 0, 0, 8, 0],
+    #                             [7, 0, 0, 0, 0, 8, 4, 0, 0],
+    #                             [0, 0, 9, 0, 0, 6, 0, 0, 0],
+    #                             [0, 1, 7, 8, 0, 0, 0, 0, 0],
+    #                             [6, 0, 0, 0, 2, 0, 7, 0, 0]],
+    #                )
+    #
+    # # TODO write test casess for options & blockindex
+    # assert s.options(0, 0) == {8, 5}
+    # assert s.options(8, 8) == {8, 1, 3, 9}
+    #
+    # # same block update
+    # s.problem[7][7] = 3
+    # assert s.options(8, 8) == {8, 1, 9}
+    #
+    # s.blockindex(3, 4)
 
     # TODO write TESTCASES:
     # aproblem = [[v + i for v in range(9)] for i in range(0, 81, 9)]
