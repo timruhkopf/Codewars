@@ -3,6 +3,16 @@ from collections import deque  # just to have a heap convention
 from Sudoku.util import timeit, count_calls
 
 
+class Tracker:
+    def __init__(self, sudoku):
+        self.unvisited = deque(sudoku.zeros)
+        self.remaining_choices = dict()  # deprec this when moving to single forward function
+
+    def nextzero(self):
+        """yield the next zero to choose from."""
+        return self.unvisited.popleft()
+
+
 class Strategyforwardbackward:
 
     @timeit
@@ -23,9 +33,10 @@ class Strategyforwardbackward:
         the path backwards is continued one step back."""
 
         # (1) First Execution find a Solution
-        r, c = sudoku.nextzero()
+        tracker = Tracker(sudoku)
+        r, c = tracker.nextzero()
         options = sudoku.options(r, c)
-        Strategyforwardbackward.forward(sudoku, r, c, options)
+        Strategyforwardbackward.forward(sudoku, tracker, r, c, options)
         print('no.calls to forward:', Strategyforwardbackward.forward.calls)
 
         # early stopping - if no solution was found next algo will not be executed
@@ -33,15 +44,15 @@ class Strategyforwardbackward:
             raise ValueError('Unsolvable Board')
 
         # (2) Second Execution figure out if there is another Solution
-        sudoku.unvisited = deque(reversed(sudoku.zeros))
-        Strategyforwardbackward.backNforth(sudoku)
+        tracker.unvisited = deque(reversed(sudoku.zeros))
+        Strategyforwardbackward.backNforth(sudoku, tracker)
 
         # check recursion found a solution. solutions are guaranteed to be valid.
         # notice: since forward options.pop, the second solution will never be the same as first
         sudoku.append_solution()
 
     @count_calls
-    def forward(sudoku, r, c, options):
+    def forward(sudoku, tracker, r, c, options):
         """forward path with recursive backtracking:
         given a position figure out the applicable choices for that position;
         try one out and see what the next position's choices are - if it has no choice
@@ -53,16 +64,16 @@ class Strategyforwardbackward:
             sudoku.problem[r][c] = choice
 
             # (0) BASECASE no zeros on the board
-            if not bool(sudoku.unvisited):
+            if not bool(tracker.unvisited):
                 sudoku.problem[r][c] = choice
-                sudoku.remaining_choices[(r, c)] = options  # tracking for the second run
+                tracker.remaining_choices[(r, c)] = options  # tracking for the second run
                 return True
 
             # (1) recursive continuation:
-            newr, newc = sudoku.nextzero()
+            newr, newc = tracker.nextzero()
             newoptions = sudoku.options(newr, newc)
-            if Strategyforwardbackward.forward(sudoku, newr, newc, newoptions):  # recursion
-                sudoku.remaining_choices[(r, c)] = options  # tracking for the second run
+            if Strategyforwardbackward.forward(sudoku, tracker, newr, newc, newoptions):  # recursion
+                tracker.remaining_choices[(r, c)] = options  # tracking for the second run
                 return True
 
             else:
@@ -70,12 +81,12 @@ class Strategyforwardbackward:
 
         else:
             # (3) no options are applicable: return to higher hierarchy level
-            sudoku.unvisited.appendleft((r, c))  # counters nextzero()
+            tracker.unvisited.appendleft((r, c))  # counters nextzero()
             sudoku.problem[r][c] = 0
             return False
 
     @timeit
-    def backNforth(sudoku):
+    def backNforth(sudoku, tracker):
         """Given the board was solved with the StrategyPosition.forward -
         a stack of the remaining_options for a position is available - look for another solution.
         This is efficiently done by walking through the stack in reverse and trying out
@@ -83,17 +94,17 @@ class Strategyforwardbackward:
         once a single solution is found, stop the entire execution"""
 
         flag = False
-        while bool(sudoku.remaining_choices):
-            r, c = sudoku.nextzero()
-            options = sudoku.remaining_choices.pop((r, c))
+        while bool(tracker.remaining_choices):
+            r, c = tracker.nextzero()
+            options = tracker.remaining_choices.pop((r, c))
             while bool(options):
                 choice = options.pop()
                 sudoku.problem[r][c] = choice
 
                 # now go forward again from this choice:
-                r, c = sudoku.nextzero()
+                r, c = tracker.nextzero()
                 newoption = sudoku.options(r, c)
-                if Strategyforwardbackward.forward(sudoku, r, c, newoption):
+                if Strategyforwardbackward.forward(sudoku, tracker, r, c, newoption):
                     flag = True
                     break  # does break hinder while-else branch to execute?
 

@@ -1,4 +1,3 @@
-from collections import deque
 from copy import deepcopy
 from functools import lru_cache
 from itertools import chain
@@ -14,9 +13,6 @@ class Sudoku:
         self.problem = sudokuboard
         self.zeros = [(r, c) for r, row in enumerate(self.problem) for c, v in enumerate(row) if v == 0]
         self.valid_grid_basic()
-
-        self.unvisited = deque(self.zeros)
-        self.remaining_choices = dict()  # deprec this when moving to single forward function
 
         self.solutions = []
 
@@ -47,10 +43,6 @@ class Sudoku:
         b = self.blockindex(r, c)
         rs, cs, bs = set(self.problem[r]), set(self.columnview(c)), set(self.blockview(b))
         return self.values.difference(rs.union(cs, bs))
-
-    def nextzero(self):
-        """yield the next zero to choose from."""
-        return self.unvisited.popleft()
 
     def valid_grid_basic(self):
         """check at initialisation if board is shaped and filled like a sudoku board
@@ -89,6 +81,7 @@ class Sudoku:
             return True
         else:
             return False
+
 
 if __name__ == '__main__':
     problem = [[0, 9, 0, 0, 7, 1, 0, 0, 4],
