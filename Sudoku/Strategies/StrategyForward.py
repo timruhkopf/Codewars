@@ -74,12 +74,3 @@ class StrategyForward:
             return False
         else:
             raise ValueError('multiple solutions were found')
-
-
-class StrategyAll(StrategyForward):
-    def policy(sudoku, tracker, r, c):
-        """find all solutions of the board and append them"""
-        sudoku.solutions.append(deepcopy(sudoku.problem))
-        tracker.unvisited.appendleft((r, c))
-        sudoku.problem[r][c] = 0
-        return False

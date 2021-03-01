@@ -2,7 +2,8 @@ from copy import deepcopy
 from functools import lru_cache
 from itertools import chain
 
-from Sudoku.Strategies.StrategyForward import StrategyForward, StrategyAll
+from Sudoku.Strategies.StrategiesForward_derivatives import StrategyAll, StrategySingleSolution, StrategyOptionSorted
+from Sudoku.Strategies.StrategyForward import StrategyForward
 from Sudoku.Strategies.Strategyforwardbackward import Strategyforwardbackward
 
 
@@ -67,12 +68,17 @@ class Sudoku:
 
     def solve(self, strategy='f'):
         """Kata's required solver"""
-        if strategy == 'fb':
-            Strategyforwardbackward.execute(self)
-        elif strategy == 'f':
+
+        if strategy == 'f':
             StrategyForward.execute(self)
         elif strategy == 'all':
             StrategyAll.execute(self)
+        elif strategy == 'single':
+            StrategySingleSolution.execute(self)
+        elif strategy == 'fb':
+            Strategyforwardbackward.execute(self)  # FIXME: currently buggy
+        elif strategy == 'sortedzeros':
+            StrategyOptionSorted.execute(self)
 
         if bool(self.solutions):
             return self.solutions[0]
