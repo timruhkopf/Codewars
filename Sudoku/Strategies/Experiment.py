@@ -8,14 +8,17 @@ class Experiment:
     blockrefs = list(chain(*[[(rref, cref) for cref in (0, 3, 6)] for rref in (0, 3, 6)]))
 
     def __init__(self, sudokuboard):
+        # TODO : make Experiment & MultipleSudoku single class; compute on the provided problem list & write out
+        #  (deepcopy) solutions along the way to a solution attr.
         self.problem = sudokuboard
         self.zeros = [(r, c) for r, row in enumerate(self.problem) for c, v in enumerate(row) if v == 0]
         self.valid_grid_basic()
 
         self.unvisited = deque(self.zeros)
-        self.remaining_choices = dict()
+        self.remaining_choices = dict()  # deprec this when moving to single forward function
 
     def __repr__(self):
+        """printing the current state of the solver"""
         return '\n'.join([str(row) for row in self.problem])
 
     def blockview(self, b):
