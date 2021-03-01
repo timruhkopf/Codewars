@@ -2,6 +2,7 @@ from copy import deepcopy
 from functools import lru_cache
 from itertools import chain
 
+from Sudoku.Strategies.StrategyForward import StrategyForward, StrategyAll
 from Sudoku.Strategies.Strategyforwardbackward import Strategyforwardbackward
 
 
@@ -64,15 +65,16 @@ class Sudoku:
         if not all((len(self.options(*zero)) > 0 for zero in self.zeros)):
             raise ValueError('Some positions do not have any options at the beginning')
 
-    def solve(self, strategy='fb'):
+    def solve(self, strategy='f'):
         """Kata's required solver"""
         if strategy == 'fb':  # TODO add multiple Strategies
             Strategyforwardbackward.execute(self)
+        elif strategy == 'f':
+            StrategyForward.execute(self)
+        elif strategy == 'all':
+            StrategyAll.execute(self)
 
-        if len(self.solutions) == 1:
-            return self.solutions[0]
-        else:
-            raise ValueError('Board has multiple Solutions')
+        return self.solutions[0]
 
     def append_solution(self):
         # check recursion found a solution. solutions are guaranteed to be valid.
