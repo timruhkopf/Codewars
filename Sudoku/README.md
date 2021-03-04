@@ -1,5 +1,7 @@
 # Multi Sudoku
 
+# README is in progress!
+
 * Easy sudoku generally have over 32 givens
 * Medium sudoku have around 30–32 givens
 * Hard sudoku have around 28–30 givens

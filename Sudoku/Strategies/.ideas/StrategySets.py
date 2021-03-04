@@ -12,7 +12,7 @@ class Bookkeeper:
         self.candcol = [set(range(10)) - set(column) for column in list(zip(*self.problem))]  # make use of transpose
 
         self.zeros = [(r, c, b) for r, c, b in self.sudokuindex if self.problem[r][c] == 0]
-        self.memo = dict
+        self.memo = dict()
 
 
 class StrategySets:
