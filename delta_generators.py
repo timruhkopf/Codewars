@@ -1,5 +1,7 @@
 import types
 
+from collections import deque
+
 
 def delta(values, n):
     if isinstance(values, types.GeneratorType):
@@ -14,6 +16,29 @@ def delta(values, n):
             ret = [i[1] - i[0] for i in zip(ret, ret[1::])]
         return ret
 
+
+def delta(values, n):
+    # setup
+    d = {level: deque([], maxlen=length) for level, length in zip(range(n), reversed(range(n)))}
+    d[0].extend(values[0:n])  # prefill the first n values
+
+    # compute this on demand
+    for level in sorted(k for k in d.keys() if k != 0):
+        d[level].extend(first - second for first, second in zip(d[level - 1], list(d[level - 1])[1:]))
+
+    # jetzt nurnoch den neuen value callen und durch level von d jeweils appenden.
+
+    # zuletzt noch yielden
+
+
+def batch(iterable, n=1):
+    l = len(iterable)
+    for ndx in range(0, l, n):
+        yield iterable[ndx:min(ndx + n, l)]
+
+
+for x in batch(list(range(0, 10)), 3):
+    print(x)
 
 if __name__ == '__main__':
     class Potion:
