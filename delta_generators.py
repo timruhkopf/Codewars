@@ -1,4 +1,4 @@
-# import types
+import types
 
 from collections import deque
 
@@ -18,31 +18,39 @@ from collections import deque
 
 
 def delta(values, n):
+    if not isinstance(values, types.GeneratorType):
+        values = iter(values)
+
     # setup
-    d = {level: deque([], maxlen=length) for level, length in zip(range(n), reversed(range(n + 1)))}
-    d[0].extend(values[0:n])  # prefill the first n values
+    d = {level: list() for level in range(n)}
+    d[0].extend((next(values) for i in range(n)))  # prefill the first n values
 
     for level in sorted(k for k in d.keys() if k != 0):
         d[level].extend(first - second for first, second in zip(list(d[level - 1])[1:], d[level - 1]))
 
+        # to save memory, remove all but the last two values
+        d[level - 1] = deque(d[level - 1][-2:], maxlen=2)
+
     yield d[n - 1][-1]
 
-    iterator = iter(values[n:])
     while True:
-        d[0].append(next(iterator))
+        d[0].append(next(values))
         for level in sorted(k for k in d.keys() if k > 0):
             d[level].append(d[level - 1][-1] - d[level - 1][-2])
 
         yield d[n - 1][-1]
 
 
-
 if __name__ == '__main__':
     gen = delta(values=list(x ** 2 for x in range(30)), n=3)
-
     assert next(gen) == 2
 
-    next(gen)
+    # test for a generator
+    gen2 = delta(values=(x ** 2 for x in range(30)), n=1)
+    assert [next(gen2) for i in range(10)] == [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+
+    gen2 = delta(values=(x ** 2 for x in range(30)), n=2)
+    assert [next(gen2) for i in range(10)] == [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
 
     # class Potion:
     #     def __init__(self, name):
