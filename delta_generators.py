@@ -25,3 +25,15 @@ def delta(values, n):
             yield d[n][-1]
         except StopIteration:
             break
+
+
+
+def delta(values, n):
+    values = iter(values) if n==1 else delta(values, n-1)
+    a = next(values)
+    for b in values:
+        yield b - a
+        a = b
+
+
+
