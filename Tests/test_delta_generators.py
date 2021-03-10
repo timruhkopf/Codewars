@@ -86,7 +86,7 @@ class Test_delta(unittest.TestCase):
                 -1889, 112, 1674, 780, -55, -834, 1803, -971, 1635, 731, 734, -1289, -440, -1748, 663, -585, 679, -62,
                 -1789, -1315, -1303, -1829, 1494, -1556]
 
-        list(delta(vals, 283))  # this does not raise !!!!!!!!!!!!
+        list(delta(vals, 283))  # this must not raise !!!!!!!!!!!!
 
 
 if __name__ == '__main__':
