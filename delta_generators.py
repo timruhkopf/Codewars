@@ -27,7 +27,6 @@ def delta(values, n):
             break
 
 
-
 def delta(values, n):
     values = iter(values) if n==1 else delta(values, n-1)
     a = next(values)
