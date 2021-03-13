@@ -1,7 +1,7 @@
 import unittest
 
-from TheLift.Lift import Lift
 from TheLift.Kata_translation import Dinglemouse
+from TheLift.Lift import Lift
 
 
 class TestTheLift(unittest.TestCase):
@@ -35,7 +35,35 @@ class TestTheLift(unittest.TestCase):
         self.assertEqual(lift.load, [6, 5])
 
     def test_up_next_floor(self):
-        pass
+        queue = ((6, 3, 5), (3, 3, 4), (5, 1, 5), (6,), (1,), (), (0,))
+
+        lift = Lift(capacity=5)
+        lift.parse_queues(queue)
+        lift._enter_lift()
+
+        self.assertEqual(lift.next_floor, 1)  # not reached capacity, and in 1 there are some waiting
+        lift.current_floor = lift.next_floor
+        self.assertEqual(lift.visited, [0, 1])
+
+        lift._enter_lift()
+        self.assertEqual(lift.load, [6, 3, 5, 3, 3])
+
+        self.assertEqual(lift.next_floor, 2)  # its full, but is must visit the 2nd floor as button was pushed
+        lift.current_floor = lift.next_floor
+        lift._enter_lift()
+        self.assertEqual(lift.load, [6, 3, 5, 3, 3])
+
+        self.assertEqual(lift.next_floor, 3)
+        lift.current_floor = lift.next_floor
+        lift._exit_lift()
+
+        self.assertEqual(lift.load, [6, 5])
+        lift._enter_lift()
+        self.assertEqual(lift.load, [6, 5, 6])
+
+        self.assertEqual(lift.next_floor, 4)
+        lift.current_floor = lift.next_floor
+        lift._exit_lift()
 
     def test_down_next_floor(self):
         pass
