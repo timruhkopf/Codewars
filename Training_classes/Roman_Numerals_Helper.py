@@ -1,4 +1,9 @@
 class RomanNumerals:
+    """
+    https://www.codewars.com/kata/51b66044bce5799a7f000003
+    """
+
+
     _symbol = ['I', 'V', 'X', 'L', 'C', 'D', 'M']
     _value = [1, 5, 10, 50, 100, 500, 1000]
     translator_sv = {s: v for s, v in zip(_symbol, _value)}
@@ -8,7 +13,8 @@ class RomanNumerals:
     def to_roman(cls, integer):
         if isinstance(integer, int):
             roman_num = ''
-            split_num = [i + '0' * j for i, j in zip(str(integer), sorted(range(len(str(integer))), reverse=True))]
+            split_num = [i + '0' * j for i, j in
+                         zip(str(integer), sorted(range(len(str(integer))), reverse=True))]
             for n in split_num:
                 if int(n) >= 1000:
                     roman_num += cls.translator_vs[1000] * (int(n) // 1000)
@@ -67,7 +73,4 @@ class RomanNumerals:
 
 
 if __name__ == '__main__':
-    assert RomanNumerals.to_roman(1) == 'I'
-    assert RomanNumerals.to_roman(2708) == 'MMDCCVIII'
-    assert RomanNumerals.from_roman('MMLIV') == 2054
-    assert RomanNumerals.from_roman('MMVIII') == 2008
+    pass
