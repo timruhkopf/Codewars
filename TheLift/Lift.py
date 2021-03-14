@@ -14,6 +14,9 @@ class Lift:
         self._state = None
         self.visited = [0]
 
+        # only when activated, the state switches!
+        self.switch_state(StateUP(self))
+
     @property
     def heading(self):
         return self._state.heading
@@ -45,10 +48,7 @@ class Lift:
 
         up = [[person for person in v if person > floor] for floor, v in enumerate(queue)]
         down = [[person for person in v if person < floor] for floor, v in enumerate(queue)]
-        self.requests = {'up': up, 'down': down}
-
-        # only when activated, the state switches!
-        self.switch_state(StateUP(self))
+        self.requests = {'up': up, 'down': list(reversed(down))}
 
     def switch_state(self, state):
         self._state = state
@@ -78,20 +78,15 @@ class Lift:
         was going down then it may continue down to collect the lowest floor
         person wanting to go up.
         """
-        any_more_requests = lambda: any(bool(floor) for direct in ['up', 'down']
-                                        for floor in self.requests[direct])
 
-        self._enter_lift()
-        while self.current_load > 0 or any_more_requests():  # lazy eval!
+        self._enter_lift()  # enter lift in floor zero if any!
+        while self.current_load > 0 or \
+                any([*self.requests['down'], *self.requests['up']]):  # any more requests,  # lazy eval!
             self.current_floor = self.next_floor
             self._exit_lift()
             self._enter_lift()  # works with 0 people entering!
-            self._state.check_end_ofthe_line()
 
-        else:
-            # If the lift is empty, and no people are waiting, then it will return to the ground floor
-            self.current_floor = 0
-            self.switch_state(state=StateUP())
+        self.switch_state(state=StateUP(self))
 
 
 # State pattern: https://refactoring.guru/design-patterns/state/python/example
@@ -100,7 +95,6 @@ class StateUP:
 
     def __init__(self, lift):
         self.lift = lift
-        self.default = lift.height
         self.next_state = StateDown
 
     @property
@@ -112,28 +106,27 @@ class StateUP:
                        if bool(queue) and f > self.lift.current_floor)
         try:
             next_request = next(up_requests)
+            # default aleviates min([]) error - and the (now existing) next_request
+            # will always be smaller than height!
+            return min([min(self.lift.load, default=self.lift.height), next_request])
+
         except StopIteration:
-            # continue up to the highest person wanting to go down
-
-            # move this to
-            next_request = next((f for f, queue in
-                                 zip(range(self.lift.current_floor + 1, self.lift.height - 1),
-                                     self.lift.requests['down'][self.lift.current_floor + 1:])
-                                 if bool(queue)))
-
             self.lift.switch_state(self.next_state(self))
-        else:
-            return min([min(self.lift.load, default=self.default), next_request])
 
-    def check_end_ofthe_line(self):
-        # no up requests, that are higher than current ("smart" strategy)
-        if not any(bool(floor) for floor in self.requests):
-            self.lift.switch_state(self.next_state(self.lift))
+            if any(self.lift.requests['down']):
+                # go to highest down request  -'smart' strategy
+                return next(self.lift.height - f for f, queue in enumerate(self.lift.requests['down']) if bool(queue))
+
+            elif any(self.lift.requests['up']):
+                # smallest up request
+                return next(f for f, queue in enumerate(self.lift.requests['up']) if bool(queue))
+
+            else:
+                return 0
 
 
-class StateDown(StateUP):
+class StateDown:
     heading = 'down'
-    default = 0
 
     def __init__(self, lift):
         self.lift = lift
@@ -141,43 +134,28 @@ class StateDown(StateUP):
 
     @property
     def next_floor(self):
-        # - next in load or next non empty floor requesting to go in the same direction
-        # - When called, the Lift will stop at a floor even if it is full, although
-        #   unless somebody gets off nobody else can get on!
-        up_requests = (f for f, queue in enumerate(self.lift.requests['down'])
-                       if bool(queue) and f < self.lift.current_floor)
+
+        # ordered down_requests
+        down_requests = (self.lift.current_floor - f for f, queue in enumerate(self.lift.requests['down'])
+                         if bool(queue) and f < self.lift.current_floor)
         try:
-            next_request = next(up_requests)
+            next_request = next(down_requests)
+            # default alleviates min([]) error - and 0 will always be
+            # smaller than the (now existing) next_request!
+            return max([max(self.lift.load, default=0), next_request])
+
         except StopIteration:
-            # continue up to the highest person wanting to go down
+            if any(self.lift.requests['up']):
+                self.lift.switch_state(self.next_state(self))
+                return self.lift._state.next_floor
 
-            # move this to
-            next_request = next((f for f, queue in
-                                 zip(range(self.lift.current_floor + 1, self.lift.height - 1),
-                                     self.lift.requests['up'][self.lift.current_floor + 1:])
-                                 if bool(queue)))
+            elif any(self.lift.requests['down']):  # 'smart' strategy
+                # topmost down request
+                return next(f for f, queue in enumerate(list(reversed(self.lift.requests['down']))) if bool(queue))
 
-            self.lift.switch_state(self.next_state(self))
-        else:
-            return min([min(self.lift.load, default=self.default), next_request])
-
-    # @property
-    # def requests(self):
-    #     return self.lift.requests[self.heading][:self.lift.current_floor - 1]
-
-    # @property
-    # def next_floor(self):
-    #     # - next in load or next non empty floor requesting to go in the same direction
-    #     # - When called, the Lift will stop at a floor even if it is full, although
-    #     #   unless somebody gets off nobody else can get on!
-    #
-    #     # the next lower floor request
-    #     headed_requests = (f for f, queue in reversed(zip(range(self.lift.current_floor - 1), self.requests))
-    #                        if bool(queue))
-    #     return min([min(self.lift.load, default=self.default), next(headed_requests)])  # FIXME: must be MAX!
+            else:
+                return 0
 
 
 if __name__ == '__main__':
     ((3, 3, 3, 3, 3, 3), (), (), (), (), (4, 4, 4, 4, 4, 4), ()), 5
-
-    lift.move()
