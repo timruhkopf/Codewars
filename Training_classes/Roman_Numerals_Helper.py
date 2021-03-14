@@ -1,76 +1,54 @@
 class RomanNumerals:
-    """
-    https://www.codewars.com/kata/51b66044bce5799a7f000003
-    """
+    """https://www.codewars.com/kata/51b66044bce5799a7f000003"""
 
-
-    _symbol = ['I', 'V', 'X', 'L', 'C', 'D', 'M']
-    _value = [1, 5, 10, 50, 100, 500, 1000]
-    translator_sv = {s: v for s, v in zip(_symbol, _value)}
-    translator_vs = {v: s for s, v in zip(_symbol, _value)}
+    _symbol = ['', 'I', 'V', 'X', 'L', 'C', 'D', 'M']
+    _value = [0, 1, 5, 10, 50, 100, 500, 1000]
+    translator_roman = {s: v for s, v in zip(_symbol, _value)}
+    translator_int = {v: s for s, v in zip(_symbol, _value)}
 
     @classmethod
-    def to_roman(cls, integer):
-        if isinstance(integer, int):
-            roman_num = ''
-            split_num = [i + '0' * j for i, j in
-                         zip(str(integer), sorted(range(len(str(integer))), reverse=True))]
-            for n in split_num:
-                if int(n) >= 1000:
-                    roman_num += cls.translator_vs[1000] * (int(n) // 1000)
-                else:
-                    roman_num += cls.combine(cls, n)
-            return roman_num
-        else:
-            raise Exception('check your input! give me an integer')
+    def to_roman(cls, integer: int):
+        temp = []
+        rev_value = list(reversed([int(s) for s in str(integer)]))
+        for power, high in enumerate(rev_value):
+            if high in (4, 9):
+                # first and second letters for value 4 or 9 by difference to next higher letter
+                temp.append(cls.translator_int[10 ** power] + cls.translator_int[(high + 1) * 10 ** power])
+            elif high == 5:
+                # e.g. 300: CCC
+                temp.append(cls.translator_int[high * 10 ** power])
 
-    @classmethod
-    def from_roman(cls, string):
-        if isinstance(string, str):
-            value_list = [cls.translator_sv[i] for i in string]
-            if value_list == sorted(value_list, reverse=True):
-                return sum(value_list)
             else:
-                number = []
-                for i in range(len(value_list) - 1):
-                    if value_list[i] < value_list[i + 1]:
-                        number.append(value_list[i + 1] - value_list[i])
-                        number.append(-value_list[i + 1])
-                    else:
-                        number.append(value_list[i])
-                return sum(number) if number[-1] > 0 else sum(number[:-1])
+                # below or above 5 but not 4, 9 e.g. DC 600
+                # THIS REQUIRES  translator_int {0:''}
+                temp.append(
+                    cls.translator_int[(high // 5) * 5 * 10 ** power] + cls.translator_int[10 ** power] * (high % 5))
+
+        return ''.join(reversed(temp))
+
+    @classmethod
+    def from_roman(cls, string: str):
+        # corner case single character
+        if len(string) == 1:
+            return cls.translator_roman[string]
+
+        # check if smaller number before larger
+        value_list = [cls.translator_roman[s] for s in string]
+        number = 0
+        iterator = zip(value_list, value_list[1:])
+        while True:
+            try:
+                prev, nxt = next(iterator)
+                if prev < nxt:
+                    number += nxt - prev
+                    next(iterator)
+                else:
+                    number += prev
+            except StopIteration:
+                break
+
+        # after stopiteration: what to do with last value?
+        if prev < nxt:
+            return number
         else:
-            raise Exception('check your input! give me a string')
-
-    def combine(self, patch):
-        if int(patch[0]) == 4:
-            for _ in [100, 10, 1]:
-                if int(patch) // _ > 0:
-                    return self.translator_vs[_] + self.translator_vs[_ * 5]
-                    break
-        elif int(patch[0]) == 9:
-            for _ in [100, 10, 1]:
-                if int(patch) // _ > 0:
-                    return self.translator_vs[_] + self.translator_vs[_ * 10]
-                    break
-        elif int(patch[0]) < 4 and int(patch[0]) != 0:
-            for _ in [100, 10, 1]:
-                if int(patch) // _ > 0:
-                    return self.translator_vs[_] * (int(patch) // _)
-                    break
-        elif int(patch[0]) > 5:
-            for _ in [100, 10, 1]:
-                if int(patch) // _ > 0:
-                    return self.translator_vs[_ * 5] + self.translator_vs[_] * (int(patch) // _ - 5)
-                    break
-        elif int(patch[0]) == 5:
-            for _ in [100, 10, 1]:
-                if int(patch) // _ > 0:
-                    return self.translator_vs[_ * 5]
-                    break
-        else:
-            return ''
-
-
-if __name__ == '__main__':
-    pass
+            return number + nxt
