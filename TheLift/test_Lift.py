@@ -77,8 +77,7 @@ class TestTheLift(unittest.TestCase):
     def test_move_switch_directions(self):
         pass
 
-
-    def test_kata_examples(self):
+    def test_kata_TEST_examples(self):
         """using the kata's interface: Dinglemouse"""
         tests = [[((), (), (5, 5, 5), (), (), (), ()), [0, 2, 5, 0]],
                  [((), (), (1, 1), (), (), (), ()), [0, 2, 1, 0]],
@@ -89,7 +88,26 @@ class TestTheLift(unittest.TestCase):
             dingle = Dinglemouse(queues, capacity=5)
             self.assertEqual(dingle.theLift(), answer)
 
+    def test_kata_examples_firedrill(self):
+        queue = ((), (0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0))
+        answer = [0, 6, 5, 4, 3, 2, 1, 0, 5, 4, 3, 2, 1, 0, 4, 3, 2, 1, 0, 3, 2, 1, 0, 1, 0]
 
+        dingle = Dinglemouse(queue, capacity=5)
+        self.assertEqual(dingle.theLift(), answer)
+
+    def test_kata_examples_highlander(self):
+        queue = ((), (2,), (3, 3, 3), (1,), (), (), ())
+        answer = [0, 1, 2, 3, 1, 2, 3, 2, 3, 0]
+
+        dingle = Dinglemouse(queue, capacity=1)
+        self.assertEqual(dingle.theLift(), answer)
+
+    def test_kata_examples_emptybuilding(self):
+        queue = ((), (), (), (), (), (), ())
+        answer = [0]
+
+        dingle = Dinglemouse(queue, capacity=5)
+        self.assertEqual(dingle.theLift(), answer)
 
 if __name__ == '__main__':
     unittest.main(exit=False)
