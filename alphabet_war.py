@@ -1,4 +1,3 @@
-
 def alphabet_war(reinforces, airstrikes):
     '''
     Task
