@@ -1,5 +1,6 @@
 def alphabet_war(reinforces, airstrikes):
     '''
+
     Task
     Write a function that accepts reinforces array of strings and airstrikes
     array of strings. The reinforces strings consist of only small letters.
